@@ -1,0 +1,18 @@
+#!/bin/sh -e
+PKG=arsoft-web-crashupload
+
+case "$1" in
+    configure|upgrade)
+        # make sure django log dir exists
+        [ ! -d /var/log/django ] && mkdir /var/log/django
+        # ... and create the log file if it does not exist
+        if [ ! -f /var/log/django/arsoft.web.crashupload.log ]; then
+            touch /var/log/django/arsoft.web.crashupload.log
+            chown www-data:www-data /var/log/django/arsoft.web.crashupload.log
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,6 @@
+/arsoft-web-crashupload/
+/*.substvars
+/*.debhelper
+/dirs
+/docs
+/files

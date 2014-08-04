@@ -1,0 +1,32 @@
+body {
+    background-color:#FEFEF2;
+    font-family:helvetica, arial, verdana, sans-serif;
+}
+.errormessage { 
+    font-weight:bold;
+    text-align:center;
+    color:red;
+}
+.statusmessage { 
+    font-weight:bold;
+    text-align:center;
+    color:blue;
+}
+.title {
+    text-align:center;
+    font-size:large;
+}
+.crashuploadform  {
+    position:relative;
+    visibility:visible;
+    text-align: center;
+    vertical-align: middle;
+}
+.crashupload {
+    visibility:visible;
+    table-layout: fixed;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+}
