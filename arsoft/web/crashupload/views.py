@@ -8,6 +8,10 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import UploadFileForm
 from django.conf import settings
 import os.path
+import logging
+from .models import CrashDumpModel
+
+logger = logging.getLogger('arsoft.web.crashupload')
 
 def home(request):
     title = 'Upload crash dump'
@@ -70,21 +74,34 @@ def submit(request):
     error_message = None
 
     if request.method == 'POST':
-        useragent = request.META['HTTP_USER_AGENT'] if 'HTTP_USER_AGENT' in request.META else None
+        useragent = request.META.get('HTTP_USER_AGENT')
         if useragent:
             is_terra3d_crashuploader = True if 'terra3d-crashuploader' in useragent else False
         else:
             is_terra3d_crashuploader = False
         remote_addr = _get_remote_addr(request)
 
-        applicationfile = request.POST['applicationfile'] if 'applicationfile' in request.POST else None
-        crashid = request.POST['id'] if 'id' in request.POST else None
-        timestamp = request.POST['timestamp'] if 'timestamp' in request.POST else None
+        applicationfile = request.POST.get('applicationfile')
+        crashid = request.POST.get('id')
+        timestamp = request.POST.get('timestamp')
 
-        minidumpfile = request.FILES['minidump'] if 'minidump' in request.FILES else None
-        minidumpreportfile = request.FILES['minidumpreport'] if 'minidumpreport' in request.FILES else None
-        coredumpfile = request.FILES['coredump'] if 'coredump' in request.FILES else None
-        coredumpreportfile = request.FILES['coredumpreport'] if 'coredumpreport' in request.FILES else None
+        productname = request.POST.get('productname')
+        productversion = request.POST.get('productversion')
+        producttargetversion = request.POST.get('producttargetversion')
+        fqdn = request.POST.get('fqdn')
+        username = request.POST.get('username')
+        buildtype = request.POST.get('buildtype')
+        buildpostfix = request.POST.get('buildpostfix')
+        machinetype = request.POST.get('machinetype')
+        systemname = request.POST.get('systemname')
+        osversion = request.POST.get('osversion')
+        osrelease = request.POST.get('osrelease')
+        osmachine = request.POST.get('osmachine')
+
+        minidumpfile = request.FILES.get('minidump')
+        minidumpreportfile = request.FILES.get('minidumpreport')
+        coredumpfile = request.FILES.get('coredump')
+        coredumpreportfile = request.FILES.get('coredumpreport')
 
         result = False
         if _store_dump_file(minidumpfile):

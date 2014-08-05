@@ -4,12 +4,21 @@
 
 # Django settings for arsoft.web.crashupload project.
 from arsoft.web.utils import initialize_settings
+import os.path
 
 # use initialize_settings from arsoft.web.utils to get the initial settings
 # for a Django web application.
 initialize_settings(__name__, __file__)
 
 SITE_ID = 1
+INSTALLED_APPS.append('django.contrib.admin')
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(APP_DATA_DIR, 'crashupload.db')
+    }
+}
 
 # Disable the host verification in the web application. This test must be
 # done in the web server itself.
