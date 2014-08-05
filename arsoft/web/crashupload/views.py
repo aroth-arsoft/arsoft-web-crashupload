@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
+from django import forms
 from .forms import UploadFileForm
 from django.conf import settings
 import os.path
@@ -12,6 +13,10 @@ import logging
 from .models import CrashDumpModel
 
 logger = logging.getLogger('arsoft.web.crashupload')
+
+class CrashDumpModelViewForm(forms.ModelForm):
+    class Meta:
+        model = CrashDumpModel
 
 def home(request):
     title = 'Upload crash dump'
@@ -53,12 +58,13 @@ def _store_dump_file(file):
     if file:
         item_name = 'dumpdata/' + file.name
         if default_storage.exists(item_name):
-            print ('dupliacted upload of %s' % file.name)
             item_path = default_storage.path(item_name)
         else:
             item_path = default_storage.save(item_name, ContentFile(file.read()))
         ret = True
-    return ret
+    else:
+        item_name = None
+    return (ret, item_name)
 
 def _get_remote_addr(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -103,15 +109,43 @@ def submit(request):
         coredumpfile = request.FILES.get('coredump')
         coredumpreportfile = request.FILES.get('coredumpreport')
 
+        db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid)
+
         result = False
-        if _store_dump_file(minidumpfile):
+        ok, db_entry.minidumpFile = _store_dump_file(minidumpfile)
+        if ok:
             result = True
-        if _store_dump_file(minidumpreportfile):
+        ok, db_entry.minidumpReportFile = _store_dump_file(minidumpreportfile)
+        if ok:
             result = True
-        if _store_dump_file(coredumpfile):
+        ok, db_entry.coredumpFile = _store_dump_file(coredumpfile)
+        if ok:
             result = True
-        if _store_dump_file(coredumpreportfile):
+        ok, db_entry.coredumpReportFile = _store_dump_file(coredumpreportfile)
+        if ok:
             result = True
+
+        if result:
+            db_entry.timestamp = timestamp
+            db_entry.applicationFile = applicationfile
+            db_entry.applicationName = os.path.basename(applicationfile)
+
+            db_entry.productName = productname
+            db_entry.productVersion = productversion
+            db_entry.productTargetVersion = producttargetversion
+            db_entry.clientHostName = fqdn
+            db_entry.clientUserName = username
+
+            db_entry.buildType = buildtype
+            db_entry.buildPostfix = buildpostfix
+
+            db_entry.machineType = machinetype
+            db_entry.systemName = systemname
+            db_entry.osVersion = osversion
+            db_entry.osRelease = osrelease
+            db_entry.osMachine = osmachine
+            db_entry.save()
+
 
         if is_terra3d_crashuploader:
             if result:

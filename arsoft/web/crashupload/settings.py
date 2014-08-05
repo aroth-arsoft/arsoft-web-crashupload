@@ -11,7 +11,9 @@ import os.path
 initialize_settings(__name__, __file__)
 
 SITE_ID = 1
+
 INSTALLED_APPS.append('django.contrib.admin')
+MIDDLEWARE_CLASSES.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 
 DATABASES = {
     'default': {
@@ -20,11 +22,11 @@ DATABASES = {
     }
 }
 
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = '(l*vxapxd##_58l*-i@9g6%ao3xq53u6rs^sqf87*5q*9woswk'
+
 # Disable the host verification in the web application. This test must be
 # done in the web server itself.
 ALLOWED_HOSTS = ['*']
-
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = '(l*vxapxd##_58l*-i@9g6%ao3xq53u6rs^sqf87*5q*9woswk'
 
 
