@@ -2,13 +2,17 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.contrib import admin
 
+from .views import CrashDumpListView, CrashDumpDetails, CrashDumpReport
+
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    url(r'^$', 'arsoft.web.crashupload.views.home', name='home'),
+    url(r'^$', CrashDumpListView.as_view(), name='home'),
+    url(r'^view/(?P<pk>\d+)$', CrashDumpDetails.as_view(), name='crash_details'),
+    url(r'^report/(?P<pk>\d+)/(\w+)$', CrashDumpReport.as_view(), name='crash_report'),
     url(r'^submit$', 'arsoft.web.crashupload.views.submit', name='submit'),
 #    url(r'^%s$' % settings.BASE_URL, 'arsoft.web.crashupload.views.home', name='home'),
 #    url(r'^%s/submit$' % settings.BASE_URL, 'arsoft.web.crashupload.views.submit', name='submit'),

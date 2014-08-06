@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+{% load static_url %}
+<link rel="stylesheet" type="text/css" href="{% static_url "main.css" %}" />
+<title>{{ title }}</title>
+</head>
+<body>
+<h1 class="title">Crash {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}</h1>
+<table>
+<tr><td>Id</td><td>{{ object.crashid }}</td></tr>
+<tr><td>Timestamp</td><td>{{ object.timestamp|date:"Y-m-d H:i:s" }}</td></tr>
+<tr><td>Application name</td><td>{{ object.applicationName }}</td></tr>
+<tr><td>Application file</td><td>{{ object.applicationFile }}</td></tr>
+<tr><td>Client FQDN</td><td>{{ object.clientHostName }}</td></tr>
+<tr><td>Client username</td><td>{{ object.clientUserName }}</td></tr>
+<tr><td>Product name</td><td>{{ object.productName}}</td></tr>
+<tr><td>Product version</td><td>{{ object.productVersion }}</td></tr>
+<tr><td>Product target version</td><td>{{ object.productTargetVersion }}</td></tr>
+<tr><td>Build type</td><td>{{ object.buildType }}</td></tr>
+<tr><td>Build postfix</td><td>{{ object.buildPostfix }}</td></tr>
+<tr><td>Machine type</td><td>{{ object.machineType }}</td></tr>
+
+<tr><td>System name</td><td>{{ object.systemName }}</td></tr>
+<tr><td>OS version</td><td>{{ object.osVersion }}</td></tr>
+<tr><td>OS release</td><td>{{ object.osRelease }}</td></tr>
+<tr><td>OS machine</td><td>{{ object.osMachine }}</td></tr>
+
+<tr><td>Minidump</td><td>
+{% if object.minidumpFile %}
+<a href="{% url "crash_report" object.id "minidump" %}">Download</a>
+{% else %}
+N/A
+{% endif %}
+</td></tr>
+<tr><td>Minidump report</td><td>
+{% if object.minidumpReportFile %}
+<a href="{% url "crash_report" object.id "minidumpReport" %}">Show</a>
+{% else %}
+N/A
+{% endif %}
+</td></tr>
+<tr><td>Coredump</td><td>
+{% if object.coredumpFile %}
+<a href="{% url "crash_report" object.id "coredump" %}">Download</a>
+{% else %}
+N/A
+{% endif %}
+</td></tr>
+<tr><td>Coredump report</td><td>
+{% if object.coredumpReportFile %}
+<a href="{% url "crash_report" object.id "coredumpReport" %}">Show</a>
+{% else %}
+N/A
+{% endif %}
+</td></tr>
+
+</table>
+<a href="{% url "home" %}">Back</a>
+</body>
+</html>

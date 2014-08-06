@@ -5,6 +5,8 @@ from django.core.files.base import ContentFile
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.list import ListView
+from django.views.generic.edit import UpdateView
 from django import forms
 from .forms import UploadFileForm
 from django.conf import settings
@@ -12,11 +14,25 @@ import os.path
 import logging
 from .models import CrashDumpModel
 
+
+
 logger = logging.getLogger('arsoft.web.crashupload')
 
 class CrashDumpModelViewForm(forms.ModelForm):
     class Meta:
         model = CrashDumpModel
+
+class CrashDumpListView(ListView):
+    model = CrashDumpModel
+    template_name = 'crashdumpmodel_list.html'
+
+class CrashDumpDetails(UpdateView):
+    model = CrashDumpModel
+    template_name = 'crashdumpmodel_update.html'
+
+class CrashDumpReport(UpdateView):
+    model = CrashDumpModel
+    template_name = 'crashdumpmodel_report.html'
 
 def home(request):
     title = 'Upload crash dump'
@@ -128,7 +144,12 @@ def submit(request):
         if result:
             db_entry.timestamp = timestamp
             db_entry.applicationFile = applicationfile
-            db_entry.applicationName = os.path.basename(applicationfile)
+
+            appbase = os.path.basename(applicationfile)
+            (appbase, ext) = os.path.splitext(appbase)
+            if buildpostfix and appbase.endswith(buildpostfix):
+                appbase = appbase[:-len(buildpostfix)]
+            db_entry.applicationName = appbase
 
             db_entry.productName = productname
             db_entry.productVersion = productversion
@@ -146,13 +167,14 @@ def submit(request):
             db_entry.osMachine = osmachine
             db_entry.save()
 
-
         if is_terra3d_crashuploader:
             if result:
                 body = "Upload of crash %s (%s, %s) from %s successful" % (crashid, applicationfile, timestamp, remote_addr)
+                status_code = 200
             else:
                 body = "Upload of crash %s (%s, %s) from %s failed" % (crashid, applicationfile, timestamp, remote_addr)
-            return HttpResponse(body, content_type="text/plain")
+                status_code = 500
+            return HttpResponse(body, status=status_code, content_type="text/plain")
         else:
             # Always return an HttpResponseRedirect after successfully dealing
             # with POST data. This prevents data from being posted twice if a

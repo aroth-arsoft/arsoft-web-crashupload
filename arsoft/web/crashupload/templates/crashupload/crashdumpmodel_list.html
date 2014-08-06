@@ -1,0 +1,13 @@
+<h1>Crashes</h1>
+<table>
+{% for object in object_list %}
+<tr>
+<td><a href="{% url "crash_details" object.id %}">{{ object.crashid }}</a></td>
+<td>{{ object.timestamp|date:"Y-m-d H:i:s" }}</td>
+<td>{{ object.applicationName }}</td>
+</tr>
+{% empty %}
+    <li>No crashes uploaded yet.</li>
+{% endfor %}
+</table>
+

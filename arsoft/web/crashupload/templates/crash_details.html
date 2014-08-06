@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+{% load static_url %}
+<link rel="stylesheet" type="text/css" href="{% static_url "main.css" %}" />
+<title>{{ title }}</title>
+</head>
+<body>
+<h1 class="title">{{ object.crashid }}</h1>
+<table>
+<tr><td>Id</td><td>{{ object.crashid }}</td></tr>
+</table>
+</body>
+</html>

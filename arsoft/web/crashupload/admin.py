@@ -7,7 +7,7 @@ class CrashDumpModelForm(forms.ModelForm):
         model = CrashDumpModel
 
 class CrashDumpModelAdmin(admin.ModelAdmin):
-    list_display = ('crashid', 'applicationName', 'clientHostName', 'clientUserName', 'productName', 'productVersion')
+    list_display = ('crashid', 'timestamp', 'applicationName', 'clientHostName', 'clientUserName', 'productName', 'productVersion')
     fields = ['crashid',
             'applicationFile', 'applicationName',
             'clientHostName', 'clientUserName',
