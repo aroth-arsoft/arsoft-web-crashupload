@@ -13,6 +13,10 @@ setup(name='arsoft-web-crashupload',
 		scripts=[],
 		data_files=[
             ('/etc/arsoft/web/crashupload/static', ['arsoft/web/crashupload/static/main.css']),
-            ('/etc/arsoft/web/crashupload/templates', ['arsoft/web/crashupload/templates/home.html']),
+            ('/etc/arsoft/web/crashupload/templates', [
+                'arsoft/web/crashupload/templates/crashdumpmodel_list.html',
+                'arsoft/web/crashupload/templates/crashdumpmodel_report.html',
+                'arsoft/web/crashupload/templates/crashdumpmodel_detail.html'
+                ]),
             ]
 		)
