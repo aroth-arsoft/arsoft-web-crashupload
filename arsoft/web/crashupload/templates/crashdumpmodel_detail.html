@@ -11,7 +11,9 @@
 <table>
 <tr><td>Id</td><td>{{ object.crashid }}</td></tr>
 <tr><td>Timestamp</td><td>{{ object.timestamp|date:"Y-m-d H:i:s" }}</td></tr>
-<tr><td>Application name</td><td>{{ object.applicationName }}</td></tr>
+<tr><td>Application name</td>
+<td><a href="{% url "list_filter_app" object.applicationName %}">{{ object.applicationName }}</a></td>
+</tr>
 <tr><td>Application file</td><td>{{ object.applicationFile }}</td></tr>
 <tr><td>Client FQDN</td><td>{{ object.clientHostName }}</td></tr>
 <tr><td>Client username</td><td>{{ object.clientUserName }}</td></tr>
@@ -29,34 +31,34 @@
 
 <tr><td>Minidump</td><td>
 {% if object.minidumpFile %}
-<a href="{% url "crash_report" object.id "minidump" %}">Download</a>
+<a href="{% url "crash_report" object.id "minidump" "raw" %}">Download</a>
 {% else %}
 N/A
 {% endif %}
 </td></tr>
 <tr><td>Minidump report</td><td>
 {% if object.minidumpReportFile %}
-<a href="{% url "crash_report" object.id "minidumpReport" %}">Show</a>
+<a href="{% url "crash_report" object.id "minidumpReport" "text" %}">Show</a>
 {% else %}
 N/A
 {% endif %}
 </td></tr>
 <tr><td>Coredump</td><td>
 {% if object.coredumpFile %}
-<a href="{% url "crash_report" object.id "coredump" %}">Download</a>
+<a href="{% url "crash_report" object.id "coredump" "raw" %}">Download</a>
 {% else %}
 N/A
 {% endif %}
 </td></tr>
 <tr><td>Coredump report</td><td>
 {% if object.coredumpReportFile %}
-<a href="{% url "crash_report" object.id "coredumpReport" %}">Show</a>
+<a href="{% url "crash_report" object.id "coredumpReport" "text" %}">Show</a>
 {% else %}
 N/A
 {% endif %}
 </td></tr>
 
 </table>
-<a href="{% url "home" %}">Back</a>
+<a href="{% url "home" %}">Back to list</a>
 </body>
 </html>

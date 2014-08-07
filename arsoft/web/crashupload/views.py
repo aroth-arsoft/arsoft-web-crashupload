@@ -7,10 +7,12 @@ from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
+from django.views.generic.detail import DetailView
 from django import forms
 from .forms import UploadFileForm
 from django.conf import settings
 import os.path
+from StringIO import StringIO
 import logging
 from .models import CrashDumpModel
 
@@ -25,14 +27,84 @@ class CrashDumpModelViewForm(forms.ModelForm):
 class CrashDumpListView(ListView):
     model = CrashDumpModel
     template_name = 'crashdumpmodel_list.html'
+    application = None
 
-class CrashDumpDetails(UpdateView):
+    def dispatch(self, request, *args, **kwargs):
+        print('dispatch')
+        if 'application' in kwargs:
+            self.application = kwargs['application']
+        context = super(CrashDumpListView, self).dispatch(request, *args, **kwargs)
+        return context
+
+    def get_context_data(self, **kwargs):
+        context = super(CrashDumpListView, self).get_context_data(**kwargs)
+        if 'application' in self.kwargs:
+            context['application'] = self.kwargs['application']
+        return context
+
+    def get_queryset(self):
+        if self.application:
+            return self.model.objects.filter(applicationName=self.application)
+        else:
+            return super(CrashDumpListView, self).get_queryset()
+
+class CrashDumpDetails(DetailView):
     model = CrashDumpModel
-    template_name = 'crashdumpmodel_update.html'
+    template_name = 'crashdumpmodel_detail.html'
 
-class CrashDumpReport(UpdateView):
+class CrashDumpReport(DetailView):
     model = CrashDumpModel
     template_name = 'crashdumpmodel_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(CrashDumpReport, self).get_context_data(**kwargs)
+        if 'report_type' in self.kwargs:
+            context['report_type'] = self.kwargs['report_type']
+        if 'flag' in self.kwargs:
+            context['flag'] = self.kwargs['flag']
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        filename = None
+        if context['report_type'] == 'minidumpReport':
+            filename = self.object.minidumpReportFile
+        elif context['report_type'] == 'minidump':
+            filename = self.object.minidumpFile
+        elif context['report_type'] == 'coredumpReport':
+            filename = self.object.coredumpReportFile
+        elif context['report_type'] == 'coredump':
+            filename = self.object.coredumpFile
+
+        if context['flag'] == 'raw':
+            if filename is None:
+                response = HttpResponse('File not found', status=404, content_type="text/plain")
+            else:
+                item_path = None
+                item_name = os.path.basename(filename)
+                if default_storage.exists(filename):
+                    item_path = default_storage.path(filename)
+
+                if item_path:
+                    body = StringIO(file(item_path, "rb").read())
+                    response = HttpResponse(body, mimetype='application/force-download')
+                    response['Content-Disposition'] = 'attachment; filename=%s' % item_name
+                else:
+                    response = HttpResponse('File not found', status=404, content_type="text/plain")
+            return response
+        elif context['flag'] == 'text':
+            if filename is None:
+                return HttpResponse('File not found', status=404, content_type="text/plain")
+            else:
+                item_path = None
+                item_name = os.path.basename(filename)
+                if default_storage.exists(filename):
+                    item_path = default_storage.path(filename)
+
+                if item_path:
+                    context['content'] = file(item_path, "rb").read()
+            return super(CrashDumpReport, self).render_to_response(context, **response_kwargs)
+        else:
+            return super(CrashDumpReport, self).render_to_response(context, **response_kwargs)
 
 def home(request):
     title = 'Upload crash dump'

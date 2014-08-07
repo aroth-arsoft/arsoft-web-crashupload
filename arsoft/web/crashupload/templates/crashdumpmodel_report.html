@@ -7,8 +7,24 @@
 <title>{{ title }}</title>
 </head>
 <body>
-<h1 class="title">Report {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}</h1>
+<h1 class="title">
+{% if report_type == 'minidumpReport' %}
+Minidump-Report {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}
+{% elif report_type == 'minidump' %}
+Download minidump {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}
+{% elif report_type == 'coredumpReport' %}
+Coredump-Report {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}
+{% elif report_type == 'coredump' %}
+Download coredump {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}
+{% else %}
+Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}
+{% endif %}
+</h1>
 
-<a href="{% url "crash_details" object.id %}">Back to {{ object.crashid }}</a>
+{% if flag == 'text' %}
+<pre>{{ content }}</pre>
+{% endif %}
+
+<p><a href="{% url "crash_details" object.id %}">Back to {{ object.crashid }}</a>&nbsp;<a href="{% url "home" %}">Back to list</a></p>
 </body>
 </html>

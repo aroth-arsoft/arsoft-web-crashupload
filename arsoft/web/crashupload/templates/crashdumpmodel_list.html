@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+{% load static_url %}
+<link rel="stylesheet" type="text/css" href="{% static_url "main.css" %}" />
+</head>
+<body>
+{% if application %}
+<h1>Crashes of application {{ application }}</h1>
+{% else %}
+<h1>Crashes</h1>
+{% endif %}
+<table>
+<tr>
+<th>Id</th>
+<th>Timestamp</th>
+<th>Application name</th>
+<th>Client FQDN</th>
+<th>Client username</th>
+<th>Product version</th>
+<th>Machine/OS</th>
+<th>Build type</th>
+</tr>
+{% for object in object_list %}
+<tr>
+<td><a href="{% url "crash_details" object.id %}">{{ object.crashid }}</a></td>
+<td>{{ object.timestamp|date:"Y-m-d H:i:s" }}</td>
+<td><a href="{% url "list_filter_app" object.applicationName %}">{{ object.applicationName }}</a></td>
+<td>{{ object.clientHostName }}</td>
+<td>{{ object.clientUserName }}</td>
+<td>{{ object.productVersion }}</td>
+<td>{{ object.machineType }}/{{ object.systemName }}</td>
+<td>{{ object.buildType }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="8">No crashes uploaded yet.</td></tr>
+{% endfor %}
+</table>
+{% if application %}
+<a href="{% url "home" %}">List all crashes</a>
+{% endif %}
+</body>
+</html>

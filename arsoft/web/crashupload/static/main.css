@@ -2,6 +2,9 @@ body {
     background-color:#FEFEF2;
     font-family:helvetica, arial, verdana, sans-serif;
 }
+tr,th,td {
+    text-align:left;
+}
 .errormessage { 
     font-weight:bold;
     text-align:center;
