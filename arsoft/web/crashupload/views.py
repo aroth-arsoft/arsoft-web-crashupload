@@ -15,8 +15,7 @@ import os.path
 from StringIO import StringIO
 import logging
 from .models import CrashDumpModel
-
-
+from .xmlreport import XMLReport
 
 logger = logging.getLogger('arsoft.web.crashupload')
 
@@ -66,12 +65,20 @@ class CrashDumpReport(DetailView):
 
     def render_to_response(self, context, **response_kwargs):
         filename = None
-        if context['report_type'] == 'minidumpReport':
-            filename = self.object.minidumpReportFile
+        if context['report_type'] == 'minidumpTextReport':
+            filename = self.object.minidumpReportTextFile
+        elif context['report_type'] == 'minidumpXMLReport':
+            filename = self.object.minidumpReportXMLFile
+        elif context['report_type'] == 'minidumpHTMLReport':
+            filename = self.object.minidumpReportHTMLFile
         elif context['report_type'] == 'minidump':
             filename = self.object.minidumpFile
-        elif context['report_type'] == 'coredumpReport':
-            filename = self.object.coredumpReportFile
+        elif context['report_type'] == 'coredumpTextReport':
+            filename = self.object.coredumpReportTextFile
+        elif context['report_type'] == 'coredumpXMLReport':
+            filename = self.object.coredumpReportXMLFile
+        elif context['report_type'] == 'coredumpHTMLReport':
+            filename = self.object.coredumpReportHTMLFile
         elif context['report_type'] == 'coredump':
             filename = self.object.coredumpFile
 
@@ -102,6 +109,19 @@ class CrashDumpReport(DetailView):
 
                 if item_path:
                     context['content'] = file(item_path, "rb").read()
+            return super(CrashDumpReport, self).render_to_response(context, **response_kwargs)
+        elif context['flag'] == 'html':
+            if filename is None:
+                return HttpResponse('File not found', status=404, content_type="text/plain")
+            else:
+                item_path = None
+                item_name = os.path.basename(filename)
+                if default_storage.exists(filename):
+                    item_path = default_storage.path(filename)
+
+                if item_path:
+                    xmlreport = XMLReport(item_path)
+                    context['content'] = xmlreport.to_html()
             return super(CrashDumpReport, self).render_to_response(context, **response_kwargs)
         else:
             return super(CrashDumpReport, self).render_to_response(context, **response_kwargs)
@@ -141,10 +161,10 @@ def home(request):
         })
     return HttpResponse(t.render(c))
 
-def _store_dump_file(file):
+def _store_dump_file(crashid, file):
     ret = False
     if file:
-        item_name = 'dumpdata/' + file.name
+        item_name = 'dumpdata/%s/%s' % (crashid, file.name)
         if default_storage.exists(item_name):
             item_path = default_storage.path(item_name)
         else:
@@ -193,23 +213,40 @@ def submit(request):
         osmachine = request.POST.get('osmachine')
 
         minidumpfile = request.FILES.get('minidump')
-        minidumpreportfile = request.FILES.get('minidumpreport')
+        minidumpreportfiletext = request.FILES.get('minidumpreport')
+        minidumpreportfilexml = request.FILES.get('minidumpreportxml')
+        minidumpreportfilehtml = request.FILES.get('minidumpreporthtml')
+
         coredumpfile = request.FILES.get('coredump')
-        coredumpreportfile = request.FILES.get('coredumpreport')
+        coredumpreportfiletext = request.FILES.get('coredumpreport')
+        coredumpreportfilexml = request.FILES.get('coredumpreportxml')
+        coredumpreportfilehtml = request.FILES.get('coredumpreporthtml')
 
         db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid)
 
         result = False
-        ok, db_entry.minidumpFile = _store_dump_file(minidumpfile)
+        ok, db_entry.minidumpFile = _store_dump_file(crashid, minidumpfile)
         if ok:
             result = True
-        ok, db_entry.minidumpReportFile = _store_dump_file(minidumpreportfile)
+        ok, db_entry.minidumpReportTextFile = _store_dump_file(crashid, minidumpreportfiletext)
         if ok:
             result = True
-        ok, db_entry.coredumpFile = _store_dump_file(coredumpfile)
+        ok, db_entry.minidumpReportXMLFile = _store_dump_file(crashid, minidumpreportfilexml)
         if ok:
             result = True
-        ok, db_entry.coredumpReportFile = _store_dump_file(coredumpreportfile)
+        ok, db_entry.minidumpReportHTMLFile = _store_dump_file(crashid, minidumpreportfilehtml)
+        if ok:
+            result = True
+        ok, db_entry.coredumpFile = _store_dump_file(crashid, coredumpfile)
+        if ok:
+            result = True
+        ok, db_entry.coredumpReportTextFile = _store_dump_file(crashid, coredumpreportfiletext)
+        if ok:
+            result = True
+        ok, db_entry.coredumpReportXMLFile = _store_dump_file(crashid, coredumpreportfilexml)
+        if ok:
+            result = True
+        ok, db_entry.coredumpReportHTMLFile = _store_dump_file(crashid, coredumpreportfilehtml)
         if ok:
             result = True
 

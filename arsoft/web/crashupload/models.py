@@ -60,9 +60,13 @@ class CrashDumpModel(models.Model):
     osMachine = models.CharField('OS machine', max_length=24, help_text='machine of operating system')
 
     minidumpFile = models.CharField('Minidump file', max_length=256, null=True, help_text='relative path to the Minidump file')
-    minidumpReportFile = models.CharField('Minidump report file', null=True, max_length=256, help_text='relative path to the Minidump report file')
+    minidumpReportTextFile = models.CharField('Minidump text report file', null=True, max_length=256, help_text='relative path to the Minidump text report file')
+    minidumpReportXMLFile = models.CharField('Minidump XML report file', null=True, max_length=256, help_text='relative path to the Minidump XML report file')
+    minidumpReportHTMLFile = models.CharField('Minidump HTML report file', null=True, max_length=256, help_text='relative path to the Minidump HTML report file')
     coredumpFile = models.CharField('Coredump file', max_length=256, null=True, help_text='relative path to the Coredump file')
-    coredumpReportFile = models.CharField('Coredump report file', null=True, max_length=256, help_text='relative path to the Coredump report file')
+    coredumpReportTextFile = models.CharField('Coredump text report file', null=True, max_length=256, help_text='relative path to the Coredump text report file')
+    coredumpReportXMLFile = models.CharField('Coredump XML report file', null=True, max_length=256, help_text='relative path to the Coredump XML report file')
+    coredumpReportHTMLFile = models.CharField('Coredump HTML report file', null=True, max_length=256, help_text='relative path to the Coredump HTML report file')
 
     class Meta:
         verbose_name = "Crash"
@@ -70,3 +74,22 @@ class CrashDumpModel(models.Model):
 
     def __unicode__(self):
         return '%s (%s at %s)' % (self.id, self.applicationName, self.timestamp)
+
+class CrashDumpAttachmentModel(models.Model):
+    crash = models.ForeignKey(CrashDumpModel)
+    name = models.CharField('Name', max_length=256, help_text='name of the attachment')
+    description = models.TextField('Description', max_length=8192, help_text='description of the attachment')
+    storageFile = models.CharField('Storage file', max_length=256, help_text='path to the stored attachment file')
+
+    class Meta:
+        verbose_name = "Crash attachment"
+        verbose_name_plural = "Crash attachments"
+
+class CrashDumpLinkModel(models.Model):
+    crash = models.ForeignKey(CrashDumpModel)
+    name = models.CharField('Name', max_length=256, null=True, help_text='name of the link')
+    url = models.TextField('URL', max_length=2048, help_text='URL')
+
+    class Meta:
+        verbose_name = "Crash link"
+        verbose_name_plural = "Crash links"
