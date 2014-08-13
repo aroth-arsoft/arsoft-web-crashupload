@@ -14,7 +14,7 @@ class XMLReport(object):
                           'symbol_directories', 'image_directories', 'environment']
 
 
-    _system_info_fields = ['platform_type', 'cpu_type', 'cpu_name', 'cpu_level', 'cpu_revision', 'cpu_vendor',
+    _system_info_fields = ['platform_type', 'cpu_type', 'cpu_64_bit', 'cpu_name', 'cpu_level', 'cpu_revision', 'cpu_vendor',
                             'number_of_cpus', 'os_version', 'os_version_info',
                             'distribution_id', 'distribution_release', 'distribution_codename', 'distribution_description' ]
     _file_info_fields = ['log']
@@ -317,6 +317,12 @@ class XMLReport(object):
 
                 ret.append(m)
         return ret
+
+    @property
+    def fields(self):
+        return ['crash_info', 'system_info', 'file_info', 'exception',
+                'assertion', 'modules', 'threads', 'memory_regions',
+                'memory_blocks', 'handles', 'stackdumps' ]
 
     def to_html(self):
         return str(self.crash_info)

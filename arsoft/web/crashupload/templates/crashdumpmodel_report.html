@@ -23,6 +23,97 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 
 {% if flag == 'text' %}
 <pre>{{ content }}</pre>
+{% elif flag == 'html' %}
+
+
+<table class='crash_info'>
+<h2>Crash dump information</h2>
+<tr><td>Id</td><td>{{ crash_info.uuid }}</td></tr>
+<tr><td>Crash timestamp</td><td>{{ crash_info.crash_timestamp|date:"Y-m-d H:i:s" }}</td></tr>
+<tr><td>Report timestamp</td><td>{{ crash_info.report_time|date:"Y-m-d H:i:s" }}</td></tr>
+<tr><td>Application name</td>
+<!--
+<td><a href="{ % url "list_filter_app" crash_info.application %}">{{ crash_info.application }}</a></td>
+-->
+<td>{{ crash_info.application }}</td>
+</tr>
+<tr><td>Command line</td><td>{{ crash_info.command_line }}</td></tr>
+<tr><td>Report FQDN</td><td>{{ crash_info.report_fqdn }}</td></tr>
+<tr><td>Report username</td><td>{{ crash_info.report_username }}</td></tr>
+<tr><td>Symbol directories</td><td>{{ crash_info.symbol_directories }}</td></tr>
+<tr><td>Image directories</td><td>{{ crash_info.image_directories }}</td></tr>
+<tr><td>Environment</td><td>{{ crash_info.environment }}</td></tr>
+</table>
+
+<table class='system_info'>
+<h2>System information</h2>
+<tr><td>Platform type</td><td>{{ system_info.platform_type }}</td></tr>
+<tr><td>CPU type</td><td>{{ system_info.cpu_type }}</td></tr>
+<tr><td>CPU 64-bit</td><td>{{ system_info.cpu_64_bit }}</td></tr>
+<tr><td>CPU name</td><td>{{ system_info.cpu_name }}</td></tr>
+<tr><td>CPU level</td><td>0x{{ system_info.cpu_level|stringformat:"x" }}</td></tr>
+<tr><td>CPU revision</td><td>0x{{ system_info.cpu_revision|stringformat:"x" }}</td></tr>
+<tr><td>CPU vendor</td><td>{{ system_info.cpu_vendor }}</td></tr>
+<tr><td>Number of CPUs</td><td>{{ system_info.number_of_cpus }}</td></tr>
+<tr><td>OS version</td><td>{{ system_info.os_version }}</td></tr>
+<tr><td>OS version info</td><td>{{ system_info.os_version_info }}</td></tr>
+<tr><td>Distribution id</td><td>{{ system_info.distribution_id }}</td></tr>
+<tr><td>Distribution release</td><td>{{ system_info.distribution_release }}</td></tr>
+<tr><td>Distribution codename</td><td>{{ system_info.distribution_codename }}</td></tr>
+<tr><td>Distribution description</td><td>{{ system_info.distribution_description }}</td></tr>
+</table>
+
+{% if exception %}
+<h2>Exception</h2>
+<table class='exception'>
+<tr><td>Thread id</td><td>{{ exception.thread }}</td></tr>
+<tr><td>Code</td><td>{{ exception.code }}</td></tr>
+<tr><td>Name</td><td>{{ exception.name }}</td></tr>
+<tr><td>Info</td><td>{{ exception.info }}</td></tr>
+<tr><td>Address</td><td>0x{{ exception.address|stringformat:"x" }}</td></tr>
+<tr><td>Flags</td><td>0x{{ exception.flags|stringformat:"x" }}</td></tr>
+</table>
+{% endif %}
+
+{% if assertion %}
+<h2>Assertion</h2>
+<table class='assertion'>
+<tr><td>Expression</td><td>{{ assertion.expression }}</td></tr>
+<tr><td>Function</td><td>{{ assertion.function }}</td></tr>
+<tr><td>Source</td><td>{{ assertion.source }}</td></tr>
+<tr><td>Line</td><td>{{ assertion.line }}</td></tr>
+</table>
+{% endif %}
+
+<h2>Modules</h2>
+<table class='modules'>
+<tr>
+<th>Base</th>
+<th>Size</th>
+<th>Timestamp</th>
+<th>Product version</th>
+<th>File version</th>
+<th>Flags</th>
+<th>Name</th>
+<th>Symbol file</th>
+</tr>
+{% for module in modules %}
+<tr>
+<td>{{ module.base }}</td>
+<td>{{ module.size }} </td>
+<td>{{ module.timestamp|date:"Y-m-d H:i:s" }}</td>
+<td>{{ module.product_version }} </td>
+<td>{{ module.file_version }}</td>
+<td>{{ module.flags }}</td>
+<td>{{ module.name }}</td>
+<td>{{ module.symbol_file }} </td>
+</tr>
+{% endfor %}
+</table>
+
+<pre>{{ content }}
+{{ modules }}
+</pre>
 {% endif %}
 
 <p><a href="{% url "crash_details" object.id %}">Back to {{ object.crashid }}</a>&nbsp;<a href="{% url "home" %}">Back to list</a></p>

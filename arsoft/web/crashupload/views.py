@@ -121,7 +121,9 @@ class CrashDumpReport(DetailView):
 
                 if item_path:
                     xmlreport = XMLReport(item_path)
-                    context['content'] = xmlreport.to_html()
+                    for f in xmlreport.fields:
+                        context[f] = getattr(xmlreport, f)
+                    context['content'] = str(xmlreport.fields)
             return super(CrashDumpReport, self).render_to_response(context, **response_kwargs)
         else:
             return super(CrashDumpReport, self).render_to_response(context, **response_kwargs)
