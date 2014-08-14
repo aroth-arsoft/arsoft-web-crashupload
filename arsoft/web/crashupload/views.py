@@ -16,6 +16,7 @@ from StringIO import StringIO
 import logging
 from .models import CrashDumpModel
 from .xmlreport import XMLReport
+from uuid import UUID
 
 logger = logging.getLogger('arsoft.web.crashupload')
 
@@ -197,60 +198,66 @@ def submit(request):
             is_terra3d_crashuploader = False
         remote_addr = _get_remote_addr(request)
 
-        applicationfile = request.POST.get('applicationfile')
-        crashid = request.POST.get('id')
-        timestamp = request.POST.get('timestamp')
+        id_str = request.POST.get('id')
+        if id_str and id_str != '00000000-0000-0000-0000-000000000000' and id_str != '{00000000-0000-0000-0000-000000000000}':
+            crashid = UUID(id_str)
+            result = True
+        else:
+            result = False
+        if result:
+            applicationfile = request.POST.get('applicationfile')
+            timestamp = request.POST.get('timestamp')
 
-        productname = request.POST.get('productname')
-        productversion = request.POST.get('productversion')
-        producttargetversion = request.POST.get('producttargetversion')
-        fqdn = request.POST.get('fqdn')
-        username = request.POST.get('username')
-        buildtype = request.POST.get('buildtype')
-        buildpostfix = request.POST.get('buildpostfix')
-        machinetype = request.POST.get('machinetype')
-        systemname = request.POST.get('systemname')
-        osversion = request.POST.get('osversion')
-        osrelease = request.POST.get('osrelease')
-        osmachine = request.POST.get('osmachine')
+            productname = request.POST.get('productname')
+            productversion = request.POST.get('productversion')
+            producttargetversion = request.POST.get('producttargetversion')
+            fqdn = request.POST.get('fqdn')
+            username = request.POST.get('username')
+            buildtype = request.POST.get('buildtype')
+            buildpostfix = request.POST.get('buildpostfix')
+            machinetype = request.POST.get('machinetype')
+            systemname = request.POST.get('systemname')
+            osversion = request.POST.get('osversion')
+            osrelease = request.POST.get('osrelease')
+            osmachine = request.POST.get('osmachine')
 
-        minidumpfile = request.FILES.get('minidump')
-        minidumpreportfiletext = request.FILES.get('minidumpreport')
-        minidumpreportfilexml = request.FILES.get('minidumpreportxml')
-        minidumpreportfilehtml = request.FILES.get('minidumpreporthtml')
+            minidumpfile = request.FILES.get('minidump')
+            minidumpreportfiletext = request.FILES.get('minidumpreport')
+            minidumpreportfilexml = request.FILES.get('minidumpreportxml')
+            minidumpreportfilehtml = request.FILES.get('minidumpreporthtml')
 
-        coredumpfile = request.FILES.get('coredump')
-        coredumpreportfiletext = request.FILES.get('coredumpreport')
-        coredumpreportfilexml = request.FILES.get('coredumpreportxml')
-        coredumpreportfilehtml = request.FILES.get('coredumpreporthtml')
+            coredumpfile = request.FILES.get('coredump')
+            coredumpreportfiletext = request.FILES.get('coredumpreport')
+            coredumpreportfilexml = request.FILES.get('coredumpreportxml')
+            coredumpreportfilehtml = request.FILES.get('coredumpreporthtml')
 
-        db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid)
+            db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid)
 
-        result = False
-        ok, db_entry.minidumpFile = _store_dump_file(crashid, minidumpfile)
-        if ok:
-            result = True
-        ok, db_entry.minidumpReportTextFile = _store_dump_file(crashid, minidumpreportfiletext)
-        if ok:
-            result = True
-        ok, db_entry.minidumpReportXMLFile = _store_dump_file(crashid, minidumpreportfilexml)
-        if ok:
-            result = True
-        ok, db_entry.minidumpReportHTMLFile = _store_dump_file(crashid, minidumpreportfilehtml)
-        if ok:
-            result = True
-        ok, db_entry.coredumpFile = _store_dump_file(crashid, coredumpfile)
-        if ok:
-            result = True
-        ok, db_entry.coredumpReportTextFile = _store_dump_file(crashid, coredumpreportfiletext)
-        if ok:
-            result = True
-        ok, db_entry.coredumpReportXMLFile = _store_dump_file(crashid, coredumpreportfilexml)
-        if ok:
-            result = True
-        ok, db_entry.coredumpReportHTMLFile = _store_dump_file(crashid, coredumpreportfilehtml)
-        if ok:
-            result = True
+            result = False
+            ok, db_entry.minidumpFile = _store_dump_file(crashid, minidumpfile)
+            if ok:
+                result = True
+            ok, db_entry.minidumpReportTextFile = _store_dump_file(crashid, minidumpreportfiletext)
+            if ok:
+                result = True
+            ok, db_entry.minidumpReportXMLFile = _store_dump_file(crashid, minidumpreportfilexml)
+            if ok:
+                result = True
+            ok, db_entry.minidumpReportHTMLFile = _store_dump_file(crashid, minidumpreportfilehtml)
+            if ok:
+                result = True
+            ok, db_entry.coredumpFile = _store_dump_file(crashid, coredumpfile)
+            if ok:
+                result = True
+            ok, db_entry.coredumpReportTextFile = _store_dump_file(crashid, coredumpreportfiletext)
+            if ok:
+                result = True
+            ok, db_entry.coredumpReportXMLFile = _store_dump_file(crashid, coredumpreportfilexml)
+            if ok:
+                result = True
+            ok, db_entry.coredumpReportHTMLFile = _store_dump_file(crashid, coredumpreportfilehtml)
+            if ok:
+                result = True
 
         if result:
             db_entry.timestamp = timestamp

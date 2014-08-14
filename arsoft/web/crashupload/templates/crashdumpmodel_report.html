@@ -37,12 +37,15 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 -->
 <td>{{ crash_info.application }}</td>
 </tr>
-<tr><td>Command line</td><td>{{ crash_info.command_line }}</td></tr>
+<tr><td>Command line</td><td>{% for e in crash_info.command_line %}&quot;{{ e }}&quot;{% endfor %}</td></tr>
 <tr><td>Report FQDN</td><td>{{ crash_info.report_fqdn }}</td></tr>
 <tr><td>Report username</td><td>{{ crash_info.report_username }}</td></tr>
-<tr><td>Symbol directories</td><td>{{ crash_info.symbol_directories }}</td></tr>
-<tr><td>Image directories</td><td>{{ crash_info.image_directories }}</td></tr>
-<tr><td>Environment</td><td>{{ crash_info.environment }}</td></tr>
+<tr><td>Symbol directories</td><td><ul>{% for e in crash_info.symbol_directories %}<li>{{e}}</li>{% endfor %}</ul></td></tr>
+<tr><td>Image directories</td><td><ul>{% for e in crash_info.image_directories %}<li>{{e}}</li>{% endfor %}</ul></td></tr>
+<tr><td>Environment</td><td><ul>
+{% for k,v in crash_info.environment.items %}
+<li>{{k}}&nbsp;=&nbsp;{{v}}</li>
+{% endfor %}</ul></td></tr>
 </table>
 
 <table class='system_info'>
@@ -111,9 +114,32 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 {% endfor %}
 </table>
 
-<pre>{{ content }}
-{{ modules }}
-</pre>
+<h2>Threads</h2>
+<table class='threads'>
+<tr>
+<th>Id</th>
+<th>Name</th>
+<th>Memory</th>
+<th>Start address</th>
+<th>Create time</th>
+<th>Exit time</th>
+<th>Kernel time</th>
+<th>User time</th>
+</tr>
+{% for thread in threads %}
+<tr>
+<td>{{ thread.id }}{% if thread.exception %}*{% endif %}</td>
+<td>{{ thread.name }} </td>
+<td>{{ thread.memory }}</td>
+<td>{{ thread.start_addr }}</td>
+<td>{{ thread.create_time|date:"Y-m-d H:i:s" }}</td>
+<td>{{ thread.exit_time|date:"Y-m-d H:i:s" }}</td>
+<td>{{ thread.kernel_time }} </td>
+<td>{{ thread.user_time }}</td>
+</tr>
+{% endfor %}
+</table>
+
 {% endif %}
 
 <p><a href="{% url "crash_details" object.id %}">Back to {{ object.crashid }}</a>&nbsp;<a href="{% url "home" %}">Back to list</a></p>

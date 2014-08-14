@@ -29,4 +29,5 @@ SECRET_KEY = '(l*vxapxd##_58l*-i@9g6%ao3xq53u6rs^sqf87*5q*9woswk'
 # done in the web server itself.
 ALLOWED_HOSTS = ['*']
 
+MEDIA_ROOT = APP_DATA_DIR
 
