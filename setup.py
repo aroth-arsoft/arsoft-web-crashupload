@@ -18,5 +18,6 @@ setup(name='arsoft-web-crashupload',
                 'arsoft/web/crashupload/templates/crashdumpmodel_report.html',
                 'arsoft/web/crashupload/templates/crashdumpmodel_detail.html'
                 ]),
+            ('/usr/lib/arsoft-web-crashupload', ['manage.py']),
             ]
 		)

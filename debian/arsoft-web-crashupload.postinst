@@ -3,6 +3,12 @@ PKG=arsoft-web-crashupload
 
 case "$1" in
     configure|upgrade)
+        /usr/lib/$PKG/manage.py syncdb --noinput
+        #/usr/lib/$PKG/manage.py collectstatic -l --noinput
+        # make sure database is owned by www-data
+        chown www-data:www-data -R /var/lib/arsoft/web/crashupload
+        # an nobody can except www-data can access the database files
+        chmod 0750 /var/lib/arsoft/web/crashupload
         # make sure django log dir exists
         [ ! -d /var/log/django ] && mkdir /var/log/django
         # ... and create the log file if it does not exist
