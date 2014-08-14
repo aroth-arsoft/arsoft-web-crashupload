@@ -1,3 +1,10 @@
+arsoft-web-crashupload (1.1) trusty; urgency=medium
+
+  * improve report formating
+  * fixed database during installation
+
+ -- Andreas Roth <aroth@arsoft-online.com>  Thu, 14 Aug 2014 14:41:04 +0200
+
 arsoft-web-crashupload (1.0) trusty; urgency=low
 
   * initial release
