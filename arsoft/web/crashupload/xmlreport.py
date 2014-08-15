@@ -110,12 +110,12 @@ class XMLReport(object):
                 return False
             else:
                 return None
-        elif data_type == 'int':
+        elif data_type == 'int' or data_type == 'qlonglong':
             return int(value_str, 10)
-        elif data_type == 'uint':
+        elif data_type == 'uint' or data_type == 'qulonglong':
             return int(value_str, 16)
         else:
-            return value_str
+            return str(value_str)
 
     @staticmethod
     def _get_node_value(node, child, default_value=None):
@@ -126,16 +126,16 @@ class XMLReport(object):
             all_subitems = node.xpath(child + '/item/text()')
             ret = []
             for c in all_subitems:
-                ret.append(c)
+                ret.append(str(c))
         elif data_type == 'QVariantMap':
             all_subitems = node.xpath(child + '/item')
             ret = {}
             for item in all_subitems:
                 r = item.xpath('@key')
-                item_key = r[0] if r else None
+                item_key = str(r[0]) if r else None
 
                 r = item.xpath('@type')
-                item_data_type = r[0] if r else None
+                item_data_type = str(r[0]) if r else None
 
                 r = item.xpath('text()')
                 item_value = r[0] if r else None
@@ -151,7 +151,7 @@ class XMLReport(object):
                 if encoding_type == 'base64':
                     ret = base64.b64decode(r[0])
                 else:
-                    ret = r[0]
+                    ret = str(r[0])
             else:
                 ret = default_value
         else:
@@ -167,17 +167,30 @@ class XMLReport(object):
         r = node.xpath('@' + attr_name)
         attr_value = r[0] if r else None
 
+        ok = False
         ret = None
         if attr_value:
-            try:
-                ret = int(attr_value)
-            except ValueError:
+            if not ok:
+                if attr_value.startswith('0x'):
+                    try:
+                        ret = int(attr_value[2:], 16)
+                        ok = True
+                    except ValueError:
+                        pass
+            if not ok:
                 try:
-                    ret = bool(attr_value)
+                    ret = int(attr_value)
+                    ok = True
                 except ValueError:
                     pass
-            if ret is None:
-                ret = attr_value
+            if not ok:
+                try:
+                    ret = bool(attr_value)
+                    ok = True
+                except ValueError:
+                    pass
+            if not ok:
+                ret = str(attr_value)
         return ret
 
     @staticmethod
@@ -342,10 +355,12 @@ if __name__ == '__main__':
     for m in xmlreport.memory_regions:
         print(m)
     for m in xmlreport.stackdumps:
-        print(m.threadid)
+        print('thread %u %s exception' % (m.threadid, 'with' if m.exception else 'without'))
         for f in m.callstack:
             print(f)
-    for m in xmlreport.memory_blocks:
-        print(m)
+    #for m in xmlreport.memory_blocks:
+        #print(m)
 
 
+    for m in xmlreport.threads:
+        print(type(m.id))
