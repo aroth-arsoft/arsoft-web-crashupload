@@ -59,6 +59,8 @@ class CrashDumpModel(models.Model):
     osRelease = models.CharField('OS release', max_length=24, help_text='release of operating system')
     osMachine = models.CharField('OS machine', max_length=24, help_text='machine of operating system')
 
+    systemInfoData = models.TextField('System info', max_length=65536, null=True, help_text='system information')
+    gfxCapsFile = models.CharField('GfxCaps file', max_length=256, null=True, help_text='relative path to the gfxcaps file')
     minidumpFile = models.CharField('Minidump file', max_length=256, null=True, help_text='relative path to the Minidump file')
     minidumpReportTextFile = models.CharField('Minidump text report file', null=True, max_length=256, help_text='relative path to the Minidump text report file')
     minidumpReportXMLFile = models.CharField('Minidump XML report file', null=True, max_length=256, help_text='relative path to the Minidump XML report file')

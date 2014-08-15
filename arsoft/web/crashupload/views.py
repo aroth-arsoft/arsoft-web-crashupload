@@ -164,12 +164,18 @@ def home(request):
         })
     return HttpResponse(t.render(c))
 
-def _store_dump_file(crashid, file):
+def _store_dump_file(crashid, request, name):
     ret = False
+    file = request.FILES.get(name)
     if file:
+        force = bool(request.POST.get('force'))
         item_name = 'dumpdata/%s/%s' % (crashid, file.name)
         if default_storage.exists(item_name):
-            item_path = default_storage.path(item_name)
+            if force:
+                default_storage.delete(item_name)
+                item_path = default_storage.save(item_name, ContentFile(file.read()))
+            else:
+                item_path = default_storage.path(item_name)
         else:
             item_path = default_storage.save(item_name, ContentFile(file.read()))
         ret = True
@@ -206,6 +212,7 @@ def submit(request):
             result = False
         if result:
             applicationfile = request.POST.get('applicationfile')
+            force = request.POST.get('force')
             timestamp = request.POST.get('timestamp')
 
             productname = request.POST.get('productname')
@@ -220,42 +227,38 @@ def submit(request):
             osversion = request.POST.get('osversion')
             osrelease = request.POST.get('osrelease')
             osmachine = request.POST.get('osmachine')
-
-            minidumpfile = request.FILES.get('minidump')
-            minidumpreportfiletext = request.FILES.get('minidumpreport')
-            minidumpreportfilexml = request.FILES.get('minidumpreportxml')
-            minidumpreportfilehtml = request.FILES.get('minidumpreporthtml')
-
-            coredumpfile = request.FILES.get('coredump')
-            coredumpreportfiletext = request.FILES.get('coredumpreport')
-            coredumpreportfilexml = request.FILES.get('coredumpreportxml')
-            coredumpreportfilehtml = request.FILES.get('coredumpreporthtml')
+            sysinfo = request.POST.get('sysinfo')
 
             db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid)
+            if not created:
+                print('crash already exusts')
 
             result = False
-            ok, db_entry.minidumpFile = _store_dump_file(crashid, minidumpfile)
+            ok, db_entry.minidumpFile = _store_dump_file(crashid, request, 'minidump')
             if ok:
                 result = True
-            ok, db_entry.minidumpReportTextFile = _store_dump_file(crashid, minidumpreportfiletext)
+            ok, db_entry.minidumpReportTextFile = _store_dump_file(crashid, request, 'minidumpreport')
             if ok:
                 result = True
-            ok, db_entry.minidumpReportXMLFile = _store_dump_file(crashid, minidumpreportfilexml)
+            ok, db_entry.minidumpReportXMLFile = _store_dump_file(crashid, request, 'minidumpreportxml')
             if ok:
                 result = True
-            ok, db_entry.minidumpReportHTMLFile = _store_dump_file(crashid, minidumpreportfilehtml)
+            ok, db_entry.minidumpReportHTMLFile = _store_dump_file(crashid, request, 'minidumpreporthtml')
             if ok:
                 result = True
-            ok, db_entry.coredumpFile = _store_dump_file(crashid, coredumpfile)
+            ok, db_entry.coredumpFile = _store_dump_file(crashid, request, 'coredump')
             if ok:
                 result = True
-            ok, db_entry.coredumpReportTextFile = _store_dump_file(crashid, coredumpreportfiletext)
+            ok, db_entry.coredumpReportTextFile = _store_dump_file(crashid, request, 'coredumpreport')
             if ok:
                 result = True
-            ok, db_entry.coredumpReportXMLFile = _store_dump_file(crashid, coredumpreportfilexml)
+            ok, db_entry.coredumpReportXMLFile = _store_dump_file(crashid, request, 'coredumpreportxml')
             if ok:
                 result = True
-            ok, db_entry.coredumpReportHTMLFile = _store_dump_file(crashid, coredumpreportfilehtml)
+            ok, db_entry.coredumpReportHTMLFile = _store_dump_file(crashid, request, 'coredumpreporthtml')
+            if ok:
+                result = True
+            ok, db_entry.gfxCapsFile = _store_dump_file(crashid, request, 'gfxcaps')
             if ok:
                 result = True
 
@@ -283,6 +286,7 @@ def submit(request):
             db_entry.osVersion = osversion
             db_entry.osRelease = osrelease
             db_entry.osMachine = osmachine
+            db_entry.systemInfoData = sysinfo
             db_entry.save()
 
         if is_terra3d_crashuploader:

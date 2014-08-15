@@ -61,6 +61,12 @@ N/A
 N/A
 {% endif %}
 </td></tr>
+<tr><td>System info</td><td><pre>{{ object.systemInfoData }}</pre></td></tr>
+<tr><td>Gfx capabilities</td><td>
+{% if object.gfxCaps %}
+<a href="{% url "crash_report" object.id "gfxCaps" "raw" %}">Download</a>
+{% endif %}
+</td></tr>
 
 <tr><td>Attachments</td><td>
 </td></tr>
