@@ -2,11 +2,35 @@ body {
     background-color:#FEFEF2;
     font-family:helvetica, arial, verdana, sans-serif;
 }
-tr,th,td {
+th,td {
+    padding-left: 3pt;
+    padding-right: 3pt;
+    padding-top: 1pt;
+    padding-bottom: 1pt;
+}
+table,tr,th,td {
     text-align:left;
     vertical-align: top;
+    border: 1px solid black;
+    border-collapse: collapse;
 }
-.errormessage { 
+ul {
+    list-style-type: square;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin: 0px;
+}
+ol {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin: 0px;
+}
+pre {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin: 0px;
+}
+.errormessage {
     font-weight:bold;
     text-align:center;
     color:red;
