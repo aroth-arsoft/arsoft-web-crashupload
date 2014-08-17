@@ -4,7 +4,7 @@
 from distutils.core import setup
 
 setup(name='arsoft-web-crashupload',
-		version='1.1',
+		version='1.2',
 		description='upload crash reports',
 		author='Andreas Roth',
 		author_email='aroth@arsoft-online.com',
