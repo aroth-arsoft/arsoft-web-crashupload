@@ -154,9 +154,9 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 </tr>
 {% for thread in threads %}
 <tr>
-<td>0x{{ thread.id|stringformat:"x" }}{% if thread.exception %}*{% endif %}</td>
+<td><a name="thread_{{ thread.id }}">0x{{ thread.id|stringformat:"x" }}{% if thread.exception %}*{% endif %}</a></td>
 <td>{{ thread.name }} </td>
-<td>0x{{ thread.memory|stringformat:"x" }}</td>
+<td><a href="#memory_block_{{ thread.memory }}">0x{{ thread.memory|stringformat:"x" }}</a></td>
 <td>0x{{ thread.start_addr|stringformat:"x" }}</td>
 <td>{{ thread.create_time|date:"Y-m-d H:i:s" }}</td>
 <td>{{ thread.exit_time|date:"Y-m-d H:i:s" }}</td>
@@ -168,7 +168,7 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 
 <h2>Stack dumps</h2>
 {% for stackdump in stackdumps %}
-<h3>Thread 0x{{ stackdump.threadid|stringformat:"x" }}{% if stackdump.exception %} with exception{% endif %}</h3>
+<h3><a href="#thread_{{ stackdump.threadid }}">Thread 0x{{ stackdump.threadid|stringformat:"x" }}</a>{% if stackdump.exception %} with exception{% endif %}</h3>
 <table class='callstack'>
 <tr>
 <th>Num</th>
@@ -180,6 +180,7 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 <th>Param3</th>
 <th>Module</th>
 <th>Function</th>
+<th>Source</th>
 <th>Source</th>
 </tr>
 {% for frame in stackdump.callstack %}
@@ -197,8 +198,48 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 </tr>
 {% endfor %}
 </table>
+{% endfor %}
+
+<h2>Memory regions</h2>
+<table class='memory_region'>
+<tr>
+<th>Base address</th>
+<th>Size</th>
+<th>Alloc base</th>
+<th>Alloc protect</th>
+<th>Type</th>
+<th>Protect</th>
+<th>State</th>
+</tr>
+{% for memory_region in memory_regions %}
+<tr>
+<td>0x{{ memory_region.base_addr|stringformat:"x" }}</td>
+<td>{{ memory_region.size|filesizeformat }} </td>
+<td>0x{{ memory_region.alloc_base|stringformat:"x" }}</td>
+<td>0x{{ memory_region.alloc_prot|stringformat:"x" }}</td>
+<td>0x{{ memory_region.type|stringformat:"x" }}</td>
+<td>0x{{ memory_region.protect|stringformat:"x" }}</td>
+<td>0x{{ memory_region.state|stringformat:"x" }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>Memory blocks</h2>
+<table class='memory_blocks'>
+{% for memory_block in memory_blocks %}
+<h3><a name="memory_block_{{ memory_block.base }}">Memory block #{{ memory_block.num }} at 0x{{ memory_block.base|stringformat:"x" }} size {{ memory_block.size }} bytes</a></h2>
+<table class='memory_block'>
+{% for hexdump_line in memory_block.memory.hexdump %}
+<tr>
+<td>0x{{ hexdump_line.offset|stringformat:"04x" }}</td>
+<td><pre>{{ hexdump_line.hex }}</pre></td>
+<td><pre>{{ hexdump_line.ascii }}</pre></td>
+</tr>
+{% endfor %}
+</table>
 
 {% endfor %}
+
 
 {% endif %}
 

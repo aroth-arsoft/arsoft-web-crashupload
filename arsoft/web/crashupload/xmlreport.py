@@ -8,6 +8,73 @@ from datetime import datetime
 from uuid import UUID
 from lxml import etree
 
+class MemoryBlock(object):
+    def __init__(self, memory):
+        self._memory = memory
+        self._hexdump = None
+
+    @property
+    def raw(self):
+        return self._memory
+
+    @property
+    def hexdump(self):
+        if not self._hexdump:
+            self._hexdump = self._generate_hexdump()
+        return self._hexdump
+
+    class HexDumpLine(object):
+        def __init__(self, offset, memory_line, line_length):
+            self.offset = offset
+            self.raw = memory_line
+
+            self.hex = ''
+            self.ascii = ''
+            idx = 0
+            while idx < 16:
+                if idx != 0:
+                    self.hex += ' '
+                if idx < line_length:
+                    c = memory_line[idx]
+                    c_i = ord(c)
+                    self.hex += '%02X' % c_i
+                    if c_i < 32 or c_i >= 127:
+                        self.ascii += '.'
+                    else:
+                        self.ascii += c
+                else:
+                    self.hex += '  '
+                    self.ascii += ' '
+                idx += 1
+
+    class HexDump(object):
+        def __init__(self, size):
+            if size > 65536:
+                self.offset_width = 6
+            elif size > 256:
+                self.offset_width = 4
+            else:
+                self.offset_width = 2
+            self._lines = []
+
+        def __iter__(self):
+            return iter(self._lines)
+
+    def _generate_hexdump(self):
+        offset = 0
+        total_size = len(self._memory)
+        ret = MemoryBlock.HexDump(total_size)
+        while offset < total_size:
+            max_row = 16
+            remain = total_size - offset
+            if remain < 16:
+                max_row = remain
+            line = MemoryBlock.HexDumpLine(offset, self._memory[offset:offset + max_row], max_row)
+            ret._lines.append(line)
+            offset += 16
+        return ret
+
+
 class XMLReport(object):
     _crash_dump_fields = ['uuid', 'crash_timestamp', 'report_time', 'report_fqdn',
                           'report_username', 'application', 'command_line',
@@ -81,7 +148,10 @@ class XMLReport(object):
 
     class MemoryBlock(XMLReportEntity):
         def __init__(self, owner):
-            super(XMLReport.MemoryRegion, self).__init__(owner)
+            super(XMLReport.MemoryBlock, self).__init__(owner)
+        @property
+        def hexdump(self):
+            return self.memory.hexdump
 
     class Handle(XMLReportEntity):
         def __init__(self, owner):
@@ -149,9 +219,9 @@ class XMLReport(object):
             value = r[0] if r else None
             if r:
                 if encoding_type == 'base64':
-                    ret = base64.b64decode(r[0])
+                    ret = MemoryBlock(base64.b64decode(r[0]))
                 else:
-                    ret = str(r[0])
+                    ret = MemoryBlock(str(r[0]))
             else:
                 ret = default_value
         else:
@@ -170,6 +240,14 @@ class XMLReport(object):
         ok = False
         ret = None
         if attr_value:
+            attr_value_low = attr_value.lower()
+            if attr_value_low == 'true' or attr_value_low == 'on':
+                ret = True
+                ok = True
+            elif attr_value_low == 'false' or attr_value_low == 'off':
+                ret = False
+                ok = True
+
             if not ok:
                 if attr_value.startswith('0x'):
                     try:
@@ -180,12 +258,6 @@ class XMLReport(object):
             if not ok:
                 try:
                     ret = int(attr_value)
-                    ok = True
-                except ValueError:
-                    pass
-            if not ok:
-                try:
-                    ret = bool(attr_value)
                     ok = True
                 except ValueError:
                     pass
@@ -289,7 +361,7 @@ class XMLReport(object):
         all_subitems = i.xpath('memory_block') if i is not None else None
         if all_subitems is not None:
             for item in all_subitems:
-                m = XMLReport.MemoryRegion(self)
+                m = XMLReport.MemoryBlock(self)
                 for f in XMLReport._memory_block_fields:
                     setattr(m, f, XMLReport._get_node_value(item, f))
                 ret.append(m)
@@ -343,24 +415,32 @@ class XMLReport(object):
 
 if __name__ == '__main__':
     xmlreport = XMLReport(sys.argv[1])
-    print(xmlreport.crash_info)
-    print(xmlreport.system_info)
-    print(xmlreport.file_info)
-    for m in xmlreport.modules:
-        print(m)
-    for m in xmlreport.threads:
-        print(m)
-    for m in xmlreport.handles:
-        print(m)
-    for m in xmlreport.memory_regions:
-        print(m)
-    for m in xmlreport.stackdumps:
-        print('thread %u %s exception' % (m.threadid, 'with' if m.exception else 'without'))
-        for f in m.callstack:
-            print(f)
-    #for m in xmlreport.memory_blocks:
+    #print(xmlreport.crash_info)
+    #print(xmlreport.system_info)
+    #print(xmlreport.file_info)
+    #for m in xmlreport.modules:
         #print(m)
+    #for m in xmlreport.threads:
+        #print(m)
+    #for m in xmlreport.handles:
+        #print(m)
+    #for m in xmlreport.memory_regions:
+        #print(m)
+    #for m in xmlreport.stackdumps:
+        #print('thread %u %s exception' % (m.threadid, 'with' if m.exception else 'without'))
+        #for f in m.callstack:
+            #print(f)
+    #for m in xmlreport.memory_blocks:
+        #fmt = '0x%%0%ix: %%s - %%s' % m.hexdump.offset_width
+        #for l in m.hexdump:
+            #print(fmt % (l.offset, l.hex, l.ascii))
 
+    #for m in xmlreport.threads:
+        #print(type(m.id))
 
-    for m in xmlreport.threads:
-        print(type(m.id))
+    m = MemoryBlock("Model field reference | Django documentation | Django")
+    h = m.hexdump
+    fmt = '0x%%0%ix: %%s - %%s' % h.offset_width
+    for l in h:
+        print(fmt % (l.offset, l.hex, l.ascii))
+

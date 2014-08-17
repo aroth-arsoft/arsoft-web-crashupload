@@ -1,0 +1,5 @@
+[
+    {"pk": 1, "model": "crashupload.crashdumpstate", "fields": {"name": "new", "description": "Newly added crash"}},
+    {"pk": 2, "model": "crashupload.crashdumpstate", "fields": {"name": "closed", "description": "Closed"}},
+    {"pk": 3, "model": "crashupload.crashdumpstate", "fields": {"name": "ignored", "description": "Ignored"}}
+]

@@ -14,7 +14,7 @@ from django.conf import settings
 import os.path
 from StringIO import StringIO
 import logging
-from .models import CrashDumpModel
+from .models import CrashDumpState, CrashDumpModel
 from .xmlreport import XMLReport
 from uuid import UUID
 
@@ -229,38 +229,38 @@ def submit(request):
             osmachine = request.POST.get('osmachine')
             sysinfo = request.POST.get('sysinfo')
 
-            db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid)
-            if not created:
-                print('crash already exusts')
-
-            result = False
-            ok, db_entry.minidumpFile = _store_dump_file(crashid, request, 'minidump')
-            if ok:
-                result = True
-            ok, db_entry.minidumpReportTextFile = _store_dump_file(crashid, request, 'minidumpreport')
-            if ok:
-                result = True
-            ok, db_entry.minidumpReportXMLFile = _store_dump_file(crashid, request, 'minidumpreportxml')
-            if ok:
-                result = True
-            ok, db_entry.minidumpReportHTMLFile = _store_dump_file(crashid, request, 'minidumpreporthtml')
-            if ok:
-                result = True
-            ok, db_entry.coredumpFile = _store_dump_file(crashid, request, 'coredump')
-            if ok:
-                result = True
-            ok, db_entry.coredumpReportTextFile = _store_dump_file(crashid, request, 'coredumpreport')
-            if ok:
-                result = True
-            ok, db_entry.coredumpReportXMLFile = _store_dump_file(crashid, request, 'coredumpreportxml')
-            if ok:
-                result = True
-            ok, db_entry.coredumpReportHTMLFile = _store_dump_file(crashid, request, 'coredumpreporthtml')
-            if ok:
-                result = True
-            ok, db_entry.gfxCapsFile = _store_dump_file(crashid, request, 'gfxcaps')
-            if ok:
-                result = True
+            db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid, defaults={'state': CrashDumpState.objects.get(name='new') })
+            if not created and not force:
+                result = False
+            else:
+                result = False
+                ok, db_entry.minidumpFile = _store_dump_file(crashid, request, 'minidump')
+                if ok:
+                    result = True
+                ok, db_entry.minidumpReportTextFile = _store_dump_file(crashid, request, 'minidumpreport')
+                if ok:
+                    result = True
+                ok, db_entry.minidumpReportXMLFile = _store_dump_file(crashid, request, 'minidumpreportxml')
+                if ok:
+                    result = True
+                ok, db_entry.minidumpReportHTMLFile = _store_dump_file(crashid, request, 'minidumpreporthtml')
+                if ok:
+                    result = True
+                ok, db_entry.coredumpFile = _store_dump_file(crashid, request, 'coredump')
+                if ok:
+                    result = True
+                ok, db_entry.coredumpReportTextFile = _store_dump_file(crashid, request, 'coredumpreport')
+                if ok:
+                    result = True
+                ok, db_entry.coredumpReportXMLFile = _store_dump_file(crashid, request, 'coredumpreportxml')
+                if ok:
+                    result = True
+                ok, db_entry.coredumpReportHTMLFile = _store_dump_file(crashid, request, 'coredumpreporthtml')
+                if ok:
+                    result = True
+                ok, db_entry.gfxCapsFile = _store_dump_file(crashid, request, 'gfxcaps')
+                if ok:
+                    result = True
 
         if result:
             db_entry.timestamp = timestamp

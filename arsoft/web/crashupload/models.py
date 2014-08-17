@@ -1,7 +1,16 @@
 from django.db import models
 
+class CrashDumpState(models.Model):
+    name = models.CharField('Name', max_length=32, help_text='short name of the state')
+    description = models.CharField('Description', max_length=256, help_text='description of the attachment')
+
+    class Meta:
+        verbose_name = "Crash state"
+        verbose_name_plural = "Crash states"
+
 class CrashDumpModel(models.Model):
     crashid = models.CharField('Crash id', max_length=36, unique=True, help_text='unique identifier of the crash')
+    state = models.ForeignKey(CrashDumpState)
     timestamp = models.DateTimeField('Timestamp', auto_now=True, auto_now_add=True)
     applicationName = models.CharField('Application name', max_length=256, help_text='name of the application which caused the crash')
     applicationFile = models.CharField('Application file', max_length=512, help_text='file of the application which caused the crash')
@@ -77,7 +86,7 @@ class CrashDumpModel(models.Model):
     def __unicode__(self):
         return '%s (%s at %s)' % (self.id, self.applicationName, self.timestamp)
 
-class CrashDumpAttachmentModel(models.Model):
+class CrashDumpAttachment(models.Model):
     crash = models.ForeignKey(CrashDumpModel)
     name = models.CharField('Name', max_length=256, help_text='name of the attachment')
     description = models.TextField('Description', max_length=8192, help_text='description of the attachment')
@@ -87,7 +96,7 @@ class CrashDumpAttachmentModel(models.Model):
         verbose_name = "Crash attachment"
         verbose_name_plural = "Crash attachments"
 
-class CrashDumpLinkModel(models.Model):
+class CrashDumpLink(models.Model):
     crash = models.ForeignKey(CrashDumpModel)
     name = models.CharField('Name', max_length=256, null=True, help_text='name of the link')
     url = models.TextField('URL', max_length=2048, help_text='URL')

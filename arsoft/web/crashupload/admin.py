@@ -1,6 +1,15 @@
 from django.contrib import admin
 from django import forms
-from arsoft.web.crashupload.models import CrashDumpModel
+from arsoft.web.crashupload.models import CrashDumpState, CrashDumpModel
+
+class CrashDumpStateForm(forms.ModelForm):
+    class Meta:
+        model = CrashDumpState
+
+class CrashDumpStateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description')
+    fields = ['name', 'description']
+    form = CrashDumpStateForm
 
 class CrashDumpModelForm(forms.ModelForm):
     class Meta:
@@ -18,4 +27,6 @@ class CrashDumpModelAdmin(admin.ModelAdmin):
             ]
     form = CrashDumpModelForm
 
+admin.site.register(CrashDumpState, CrashDumpStateAdmin)
 admin.site.register(CrashDumpModel, CrashDumpModelAdmin)
+

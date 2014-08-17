@@ -10,6 +10,7 @@
 <h1 class="title">Crash {{ object.crashid }} of {{ object.applicationName }} at {{ object.timestamp|date:"Y-m-d H:i:s" }}</h1>
 <table>
 <tr><td>Id</td><td>{{ object.crashid }}</td></tr>
+<tr><td>State</td><td>{{ object.state.description }}</td></tr>
 <tr><td>Timestamp</td><td>{{ object.timestamp|date:"Y-m-d H:i:s" }}</td></tr>
 <tr><td>Application name</td>
 <td><a href="{% url "list_filter_app" object.applicationName %}">{{ object.applicationName }}</a></td>
