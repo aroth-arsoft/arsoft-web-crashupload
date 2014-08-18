@@ -64,15 +64,23 @@ N/A
 </td></tr>
 <tr><td>System info</td><td><pre>{{ object.systemInfoData }}</pre></td></tr>
 <tr><td>Gfx capabilities</td><td>
-{% if object.gfxCaps %}
+{% if object.gfxCapsFile %}
 <a href="{% url "crash_report" object.id "gfxCaps" "raw" %}">Download</a>
+&nbsp;<a href="{% url "crash_report" object.id "gfxCaps" "text" %}">Plain text</a>
 {% endif %}
 </td></tr>
 
-<tr><td>Attachments</td><td>
-</td></tr>
+<tr><td>Attachments</td><td><ul>
+{% for attachment in attachments %}
+<li>{{ attachment.name }}</li>
+{% endfor %}
+</ul></td></tr>
 
-<tr><td>Links</td><td>
+<tr><td>Links</td><td><ul>
+{% for link in links %}
+<li><a href="{{link.target}}">{{ link.name }}</a></li>
+{% endfor %}
+</ul>
 </td></tr>
 
 </table>

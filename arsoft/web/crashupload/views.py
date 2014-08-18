@@ -14,7 +14,7 @@ from django.conf import settings
 import os.path
 from StringIO import StringIO
 import logging
-from .models import CrashDumpState, CrashDumpModel
+from .models import CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
 from .xmlreport import XMLReport
 from uuid import UUID
 
@@ -28,11 +28,13 @@ class CrashDumpListView(ListView):
     model = CrashDumpModel
     template_name = 'crashdumpmodel_list.html'
     application = None
+    state = None
 
     def dispatch(self, request, *args, **kwargs):
-        print('dispatch')
         if 'application' in kwargs:
             self.application = kwargs['application']
+        if 'state' in kwargs:
+            self.state = kwargs['state']
         context = super(CrashDumpListView, self).dispatch(request, *args, **kwargs)
         return context
 
@@ -40,17 +42,37 @@ class CrashDumpListView(ListView):
         context = super(CrashDumpListView, self).get_context_data(**kwargs)
         if 'application' in self.kwargs:
             context['application'] = self.kwargs['application']
+        if 'state' in self.kwargs:
+            context['state'] = self.kwargs['state']
         return context
 
     def get_queryset(self):
-        if self.application:
+        if self.application and self.state:
+            return self.model.objects.filter(applicationName=self.application, state=CrashDumpState.objects.get(name=self.state))
+        elif self.application:
             return self.model.objects.filter(applicationName=self.application)
+        elif self.state:
+            return self.model.objects.filter(state=CrashDumpState.objects.get(name=self.state))
         else:
             return super(CrashDumpListView, self).get_queryset()
 
 class CrashDumpDetails(DetailView):
     model = CrashDumpModel
     template_name = 'crashdumpmodel_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(CrashDumpDetails, self).get_context_data(**kwargs)
+        try:
+            links = CrashDumpLink.objects.get(crash=self.object.id)
+        except CrashDumpLink.DoesNotExist:
+            links = None
+        try:
+            attachments = CrashDumpAttachment.objects.get(crash=self.object.id)
+        except CrashDumpAttachment.DoesNotExist:
+            attachments = None
+        context['links'] = links
+        context['attachments'] = attachments
+        return context
 
 class CrashDumpReport(DetailView):
     model = CrashDumpModel
@@ -82,6 +104,8 @@ class CrashDumpReport(DetailView):
             filename = self.object.coredumpReportHTMLFile
         elif context['report_type'] == 'coredump':
             filename = self.object.coredumpFile
+        elif context['report_type'] == 'gfxCaps':
+            filename = self.object.gfxCapsFile
 
         if context['flag'] == 'raw':
             if filename is None:

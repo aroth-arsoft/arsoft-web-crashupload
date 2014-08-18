@@ -7,9 +7,17 @@
 </head>
 <body>
 {% if application %}
+{% if state %}
+<h1>Crashes of application {{ application }} with state {{ state }}</h1>
+{% else %}
 <h1>Crashes of application {{ application }}</h1>
+{% endif %}
+{% else %}
+{% if state %}
+<h1>Crashes with state {{ state }}</h1>
 {% else %}
 <h1>Crashes</h1>
+{% endif %}
 {% endif %}
 <table>
 <tr>
@@ -26,7 +34,13 @@
 {% for object in object_list %}
 <tr>
 <td><a href="{% url "crash_details" object.id %}">{{ object.crashid }}</a></td>
-<td>{{ object.state.name }}</td>
+<td>
+{% if application %}
+<a href="{% url "list_filter_app_and_state" application object.state.name %}">app with {{ object.state.name }}</a>
+{% else %}
+<a href="{% url "list_filter_state" object.state.name %}">{{ object.state.name }}</a>
+{% endif %}
+</td>
 <td>{{ object.timestamp|date:"Y-m-d H:i:s" }}</td>
 <td><a href="{% url "list_filter_app" object.applicationName %}">{{ object.applicationName }}</a></td>
 <td>{{ object.clientHostName }}</td>

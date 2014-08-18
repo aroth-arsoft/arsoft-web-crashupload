@@ -95,7 +95,7 @@ class XMLReport(object):
     _handle_fields = ['handle', 'type', 'name', 'count', 'pointers' ]
 
     _stackdump_fields = ['threadid', 'exception']
-    _stack_frame_fields = ['num', 'addr', 'retaddr', 'param0', 'param1', 'param2', 'param3', 'module', 'function', 'source' ]
+    _stack_frame_fields = ['num', 'addr', 'retaddr', 'param0', 'param1', 'param2', 'param3', 'module', 'function', 'source', 'line', 'lineoff' ]
 
     def __init__(self, filename=None):
         self._filename = filename
@@ -164,6 +164,12 @@ class XMLReport(object):
     class StackFrame(XMLReportEntity):
         def __init__(self, owner):
             super(XMLReport.StackFrame, self).__init__(owner)
+        @property
+        def source_url(self):
+            if self.source:
+                return 'file:///' + self.source
+            else:
+                return None
 
     @staticmethod
     def _value_convert(value_str, data_type):

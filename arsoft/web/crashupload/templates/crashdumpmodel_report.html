@@ -48,6 +48,7 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 <table class='crash_info'>
 <h2>Crash dump information</h2>
 <tr><td>Id</td><td>{{ crash_info.uuid }}</td></tr>
+<tr><td>State</td><td>{{ object.state.description }}</td></tr>
 <tr><td>Crash timestamp</td><td>{{ crash_info.crash_timestamp|date:"Y-m-d H:i:s" }}</td></tr>
 <tr><td>Report timestamp</td><td>{{ crash_info.report_time|date:"Y-m-d H:i:s" }}</td></tr>
 <tr><td>Application name</td>
@@ -181,7 +182,7 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 <th>Module</th>
 <th>Function</th>
 <th>Source</th>
-<th>Source</th>
+<th>LineOff</th>
 </tr>
 {% for frame in stackdump.callstack %}
 <tr>
@@ -194,7 +195,8 @@ Report {{ report_type }} {{ object.crashid }} of {{ object.applicationName }} at
 <td>0x{{ frame.param3|stringformat:"x" }}</td>
 <td>{{ frame.module }}</td>
 <td>{{ frame.function }}</td>
-<td>{{ frame.source }}</td>
+<td><a href="{{ frame.source_url }}">{{ frame.source }}:{{frame.line}}</a></td>
+<td>0x{{ frame.lineoff|stringformat:"x" }}</td>
 </tr>
 {% endfor %}
 </table>
