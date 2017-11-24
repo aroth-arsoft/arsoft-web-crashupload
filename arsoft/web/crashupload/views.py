@@ -23,6 +23,7 @@ logger = logging.getLogger('arsoft.web.crashupload')
 class CrashDumpModelViewForm(forms.ModelForm):
     class Meta:
         model = CrashDumpModel
+        fields = '__all__'
 
 class CrashDumpListView(ListView):
     model = CrashDumpModel

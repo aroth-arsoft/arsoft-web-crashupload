@@ -11,7 +11,7 @@ class CrashDumpState(models.Model):
 class CrashDumpModel(models.Model):
     crashid = models.CharField('Crash id', max_length=36, unique=True, help_text='unique identifier of the crash')
     state = models.ForeignKey(CrashDumpState)
-    timestamp = models.DateTimeField('Timestamp', auto_now=True, auto_now_add=True)
+    timestamp = models.DateTimeField('Timestamp', auto_now_add=True)
     applicationName = models.CharField('Application name', max_length=256, help_text='name of the application which caused the crash')
     applicationFile = models.CharField('Application file', max_length=512, help_text='file of the application which caused the crash')
     clientHostName = models.CharField('Client FQDN', max_length=256, null=True, help_text='full qualified host name of the client')

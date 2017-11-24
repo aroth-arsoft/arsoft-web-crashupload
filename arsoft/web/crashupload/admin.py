@@ -5,6 +5,7 @@ from arsoft.web.crashupload.models import CrashDumpState, CrashDumpModel
 class CrashDumpStateForm(forms.ModelForm):
     class Meta:
         model = CrashDumpState
+        fields = '__all__'
 
 class CrashDumpStateAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
@@ -14,6 +15,7 @@ class CrashDumpStateAdmin(admin.ModelAdmin):
 class CrashDumpModelForm(forms.ModelForm):
     class Meta:
         model = CrashDumpModel
+        fields = '__all__'
 
 class CrashDumpModelAdmin(admin.ModelAdmin):
     list_display = ('crashid', 'timestamp', 'applicationName', 'clientHostName', 'clientUserName', 'productName', 'productVersion')
