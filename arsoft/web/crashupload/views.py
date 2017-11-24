@@ -12,7 +12,7 @@ from django import forms
 from .forms import UploadFileForm
 from django.conf import settings
 import os.path
-from StringIO import StringIO
+from io import StringIO
 import logging
 from .models import CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
 from .xmlreport import XMLReport

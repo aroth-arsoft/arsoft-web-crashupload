@@ -1,5 +1,7 @@
 from django.db import models
 
+print('models')
+
 class CrashDumpState(models.Model):
     name = models.CharField('Name', max_length=32, help_text='short name of the state')
     description = models.CharField('Description', max_length=256, help_text='description of the attachment')

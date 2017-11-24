@@ -13,7 +13,7 @@ initialize_settings(__name__, __file__)
 SITE_ID = 1
 
 INSTALLED_APPS.append('django.contrib.admin')
-MIDDLEWARE_CLASSES.append('django.contrib.auth.middleware.AuthenticationMiddleware')
+MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 
 DATABASES = {
     'default': {

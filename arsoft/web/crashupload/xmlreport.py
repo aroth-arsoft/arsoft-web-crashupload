@@ -107,7 +107,7 @@ class XMLReport(object):
 
         def __str__(self):
             ret = ''
-            for (k,v) in self.__dict__.items():
+            for (k,v) in list(self.__dict__.items()):
                 if k[0] != '_':
                     if ret:
                         ret += ', '
@@ -448,5 +448,5 @@ if __name__ == '__main__':
     h = m.hexdump
     fmt = '0x%%0%ix: %%s - %%s' % h.offset_width
     for l in h:
-        print(fmt % (l.offset, l.hex, l.ascii))
+        print((fmt % (l.offset, l.hex, l.ascii)))
 
