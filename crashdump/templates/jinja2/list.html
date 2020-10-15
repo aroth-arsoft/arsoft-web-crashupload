@@ -1,0 +1,147 @@
+# extends 'layout.html'
+<!DOCTYPE html>
+<html>
+  <head>
+    # block head
+    ${ super() }
+    <title>
+    # block title
+    List of crashes
+    # endblock title
+    </title>
+    <script type="text/javascript">
+        crashdump_docReady();
+    </script>
+    # endblock head
+  </head>
+  <body>
+    # block content
+    <div id="content" class="report">
+      <h1>${title}
+        # if numrows:
+        <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches',
+          numrows)})</span>
+        # endif
+      </h1>
+
+      <form method="get" id="trac-report-prefs" action="#">
+        <div id="prefs">
+          <div>
+            <label>
+              ${_("Max items per page")}
+              <input type="text" name="max" size="10" value="${max}" />
+            </label>
+            # if show_args_form:
+            <fieldset id="reportfilters">
+              <legend class="foldable">${_("Arguments")}</legend>
+              <table>
+                <tbody>
+                  <tr style="height: 1px"><td colspan="2"></td></tr>
+                </tbody>
+                # if name != 'USER':
+                #   for (name, value) in sorted(args.items()):
+                <tbody>
+                  <tr>
+                    <th scope="row"><label>${name}</label></th>
+                    <td class="filter">
+                      <input type="text" size="42"${
+                           {'name': name, 'value': value}|htmlattr}/>
+                    </td>
+                  </tr>
+                </tbody>
+                #   endfor
+                # endif
+              </table>
+            </fieldset>
+            # endif
+          </div>
+          <div class="buttons">
+            <input type="hidden" name="sort" value="${sort}" />
+            # if asc:
+            <input type="hidden" name="asc" value="1" />
+            # endif
+            <input type="submit" value="${_('Update')}" />
+          </div>
+        </div>
+      </form>
+
+      # if description:
+      <div id="description">
+        ${wiki_to_html(context, description)}
+      </div>
+      # endif
+
+      # if paginator.has_more_pages:
+      <h2 class="report-result">
+        ${_("Results")}
+        <span class="numresults">(${paginator.displayed_items()})</span>
+      </h2>
+      #   include 'page_index.html'
+      # endif
+
+      # macro group_heading(value_for_group, row_group)
+      #   if value_for_group is not none:
+      <h2 class="report-result">
+        #   if row_group and '__grouplink__' in row_group[0]:
+        <a href="${row_group[0]['__grouplink__']}">${value_for_group or _("(empty)")}</a>
+        #   else:
+        ${value_for_group or _("(empty)")}
+        #   endif
+        #   set cnt = row_group|length
+        <span class="numrows">
+          (${ngettext('%(num)s match', '%(num)s matches', cnt) if cnt
+          else _("No matches found.")})
+        </span>
+      </h2>
+      #   endif
+      # endmacro
+
+      <table class="listing tickets">
+        <thead><tr>
+            <th>UUID</th>
+            <th>Crash time</th>
+            <th>Crash user</th>
+            <th>Crash hostname</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Component</th>
+            <th>Version</th>
+            <th>Milestone</th>
+            <th>Application name</th>
+            <th>OS</th>
+            <th>Build type</th>
+            <th>Linked Tickets</th>
+        </tr></thead>
+        <tbody>
+        # for object in results
+        <tr>
+            <td><a href="${href('crash', object.uuid)}" class="trac-id">CrashId#${object.id} - {${object.uuid}}</a></td>
+            <td>${ pretty_dateinfo(object['crashtime']) }</td>
+            <td>${object['crashusername']}</td>
+            <td>${object['crashhostname']}</td>
+            <td>${ object['status'] } </td>
+            <td>${ object['priority'] } </td>
+            <td>${object['component']}</td>
+            <td>${object['version']}</td>
+            <td>${object['milestone']}</td>
+            <td>${object['applicationname']}</td>
+            <td>${object['systemname']}/${object['osversion']}</td>
+            <td>${object['buildtype']}</td>
+            <td>{% for tkt in object.linked_tickets %}<a href="${href('ticket', tkt)}" title="${tkt}">#${tkt}</a>{% endfor %}</td>
+        </tr>
+
+        # endfor
+        </tbody>
+      </table>
+
+      # if message:
+      <div class="system-message">${message}</div>
+      # endif
+      # if numrows == 0:
+      <div id="report-notfound">${_("No matches found.")}</div>
+      # endif
+    </div>
+    ${ super() }
+    # endblock content
+  </body>
+</html>

@@ -1,0 +1,248 @@
+# extends 'layout.html'
+<!DOCTYPE html>
+<html>
+  <head>
+    # block head
+    ${ super() }
+    <title>
+    # block title
+    CrashId#${object.id} - ${object.uuid}
+    # endblock title
+    </title>
+    <script type="text/javascript">
+        crashdump_docReady();
+    </script>
+    # endblock head
+  </head>
+  <body>
+    # block content
+        <div id="crashdump">
+            <div class="date">
+                <p>{% trans crashtime=pretty_dateinfo(object['crashtime']) %}Crashed ${crashtime}{% endtrans %}</p>
+                {% if object['reporttime'] %}<p>{% trans reporttime=pretty_dateinfo(object['reporttime']) %}Report generated ${reporttime}{% endtrans %}</p>{% endif %}
+                {% if object['uploadtime'] %}<p>{% trans uploadtime=pretty_dateinfo(object['uploadtime']) %}Uploaded ${uploadtime}{% endtrans %}</p>{% endif %}
+                {% if object['closetime'] %}<p>{% trans closetime=pretty_dateinfo(object['closetime']) %}Closed ${closetime}{% endtrans %}</p>{% endif %}
+                {% if object['changetime'] != object['uploadtime'] and object['changetime'] != object['closetime']%}
+                    <p>{% trans changetime=pretty_dateinfo(object['changetime']) %}Last modified ${changetime}{% endtrans %}</p>
+                {% endif %}
+                {% if show_delete_crash %}
+                <p><a href="${href('crash', object.uuid, 'delete')}" class="trac-id">Delete CrashId#${object.id}</a></p>
+                {% endif %}
+            </div>
+
+            <h2>
+                <a href="${href('crash', object.uuid)}" class="trac-id">CrashId#${object.id} - {${object.uuid}}</a>
+                <span class="trac-status">
+                ${'status' in fields_map and fields[fields_map['status']].rendered or object['status']}
+                </span>
+                {% if object['type'] %}
+                <span class="trac-type">${'type' in fields_map and fields[fields_map['type']].rendered or object['type']}</span>
+                {% endif %}
+                {% if object['resolution'] %}
+                <span class="trac-resolution">
+                (${'resolution' in fields_map and fields[fields_map['resolution']].rendered or object['resolution']})
+                </span>
+                {% endif %}
+            </h2>
+<table class="properties">
+<tr>
+{% if xmlfile_error %}
+<tr>
+<th>Error:</th><td colspan="3">${xmlfile_error}</td>
+</tr>
+{% endif %}
+<th>Reported by:</th><td>${object['reporter']}</td>
+<th>Owned by:</th><td>${object['owner']}</td>
+</tr>
+<tr>
+<th>Priority:</th><td>${object['priority']}</td>
+<th>Severity:</th><td>${object['severity']}</td>
+</tr>
+<tr>
+<th>Version:</th><td>${object['version']}</td>
+<th>Milestone:</th><td>${object['milestone']}</td>
+</tr>
+<tr>
+<th>Application name:</th><td>${object['applicationname']}</td>
+<th>Component:</th><td>${object['component']}</td>
+</tr>
+<tr>
+<th>Keywords:</th><td>${object['keywords']}</td>
+<th>Cc:</th><td>${object['cc']}</td>
+</tr>
+<tr>
+<th>Linked tickets:</th><td><ul>
+{% for tkt in linked_tickets %}<li>${tkt}</li>{% endfor %}
+</ul>
+</td>
+</tr>
+{% if show_debug_info %}
+<tr>
+<th>Parse time:</th><td>${ format_seconds(parsetime) }</td>
+<th>Database time:</th><td>${ format_seconds(dbtime) }</td>
+</tr>
+<tr>
+<th>Is 64-Bit:</th><td>${is_64_bit}</td>
+<th>Bits:</th><td>${bits}</td>
+</tr>
+{% endif %}
+</table>
+
+<!-- close the crashdump yellow box -->
+</div>
+
+<a name="crash_dump_info"/>
+<div id="crash_dump_info" class="crashdump_box">
+<h2 class="foldable">Crash dump information</h2>
+<table class="properties">
+<tr><th>Application&nbsp;file</th><td class="fullrow">${object['applicationfile']}</td></tr>
+<tr><th>Command&nbsp;line</th><td class="fullrow">
+    {% if crash_info %}
+    <pre class="cmdline">{% for e in crash_info.command_line %}&quot;${e}&quot;{% endfor %}</pre>
+    {% else %}
+    <div>N/A</div>
+    {% endif %}
+</td></tr>
+{% if object.has_minidump %}
+    <tr><th>Minidump file</th><td class="fullrow">
+        {% if object['minidumpfile'] %}
+        <a href="${href('crash', object.uuid, 'minidump_raw')}" title="${object.uuid} (${ format_size(minidumpfile_size) })">Download</a>
+        {% endif %}
+        {% if object['minidumpreporttextfile'] %}
+            &nbsp;<a href="${href('crash', object.uuid, 'minidump_text')}" title="${object.uuid} (${ format_size(reporttextfile_size) })">Text report</a>
+        {% endif %}
+        {% if object['minidumpreportxmlfile'] %}
+            &nbsp;<a href="${href('crash', object.uuid, 'minidump_xml')}" title="${object.uuid} (${ format_size(xmlfile_size) })">XML report</a>
+        {% endif %}
+        {% if object['minidumpreporthtmlfile'] %}
+            &nbsp;<a href="${href('crash', object.uuid, 'minidump_html')}" title="${object.uuid} (${ format_size(reporthtmlfile_size) })">HTML report</a>
+        {% endif %}
+    </td></tr>
+{% endif %}
+{% if object.has_coredump %}
+    <tr><th>Coredump file</th><td class="fullrow">
+        {% if object['coredumpfile'] %}
+        <a href="${href('crash', object.uuid, 'coredump_raw')}" title="${object.uuid} (${ format_size(coredumpfile_size) })">Download</a>
+        {% endif %}
+        {% if object['coredumpreporttextfile'] %}
+            &nbsp;<a href="${href('crash', object.uuid, 'coredump_text')}" title="${object.uuid} (${ format_size(reporttextfile_size) })">Text report</a>
+        {% endif %}
+        {% if object['coredumpreportxmlfile'] %}
+            &nbsp;<a href="${href('crash', object.uuid, 'coredump_xml')}" title="${object.uuid} (${ format_size(xmlfile_size) })">XML report</a>
+        {% endif %}
+        {% if object['coredumpreporthtmlfile'] %}
+            &nbsp;<a href="${href('crash', object.uuid, 'coredump_html')}" title="${object.uuid} (${ format_size(reporthtmlfile_size) })">HTML report</a>
+        {% endif %}
+    </td></tr>
+{% endif %}
+{% if fast_protect_system_info %}
+<tr><th>Crash&nbsp;FQDN</th><td class="fullrow">${fast_protect_system_info.fqdn}&nbsp;<a href="${href('crash', object.uuid, 'sysinfo_report')}" title="${object.uuid} system info">Show complete system info</a>
+</td></tr>
+<tr><th>Crash&nbsp;username</th><td class="fullrow">${fast_protect_system_info.username}</td></tr>
+{% endif %}
+{% if crash_info %}
+<tr><th>Report&nbsp;FQDN</th><td class="fullrow">${crash_info.report_fqdn}</td></tr>
+<tr><th>Report&nbsp;username</th><td class="fullrow">${crash_info.report_username}</td></tr>
+<tr><th>Symbol&nbsp;directories</th><td class="fullrow">
+<div id="symboldirs" class="collapsed crashdump_expand_box">
+<h4 class="foldable">Show symbol directories</h4>
+<ul class="dirlist">{% for e in crash_info.symbol_directories %}<li>${e}</li>{% endfor %}</ul>
+</div>
+</td></tr>
+<tr><th>Image&nbsp;directories</th><td class="fullrow">
+<div id="imagedirs" class="collapsed crashdump_expand_box">
+<h4 class="foldable">Show image directories</h4>
+<ul class="dirlist">{% for e in crash_info.image_directories %}<li>${e}</li>{% endfor %}</ul>
+</div>
+</td></tr>
+<tr><th>Path</th><td class="fullrow">
+<div id="path" class="collapsed crashdump_expand_box">
+<h4 class="foldable">Show path</h4>
+<ul class="path">{% for p in crash_info.path %}{% if p %}<li>${p}</li>{% endif %}{% endfor %}</ul>
+</div>
+</td></tr>
+<tr><th>Environment</th><td class="fullrow">
+<div id="environment" class="collapsed crashdump_expand_box">
+<h4 class="foldable">Show environment</h4>
+<ul class="environment">
+{% for k in sorted(crash_info.environment.keys()) %}
+    {% if k.lower() != 'path' %}
+        <li>${k}&nbsp;=&nbsp;${crash_info.environment[k]}</li>
+    {% endif %}
+{% endfor %}
+</ul>
+</div>
+</td></tr>
+{% endif %}
+</table>
+</div>
+
+{% if system_info %}
+<a name="sysinfo"/>
+<div id="view___sysinfo" class="collapsed crashdump_box">
+<h2 class="delayfoldable">System information</h2>
+</div>
+{% endif %}
+
+{% if fast_protect_version_info %}
+<a name="sysinfo_ex"/>
+<div id="view___sysinfo_ex" class="collapsed crashdump_box">
+<h2 class="delayfoldable">More system information</h2>
+</div>
+{% endif %}
+
+{% if fast_protect_version_info %}
+<a name="fast_protect_version_info"/>
+<div id="view___fast_protect_version_info" class="collapsed crashdump_box">
+<h2 class="delayfoldable">Version info</h2>
+</div>
+{% endif %}
+
+{% if exception %}
+<div id="view___exception" class="crashdump_box">
+<h2 class="delayfoldable">{% if assertion %}Assertion{% else %}Exception{% endif %}</h2>
+</div>
+{% endif %}
+
+{% if modules %}
+<a name="modules"/>
+<div id="view___modules" class="collapsed crashdump_box">
+<h2 class="delayfoldable">Modules</h2>
+</div>
+{% endif %}
+
+{% if threads %}
+<a name="threads"/>
+<div id="view___threads" class="collapsed crashdump_box">
+<h2 class="delayfoldable">Threads</h2>
+</div>
+{% endif %}
+
+{% if stackdumps %}
+<div id="view___stackdumps" class="crashdump_box">
+<h2 class="delayfoldable">Stack dumps</h2>
+</div>
+{% endif %}
+
+{% if memory_regions %}
+<div id="view___memory_regions" class="collapsed crashdump_box">
+<h2 class="delayfoldable">Memory regions</h2>
+</div>
+{% endif %}
+
+{% if memory_blocks %}
+<div id="view___memory_blocks" class="collapsed crashdump_box">
+<h2 class="delayfoldable">Memory blocks</h2>
+</div>
+{% endif %}
+
+{% if file_info %}
+<div id="view___file_info" class="collapsed crashdump_box">
+<h2 class="delayfoldable">Processing log</h2>
+</div>
+{% endif %}
+
+    # endblock content
+
+  </body>
+</html>

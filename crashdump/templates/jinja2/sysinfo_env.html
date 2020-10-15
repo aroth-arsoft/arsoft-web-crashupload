@@ -1,0 +1,6 @@
+<ul class="environment">
+# set sysinfo_report_env = sysinfo_report['Environment']
+{% for k in sorted(sysinfo_report_env.keys()) %}
+    <li>${k}&nbsp;=&nbsp;${sysinfo_report_env[k]}</li>
+{% endfor %}
+</ul>

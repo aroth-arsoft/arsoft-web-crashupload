@@ -1,0 +1,18 @@
+<table class="properties">
+    {% for item in sysinfo_report['CPU'] %}
+        {% if item.description %}
+        <tr>
+            <th>${item.description}</th>
+            <td>
+                {% if item.name == 'name' %}
+                ${format_cpu_vendor(item.value)}
+                {% elif item.name == 'brand' %}
+                ${format_cpu_name(sysinfo_report['CPU']['name'].value, item.value)}
+                {% else %}
+                ${item.value}
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+    {% endfor %}
+</table>

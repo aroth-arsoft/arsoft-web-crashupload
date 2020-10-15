@@ -1,0 +1,17 @@
+<table
+    class="properties"
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:i18n="http://genshi.edgewall.org/i18n"
+    xmlns:py="http://genshi.edgewall.org/">
+    <py:for each="item in sysinfo_report['Network']">
+    <tr><th>${item.description}</th>
+    <td>Hardware address: ${item.hwaddr}
+    <py:if test="item.addr">
+    <br/><ul>
+    <py:for each="addr in item.addr"><li>${ addr }</li></py:for>
+    </ul>
+    </py:if>
+    </td>
+    </tr>
+    </py:for>
+</table>
