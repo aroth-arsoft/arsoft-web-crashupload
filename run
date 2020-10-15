@@ -1,0 +1,425 @@
+#!/bin/bash
+SCRIPTFILE=`readlink -f "$0"`
+SCRIPTNAME=`basename "$SCRIPTFILE"`
+SCRIPTDIR=`dirname "$SCRIPTFILE"`
+
+VENV_DIR="$SCRIPTDIR/venv"
+
+function usage() {
+	echo "Usage: $SCRIPTNAME [OPTIONS]"
+	echo "  run/create/initializes the flask application"
+	echo "OPTIONS:"
+	echo "    -h, --help            shows this help"
+	echo "    -v, --verbose         enable verbose output"
+	echo "     --init               initialize the virtualenv for the flask application"
+	echo "     --gunicorn           run within gunicorn WSGI server"
+	echo "     --rpm                build RPM package"
+    echo "     --docker             build docker image"
+    echo "     --wheel              build a python wheel package"
+    echo "     --depends            add extra dependencies for a python wheel package build"
+    echo "     --wheels             build a python wheel packages required for this app"
+	echo "     --export             export this application as archive"
+	exit 0
+}
+
+function do_initialize_venv() {
+    msg=`python3 -m venv "$VENV_DIR" 2>&1`
+    if [ -f "$VENV_DIR/bin/activate" ]; then
+        source "$VENV_DIR/bin/activate"
+        pip install -r "$SCRIPTDIR/requirements.txt"
+        deactivate
+    else
+        echo "Unable to create virtual environment $VENV_DIR. Please run 'sudo apt install python3-venv'." >&2
+        false
+    fi
+}
+
+function venv_export_archive() {
+
+    version=`cat $SCRIPTDIR/setup.py | perl -n -e"/version='(\d+\.\d+)'/ && print \\\$1"`
+    local outdir="$1"
+    local prefix=`basename $SCRIPTDIR`
+    local format='tar.gz'
+    local outfile="$outdir/$prefix-$version.$format"
+    local ref='refs/remotes/origin/master'
+    if [ -f "$SCRIPTDIR/../.git/refs/heads/master" ]; then
+        ref='refs/heads/master'
+    fi
+    git -C "$SCRIPTDIR" archive --format=$format --prefix=$prefix/ -o "$outfile" "$ref"
+}
+
+function venv_run_gunicorn() {
+    local FLASK_SERVER_PORT=`awk '/FLASK_SERVER_PORT/ { print $3}' $SCRIPTDIR/settings.py`
+    local opts=''
+    opts="$opts --chdir $SCRIPTDIR"
+    if [ -f "$SCRIPTDIR/server_cert.pem" -a -f "$SCRIPTDIR/server_key.pem" ]; then
+        opts="$opts --certfile=$SCRIPTDIR/server_cert.pem --keyfile=$SCRIPTDIR/server_key.pem"
+    fi
+    if [ -f "$SCRIPTDIR/logging.conf" ]; then
+        opts="$opts --log-config=$SCRIPTDIR/logging.conf"
+    fi
+    opts="$opts --bind 0.0.0.0:$FLASK_SERVER_PORT"
+    if [ $verbose -ne 0 ]; then
+        opts="$opts --log-level debug"
+    fi
+    gunicorn $opts app:app
+    RES=$?
+}
+
+function docker_build_wheel() {
+
+    local package="$1"
+    local depends="$2"
+    local url="$3"
+    local tmpdir=`mktemp -d`
+    local dockerfile="$tmpdir/Dockerfile"
+    local build_sh="$tmpdir/build.sh"
+    local from_tag='3.8-slim'
+    local build_image_name="python-build-wheel:$from_tag"
+    local wheel_dir="$SCRIPTDIR/wheel"
+    local existing=''
+
+    if [ -d "$wheel_dir" ]; then
+        existing=`find "$wheel_dir" -type f -name "${package}*.whl"`
+    fi
+
+    if [ ! -z "$existing" ]; then
+        return 0
+    fi
+
+    cat > "$dockerfile" <<EOF
+ARG TAG=$from_tag
+FROM python:\$TAG
+RUN apt update -y && \
+    apt install -y \
+        build-essential python3-dev \
+        && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+EOF
+
+    docker build --tag "$build_image_name" --build-arg TAG=$from_tag "$tmpdir" || return 1
+
+    if [ ! -z "$depends" ]; then
+    cat > "$dockerfile" <<EOF
+FROM $build_image_name
+RUN apt update -y && \
+    apt install -y \
+        $depends \
+        && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+EOF
+        build_image_name="python-build-wheel-$package:$from_tag"
+        docker build --tag "$build_image_name" --build-arg TAG=$from_tag "$tmpdir" || return 1
+    fi
+
+    if [ ! -z "$url" ]; then
+        cat > "$build_sh" <<EOF
+cd /tmp
+pip wheel "$url" --wheel-dir /src
+EOF
+    else
+        cat > "$build_sh" <<EOF
+cd /tmp
+pip wheel $package --wheel-dir /src
+EOF
+    fi
+
+    docker run --rm -v "$tmpdir:/src" "$build_image_name" '/bin/sh' -x '/src/build.sh' || return 1
+
+    [ ! -d "$wheel_dir" ] && mkdir -p "$wheel_dir"
+    find "$tmpdir" -name '*.whl' -exec cp {} "$wheel_dir" \;
+
+    # Remove temp dir
+    rm -rf "$tmpdir"
+}
+
+function venv_build_wheels() {
+    #docker_build_wheel pyodbc "swig unixodbc-dev" || return 1
+    return 0
+}
+
+function venv_build_docker() {
+    local build_image="$1"
+    local app_binary_depends="$2"
+    local app_use_mssql="$3"
+    local app_use_mysql="$4"
+    #local from_tag='3-alpine'
+    local from_tag='3.8-slim'
+    local tag='latest'
+    local tar_compress_fmt='xz'
+    local tar_compress_cmd='xz --threads=2 -z'
+    #local tar_compress_fmt='bz2'
+    #local tar_compress_cmd='bzip2 -c'
+    #local tar_compress_fmt='gz'
+    #local tar_compress_cmd='gzip -c'
+    local tmpdir=`mktemp -d`
+    local dockerfile="$tmpdir/Dockerfile"
+    local appname=`basename $SCRIPTDIR`
+    local FLASK_SERVER_PORT=`awk '/FLASK_SERVER_PORT/ { print $3}' $SCRIPTDIR/settings.py`
+
+    venv_build_wheels || return 1
+
+    venv_export_archive "$tmpdir" || return 1
+
+    [ ! -d "$SCRIPTDIR/wheel" ] && mkdir "$SCRIPTDIR/wheel"
+    local no_wheels='#'
+    local num_wheels=`ls -1 "$SCRIPTDIR/wheel" | wc -l`
+    if [ $num_wheels -ne 0 ]; then
+        find "$SCRIPTDIR/wheel" -type f -exec cp {} "$tmpdir" \;
+        no_wheels=''
+    fi
+
+    cat > "$dockerfile" <<EOF
+ARG TAG=$from_tag
+FROM python:\$TAG
+ADD *.tar.gz /app/
+${no_wheels}ADD *.whl /tmp/wheel/
+EXPOSE $FLASK_SERVER_PORT
+RUN test ! -d /tmp/wheel && mkdir -p /tmp/wheel ; \
+    find /tmp/wheel -type f -exec pip install {} \; && \
+    rm -rf /tmp/wheel && \
+    pip install -r /app/$appname/requirements.txt && \
+    mkdir /app/etc && \
+    mv /app/$appname/settings.py /app/etc && \
+    ln -s ../etc/settings.py /app/$appname/settings.py && \
+    mv /app/$appname/logging.conf /app/etc && \
+    ln -s ../etc/logging.conf /app/$appname/logging.conf
+EOF
+
+    if [ $app_use_mssql -ne 0 -a $app_use_mysql -ne 0 ]; then
+        local msodbcsql17_file="${msodbcsql17_url##*/}"
+        curl -o "$tmpdir/$msodbcsql17_file" "$msodbcsql17_url"
+
+        local mysql_odbc_file="${mysql_odbc_url##*/}"
+        curl -L -o "$tmpdir/$mysql_odbc_file" "$mysql_odbc_url"
+
+        # NOTE: MSSQL fails to connect with latest OpenSSL versions because of TLS1.2. To fix the connect error
+        #       the default SSL params need to be tweaked. This issue especially occurs for SQL servers, which
+        #       haven't installed the latest patches/updates from M$ (like on Vienna airport).
+        #       See https://github.com/microsoft/msphpsql/issues/252 and
+        #           https://github.com/microsoft/msphpsql/issues/1021
+        # BEGIN: MSSQL ODBC Driver
+        cat >> "$dockerfile" <<EOF
+ADD msodbcsql17_*.deb mysql-connector-odbc_*.deb /tmp/
+RUN apt update -y && \
+    ACCEPT_EULA=Y apt install -y $app_binary_depends /tmp/msodbcsql17_*.deb /tmp/mysql-connector-odbc_*.deb && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm /tmp/msodbcsql17_* /tmp/mysql-connector-odbc_* && \
+    sed -i 's/TLSv1.2/TLSv1/g' /etc/ssl/openssl.cnf && \
+    sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /etc/ssl/openssl.cnf
+EOF
+        # END: MSSQL ODBC Driver
+    elif [ $app_use_mssql -ne 0 ]; then
+
+
+        # NOTE: MSSQL fails to connect with latest OpenSSL versions because of TLS1.2. To fix the connect error
+        #       the default SSL params need to be tweaked. This issue especially occurs for SQL servers, which
+        #       haven't installed the latest patches/updates from M$ (like on Vienna airport).
+        #       See https://github.com/microsoft/msphpsql/issues/252 and
+        #           https://github.com/microsoft/msphpsql/issues/1021
+        # BEGIN: MSSQL ODBC Driver
+        local msodbcsql17_file="${msodbcsql17_url##*/}"
+        curl -o "$tmpdir/$msodbcsql17_file" "$msodbcsql17_url"
+        # BEGIN: MSSQL ODBC Driver
+        cat >> "$dockerfile" <<EOF
+ADD msodbcsql17_*.deb /tmp/
+RUN apt update -y && \
+    ACCEPT_EULA=Y apt install -y $app_binary_depends /tmp/msodbcsql17_* && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm /tmp/msodbcsql17_* && \
+    sed -i 's/TLSv1.2/TLSv1/g' /etc/ssl/openssl.cnf && \
+    sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /etc/ssl/openssl.cnf
+EOF
+        # END: MSSQL ODBC Driver
+    elif [ ! -z "$app_binary_depends" ]; then
+       # add any required binary packages
+        cat >> "$dockerfile" <<EOF
+RUN apt update -y && \
+    apt install -y $app_binary_depends && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+EOF
+    fi
+
+    # Add the final line with the command/entrypoint
+    if [ -f "$SCRIPTDIR/entrypoint.sh" ]; then
+        cp "$SCRIPTDIR/entrypoint.sh" "$tmpdir"
+        cat >> "$dockerfile" <<EOF
+ADD entrypoint.sh /app/
+CMD ["bash", "/app/entrypoint.sh", "$appname", "$FLASK_SERVER_PORT"]
+EOF
+    else
+        if [ $verbose -ne 0 ]; then
+            cat >> "$dockerfile" <<EOF
+CMD ["gunicorn", "--chdir", "/app/$appname", "--log-level", "debug", "--log-config", "/app/etc/logging.conf", "--bind", "0.0.0.0:$FLASK_SERVER_PORT", "app:app"]
+EOF
+        else
+            cat >> "$dockerfile" <<EOF
+CMD ["gunicorn", "--chdir", "/app/$appname", "--log-config", "/app/etc/logging.conf", "--bind", "0.0.0.0:$FLASK_SERVER_PORT", "app:app"]
+EOF
+        fi
+    fi
+
+    docker build --tag "fast-abv-$appname:$tag" --build-arg TAG=$from_tag "$tmpdir" || return 1
+
+    if [ ! -z "$BUILD_NUMBER" ]; then
+        docker tag "fast-abv-$appname:$tag" "fast-abv-$appname:$BUILD_NUMBER" || return 1
+    fi
+
+    if [ ! -z "$docker_repo" ]; then
+        if [ ! -z "$BUILD_NUMBER" ]; then
+            docker tag "fast-abv-$appname:$BUILD_NUMBER" "${docker_repo}/fast-abv-$appname:$BUILD_NUMBER" || return 1
+            docker push "${docker_repo}/fast-abv-$appname:$BUILD_NUMBER" || return 1
+        fi
+        docker tag "fast-abv-$appname:$BUILD_NUMBER" "${docker_repo}/fast-abv-$appname:latest" || return 1
+        docker push "${docker_repo}/fast-abv-$appname:latest" || return 1
+    fi
+
+    if [ $build_image -ne 0 ]; then
+        local image_file
+        local image_src
+        if [ ! -z "$BUILD_NUMBER" ]; then
+            image_file="$SCRIPTDIR/fast-abv-${appname}_${BUILD_NUMBER}.tar.${tar_compress_fmt}"
+            image_src="fast-abv-$appname:$BUILD_NUMBER"
+        else
+            image_file="$SCRIPTDIR/fast-abv-${appname}_${tag}.tar.xz"
+            image_src="fast-abv-$appname:$tag"
+        fi
+        echo "Save image \"${image_src}\" to \"$image_file\""
+        docker image save "${image_src}" | ${tar_compress_cmd} > "$image_file"
+    fi
+
+    #docker run --rm -v "$tmpdir:/src" fast-rpmbuild-python:$lsb_rel /bin/bash "/src/build.sh"
+
+    #echo "tmp dir in $tmpdir"
+    #find "$tmpdir" -type f -name '*.rpm' -print -exec cp {} "$SCRIPTDIR" \;
+    # Remove temp dir
+    rm -rf "$tmpdir"
+}
+
+function venv_run() {
+    . "$VENV_DIR/bin/activate"
+    if [ $venv_gunicorn -ne 0 ]; then
+        venv_run_gunicorn
+        RES=$?
+    else
+        python3 "$SCRIPTDIR/app.py"
+        RES=$?
+    fi
+    deactivate
+}
+
+
+verbose=0
+venv_initialize=0
+venv_gunicorn=0
+venv_rpm=0
+venv_rpm_with_docker=0
+venv_rpm_run=0
+venv_docker=0
+venv_docker_image=0
+venv_docker_binary_depends=''
+venv_docker_use_mssql=1
+venv_docker_use_mysql=1
+venv_export=0
+venv_run_installed=0
+venv_build_wheels=0
+build_wheel=''
+build_wheel_depends=''
+
+
+# parse command line arguments
+while [ $# -ne 0 ]; do
+	case "$1" in
+	'-?'|'-h'|'--help') usage;;
+	'-v'|'--verbose') verbose=1; set -x; ;;
+	'--init') venv_initialize=1; ;;
+	'--gunicorn') venv_gunicorn=1; ;;
+	'--rpm')
+        # check if we are already inside a docker container
+        if [ -f "/.dockerenv" ]; then
+            venv_rpm=1;
+        else
+            venv_rpm_with_docker=1;
+        fi
+        ;;
+    '--docker') venv_docker=1; ;;
+    '--docker-image') venv_docker=1; venv_docker_image=1; ;;
+    '--wheel') shift; build_wheel="$1"; ;;
+    '--depends') shift; build_wheel_depends="$1"; ;;
+    '--wheels') venv_build_wheels=1; ;;
+	'--export') venv_export=1; ;;
+	'--run-rpm') venv_rpm_run=1; ;;
+	-*)
+		echo "Unrecognized option $1" >&2
+		exit 1
+		;;
+	*)
+        echo "Unrecognized argument $1" >&2
+        exit 1
+		;;
+	esac
+	shift
+done
+
+if [ $venv_initialize -ne 0 ]; then
+    do_initialize_venv
+    RES=$?
+    exit $RES
+elif [ $venv_rpm_with_docker -ne 0 ]; then
+    venv_docker_rpmbuild
+    RES=$?
+    exit $RES
+elif [ $venv_rpm -ne 0 ]; then
+    venv_build_rpm
+    RES=$?
+    exit $RES
+elif [ $venv_export -ne 0 ]; then
+    venv_export_archive "$SCRIPTDIR"
+    RES=$?
+    exit $RES
+elif [ $venv_rpm_run -ne 0 ]; then
+    venv_docker_run_rpm
+    RES=$?
+    exit $RES
+elif [ $venv_docker -ne 0 ]; then
+    venv_build_docker "$venv_docker_image" "$venv_docker_binary_depends" "$venv_docker_use_mssql" "$venv_docker_use_mysql"
+    RES=$?
+    exit $RES
+elif [ $venv_build_wheels -ne 0 ]; then
+    venv_build_wheels
+    RES=$?
+    exit $RES
+elif [ ! -z "$build_wheel" ]; then
+    docker_build_wheel "$build_wheel" "$build_wheel_depends"
+    RES=$?
+    exit $RES
+fi
+
+# check if the script is installed and a copy of python can be found beside it
+if [ -x "$SCRIPTDIR/python" ]; then
+    venv_run_installed=1
+    scriptdirname=`basename "$SCRIPTDIR"`
+    if [ "$scriptdirname" == 'bin' ]; then
+        VENV_DIR=`readlink -f "$SCRIPTDIR/.."`
+    else
+        VENV_DIR="$SCRIPTDIR"
+    fi
+    PATH="$VENV_DIR/bin:$PATH" venv_run_gunicorn
+    exit $RES
+elif [ ! -d "$VENV_DIR" ]; then
+    echo "No virtualenv directory $VENV_DIR found. Run '$SCRIPTFILE --init'" >&2
+    exit 2
+elif [ ! -f "$VENV_DIR/bin/activate" ]; then
+    echo "No virtualenv directory $VENV_DIR not initialized. Run '$SCRIPTFILE --init'" >&2
+    exit 2
+else
+    venv_run
+    RES=$?
+    exit $RES
+fi
+

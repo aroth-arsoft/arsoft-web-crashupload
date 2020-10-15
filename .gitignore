@@ -38,3 +38,4 @@ nosetests.xml
 /build/
 /data/
 /dumpdata/
+/venv/

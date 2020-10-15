@@ -12,7 +12,7 @@ class CrashDumpState(models.Model):
 
 class CrashDumpModel(models.Model):
     crashid = models.CharField('Crash id', max_length=36, unique=True, help_text='unique identifier of the crash')
-    state = models.ForeignKey(CrashDumpState)
+    state = models.ForeignKey(CrashDumpState, on_delete=models.CASCADE)
     timestamp = models.DateTimeField('Timestamp', auto_now_add=True)
     applicationName = models.CharField('Application name', max_length=256, help_text='name of the application which caused the crash')
     applicationFile = models.CharField('Application file', max_length=512, help_text='file of the application which caused the crash')
@@ -89,7 +89,7 @@ class CrashDumpModel(models.Model):
         return '%s (%s at %s)' % (self.id, self.applicationName, self.timestamp)
 
 class CrashDumpAttachment(models.Model):
-    crash = models.ForeignKey(CrashDumpModel)
+    crash = models.ForeignKey(CrashDumpModel, on_delete=models.CASCADE)
     name = models.CharField('Name', max_length=256, help_text='name of the attachment')
     description = models.TextField('Description', max_length=8192, help_text='description of the attachment')
     storageFile = models.CharField('Storage file', max_length=256, help_text='path to the stored attachment file')
@@ -99,7 +99,7 @@ class CrashDumpAttachment(models.Model):
         verbose_name_plural = "Crash attachments"
 
 class CrashDumpLink(models.Model):
-    crash = models.ForeignKey(CrashDumpModel)
+    crash = models.ForeignKey(CrashDumpModel, on_delete=models.CASCADE)
     name = models.CharField('Name', max_length=256, null=True, help_text='name of the link')
     url = models.TextField('URL', max_length=2048, help_text='URL')
 

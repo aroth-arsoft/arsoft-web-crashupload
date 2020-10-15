@@ -1,9 +1,9 @@
 from django.template import RequestContext, loader
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
