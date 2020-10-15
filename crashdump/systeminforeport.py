@@ -10,7 +10,7 @@ from datetime import datetime
 
 from arsoft.inifile import IniFile
 from crashdump.xmlreport import XMLReport
-from utils import language_from_qlocale_language_enum, country_from_qlocale_country_enum, script_from_qlocale_script_enum
+from crashdump.utils import language_from_qlocale_language_enum, country_from_qlocale_country_enum, script_from_qlocale_script_enum
 
 class _Terra3DDirectories(object):
     _dirlist = [
