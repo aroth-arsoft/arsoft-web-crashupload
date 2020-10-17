@@ -122,7 +122,7 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     # If DISABLE_DEBUG_INFO_PAGE is set the 
     settings_obj.DISABLE_DEBUG_INFO_PAGE = False
 
-    settings_obj.ADMINS = _get_default_admin()
+    settings_obj.ADMINS = _get_default_admin() 
     settings_obj.MANAGERS = settings_obj.ADMINS
 
     # If you set this to False, Django will make some optimizations so as not
@@ -250,7 +250,7 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
         settings_obj.APP_DATA_DIR = app_data_dir
 
     # Fixture Dir
-    settings_obj.FIXTURE_DIRS = ( os.path.join(appdir, 'fixtures') )
+    settings_obj.FIXTURE_DIRS = ( os.path.join(appdir, 'fixtures'),  )
 
     # and finally set up the list of installed applications
     settings_obj.INSTALLED_APPS = [
@@ -310,13 +310,14 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
                 },
                 # Log to a text file that can be rotated by logrotate
                 'logfile': {
+                    'level': 'DEBUG',
                     'class': 'logging.handlers.WatchedFileHandler',
                     'filename': os.path.join(settings_obj.LOG_DIR, appname + '.log')
                 },
             },
             'loggers': {
                 'django.request': {
-                    'handlers': ['mail_admins', 'logfile'] if not settings_obj.DEBUG else ['logfile'],
+                    'handlers': ['logfile'],
                     'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
                     'propagate': True,
                 },
@@ -606,9 +607,9 @@ def django_debug_info(request):
     import datetime
     from django.conf import settings
     from django.http import HttpResponse, HttpResponseForbidden
-    from django.template import Template, Context
+    from django.template import Template, Context, Engine
     from django.utils.encoding import force_bytes, smart_text
-    from django.core.urlresolvers import get_script_prefix, get_resolver
+    from django.urls import get_script_prefix, get_resolver
     from django import get_version
 
     disable = is_debug_info_disabled()
@@ -619,12 +620,16 @@ def django_debug_info(request):
 
     urlpatterns = django_debug_urls()
 
+    eng = Engine.get_default()
+
+
     t = Template(DEBUG_INFO_VIEW_TEMPLATE, name='Debug Info template')
     c = Context({
         'request_path': request.path_info,
         'urlpatterns': urlpatterns,
         'reason': 'N/A',
         'request': request,
+        'template_libraries': eng.template_libraries,
         'settings': get_safe_settings(),
         'script_prefix': script_prefix,
         'sys_executable': sys.executable,
@@ -757,9 +762,17 @@ DEBUG_INFO_VIEW_TEMPLATE = """
         <th>settings module:</th>
         <td><code>{{ settings.SETTINGS_MODULE }}</code></td>
       </tr>
+      <tr>
+        <th>Template Libraries:</th>
+        <td><ul>
+          {% for item in template_libraries %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+        </ul></td>
+      </tr>
     </table>
   </div>
-  
+
   <div id="info">
       <ol>
         {% for pattern in urlpatterns %}

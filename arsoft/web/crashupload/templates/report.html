@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load crashupload_utils %}
+
+{% block content %}
+
+<h1 class="title">Crash {{ object.crashid }} of {{ object.get_applicationName }} at {{ object.crashtimestamp|date:"Y-m-d H:i:s" }}</h1>
+<div id="crashdump">
+<table class="properties">
+<tr><td>Id</td><td>{{ object.crashid }}</td></tr>
+<tr><td>State</td><td>{{ object.state.description }}</td></tr>
+{% if xmlfile_error %}
+<tr><th>XML Error:</th><td>{{ xmlfile_error }}</td></tr>
+{% endif %}
+{% if minidumpfile_error %}
+<tr><th>Minidump Error:</th><td>{{ minidumpfile_error }}</td></tr>
+{% endif %}
+{% if show_debug_info %}
+<tr><th>Parse time:</th><td>{% format_seconds parsetime %}</td></tr>
+<tr><th>Database time:</th><td>{% format_seconds dbtime %}</td></tr>
+<tr><th>Is 64-Bit:</th><td>{{is_64_bit}}</td></tr>
+<tr><th>Bits:</th><td>{{bits}}</td></tr>
+{% endif %}
+<tr><td>Crash Timestamp</td><td>{{ object.crashtimestamp|date:"Y-m-d H:i:s" }}</td></tr>
+<tr><td>Report Timestamp</td><td>{{ object.reporttimestamp|date:"Y-m-d H:i:s" }}</td></tr>
+<tr><td>Application name</td>
+    <td><a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a></td>
+</tr>
+<tr><td>Application file</td><td>{{ object.applicationFile }}</td></tr>
+<tr><td>Reporter FQDN</td><td>{{ object.reportHostName }}</td></tr>
+<tr><td>Reporter username</td><td>{{ object.reportUserName }}</td></tr>
+<tr><td>Client FQDN</td><td>{{ object.crashHostName }}</td></tr>
+<tr><td>Client username</td><td>{{ object.crashUserName }}</td></tr>
+<tr><td>Product name</td><td>{{ object.productName}}</td></tr>
+<tr><td>Product version</td><td>{{ object.productVersion }}</td></tr>
+<tr><td>Product target version</td><td>{{ object.productTargetVersion }}</td></tr>
+<tr><td>Build type</td><td>{{ object.buildType }}</td></tr>
+<tr><td>Build postfix</td><td>{{ object.buildPostfix }}</td></tr>
+<tr><td>Machine type</td><td>{{ object.machineType }}</td></tr>
+
+<tr><td>System name</td><td>{{ object.systemName }}</td></tr>
+<tr><td>OS version</td><td>{{ object.osVersion }}</td></tr>
+<tr><td>OS release</td><td>{{ object.osRelease }}</td></tr>
+<tr><td>OS machine</td><td>{{ object.osMachine }}</td></tr>
+
+{% if object.has_minidump %}
+    <tr><th>Minidump file</th><td class="fullrow">
+        {% if object.minidumpFile %}
+        <a href="{% url "crash_report" object.id "minidump" "raw" %}" title="{{object.crashid}} ({% format_size minidumpfile_size %})">Download</a>
+        {% endif %}
+        {% if object.minidumpReportTextFile %}
+            &nbsp;<a href="{% url "crash_report" object.id "minidumpTextReport" "raw" %}" title="{{object.crashid}} ({% format_size reporttextfile_size %})">Text report</a>
+        {% endif %}
+        {% if object.minidumpReportXMLFile %}
+            &nbsp;<a href="{% url "crash_report" object.id "minidumpXMLReport" "raw" %}" title="{{object.crashid}} ({% format_size xmlfile_size %})">XML report</a>
+        {% endif %}
+        {% if object.minidumpReportHTMLFile %}
+            &nbsp;<a href="{% url "crash_report" object.id "minidumpHTMLReport" "raw" %}" title="{{object.crashid}} ({% format_size reporthtmlfile_size %})">HTML report</a>
+        {% endif %}
+    </td></tr>
+{% endif %}
+
+{% if object.has_coredump %}
+<tr><th>Minidump file</th><td class="fullrow">
+    {% if object.coredumpFile %}
+    <a href="{% url "crash_report" object.id "coredump" "raw" %}" title="{{object.crashid}} ({% format_size coredumpfile_size %})">Download</a>
+    {% endif %}
+    {% if object.coredumpReportTextFile %}
+        &nbsp;<a href="{% url "crash_report" object.id "coredumpTextReport" "raw" %}" title="{{object.crashid}} ({% format_size reporttextfile_size %})">Text report</a>
+    {% endif %}
+    {% if object.coredumpReportXMLFile %}
+        &nbsp;<a href="{% url "crash_report" object.id "coredumpXMLReport" "raw" %}" title="{{object.crashid}} ({% format_size xmlfile_size %})">XML report</a>
+    {% endif %}
+    {% if object.coredumpReportHTMLFile %}
+        &nbsp;<a href="{% url "crash_report" object.id "coredumpHTMLReport" "raw" %}" title="{{object.crashid}} ({% format_size reporthtmlfile_size %})">HTML report</a>
+    {% endif %}
+</td></tr>
+{% endif %}
+
+<tr><td>System info</td><td><pre>{{ object.systemInfoData }}</pre></td></tr>
+<tr><td>Gfx capabilities</td><td>
+{% if object.gfxCapsFile %}
+<a href="{% url "crash_report" object.id "gfxCaps" "raw" %}">Download</a>
+&nbsp;<a href="{% url "crash_report" object.id "gfxCaps" "text" %}">Plain text</a>
+{% endif %}
+</td></tr>
+
+<tr><td>Attachments</td><td><ul>
+{% for attachment in attachments %}
+<li>{{ attachment.name }}</li>
+{% endfor %}
+</ul></td></tr>
+
+<tr><td>Links ss</td><td><ul>
+{% for link in links %}
+<li><a href="{{link.target}}">{{ link.name }}</a></li>
+{% endfor %}
+</ul>
+</td></tr>
+
+</table>
+<!-- close the crashdump yellow box -->
+</div>
+
+{% if system_info %}
+<a name="sysinfo"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___sysinfo">System information</a></h4></div>
+      <div id="view___sysinfo" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if fast_protect_version_info %}
+<a name="sysinfo_ex"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___sysinfo_ex">More system information</a></h4></div>
+      <div id="view___sysinfo_ex" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if fast_protect_version_info %}
+<a name="fast_protect_version_info"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___fast_protect_version_info">Version info</a></h4></div>
+      <div id="view___fast_protect_version_info" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if exception %}
+<a name="exception"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___exception">{% if assertion %}Assertion{% else %}Exception{% endif %}</a></h4></div>
+      <div id="view___exception" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if modules %}
+<a name="modules"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___modules">Modules</a></h4></div>
+      <div id="view___modules" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if threads %}
+<a name="threads"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___threads">Threads</a></h4></div>
+      <div id="view___threads" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if stackdumps %}
+<a name="stackdumps"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___stackdumps">Stack dumps</a></h4></div>
+      <div id="view___stackdumps" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if memory_regions %}
+<a name="memory_regions"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___memory_regions">Memory regions</a></h4></div>
+      <div id="view___memory_regions" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if memory_blocks %}
+<a name="memory_blocks"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___memory_blocks">Memory blocks</a></h4></div>
+      <div id="view___memory_blocks" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if file_info %}
+<a name="file_info"/>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___file_info">Processing log</a></h4></div>
+      <div id="view___file_info" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
+</div>
+{% endif %}
+
+<a href="{% url "home" %}">Back to list</a>
+
+{% endblock %}

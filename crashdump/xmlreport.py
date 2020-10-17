@@ -434,6 +434,13 @@ class XMLReport(object):
                 return False
             return bool(self._real_object)
 
+        def __bool__(self):
+            if self._real_object is None:
+                object.__setattr__(self, '_real_object', getattr(self._report, self._field_name))
+            if self._real_object is None:
+                return False
+            return bool(self._real_object)
+
         def __len__(self):
             if self._real_object is None:
                 object.__setattr__(self, '_real_object', getattr(self._report, self._field_name))

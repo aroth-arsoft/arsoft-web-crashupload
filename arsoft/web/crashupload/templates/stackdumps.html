@@ -1,0 +1,12 @@
+{% load crashupload_utils %}
+
+{% for stackdump in stackdumps %}
+{% if not stackdump.simplified %}
+<a name="stackdump_{{stackdump.threadid}}"/>
+<div id="view___stackdump___{{stackdump.threadid}}" class="{% if not stackdump.exception %}collapsed{% endif %}">
+<h3 class="delayfoldable">{% format_thread stackdump.thread %}</h3>
+</div>
+{% endif %}
+{% endfor %}
+
+<div>aaa</div>

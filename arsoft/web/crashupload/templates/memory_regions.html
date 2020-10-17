@@ -1,0 +1,42 @@
+{% load crashupload_utils %}
+
+<table class="properties">
+<tr>
+<th>Base address</th>
+<th>Size</th>
+<th>Usage</th>
+<th>Alloc base</th>
+<th>Alloc protect</th>
+<th>Type</th>
+<th>Protect</th>
+<th>State</th>
+</tr>
+{% for memory_region in memory_regions %}
+<tr>
+<td><div class="address">{% addr_format_bits memory_region.base_addr bits %}</div></td>
+<td>{% format_size memory_region.size %} </td>
+<td>
+{% if memory_region.usage %}
+<ol>
+    {% for m in memory_region.usage %}
+    <li>
+        {% if m.threadid %}
+        <a href="#thread_{{m.threadid}}" title="Go to thread {% hex_format m.threadid %}">Thread {% hex_format m.threadid %}&nbsp;-&nbsp;{% format_memory_usagetype m.usagetype %}</a>
+        {% else %}
+        <div>{% format_memory_usagetype m.usagetype %}</div>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ol>
+{% else %}
+<div>N/A</div>
+{% endif %}
+</td>
+<td><div class="address">{% addr_format_bits memory_region.alloc_base bits %}</div></td>
+<td>{% hex_format memory_region.alloc_prot %}</td>
+<td>{% hex_format memory_region.type %}</td>
+<td>{% hex_format memory_region.protect %}</td>
+<td>{% hex_format memory_region.state %}</td>
+</tr>
+{% endfor %}
+</table>

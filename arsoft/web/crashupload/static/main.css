@@ -2,6 +2,7 @@ body {
     background-color:#FEFEF2;
     font-family:helvetica, arial, verdana, sans-serif;
 }
+/*
 th,td {
     padding-left: 3pt;
     padding-right: 3pt;
@@ -14,6 +15,7 @@ table,tr,th,td {
     border: 1px solid black;
     border-collapse: collapse;
 }
+*/
 ul {
     list-style-type: square;
     padding-top: 0px;

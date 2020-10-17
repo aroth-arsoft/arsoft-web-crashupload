@@ -1,0 +1,35 @@
+{% load crashupload_utils %}
+
+<table class="properties">
+<tr>
+<th>Id</th>
+<th>Name</th>
+<th>Location</th>
+<th>Memory</th>
+<th>Start address</th>
+<th>Create time</th>
+<th>Exit time</th>
+<th>Kernel time</th>
+<th>User time</th>
+<th>CPU affinity</th>
+</tr>
+{% for thread in threads %}
+<tr>
+<td><a name="thread_{{thread.id}}"><a href="#stackdump_{{thread.id}}">{% hex_format thread.id %}</a>{% thread_extra_info thread %}</a></td>
+<td>{% if thread.name %}{{thread.name}}{% else %}N/A{% endif %}</td>
+<td>{% format_stack_frame thread.location %}</td>
+<td>
+    {% if thread.memory %}<a href="#memory_block_{{thread.memory}}"><div class="address">{% addr_format_bits thread.memory bits %}</div></a>
+    {% else %}
+    N/A
+    {% endif %}
+</td>
+<td><div class="address">{% addr_format_bits thread.start_addr bits %}</div></td>
+<td>{{ thread.create_time|date }}</td>
+<td>{{ thread.exit_time|date }}</td>
+<td>{% format_milliseconds thread.kernel_time %}</td>
+<td>{% format_milliseconds thread.user_time %}</td>
+<td>{% hex_format thread.cpu_affinity %}</td>
+</tr>
+{% endfor %}
+</table>

@@ -18,11 +18,14 @@ class CrashDumpModelForm(forms.ModelForm):
         fields = '__all__'
 
 class CrashDumpModelAdmin(admin.ModelAdmin):
-    list_display = ('crashid', 'timestamp', 'applicationName', 'clientHostName', 'clientUserName', 'productName', 'productVersion')
+    list_display = ('crashid', 'crashtimestamp', 'reporttimestamp', 'applicationName', 
+        'reportHostName', 'reportUserName', 'crashHostName', 'crashUserName', 
+        'productName', 'productCodeName', 'productVersion')
+
     fields = ['crashid',
             'applicationFile', 'applicationName',
-            'clientHostName', 'clientUserName',
-            'productName', 'productVersion', 'productTargetVersion',
+            'reportHostName', 'reportUserName', 'crashHostName', 'crashUserName', 
+            'productName', 'productCodeName', 'productVersion', 'productTargetVersion',
             'buildType', 'buildPostfix',
             'machineType', 'systemName',
             'osVersion', 'osRelease', 'osMachine'

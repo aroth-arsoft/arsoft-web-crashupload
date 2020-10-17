@@ -1,0 +1,16 @@
+{% load crashupload_utils %}
+
+{% for memory_block in memory_blocks %}
+
+    <div class="panel-group crashdump_box">
+        <div class="panel panel-default">
+        <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___memory_block___{{memory_block.base}}">
+        Memory block #{{memory_block.num}} at {% addr_format_bits memory_block.base bits %} size {% format_size memory_block.size %}
+        {% if memory_block.threadid %}
+            (memory of thread {% hex_format memory_block.threadid %})
+        {% endif %}
+        </a></h4></div>
+        <div id="view___memory_block___{{memory_block.base}}" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+        </div>
+    </div>
+{% endfor %}

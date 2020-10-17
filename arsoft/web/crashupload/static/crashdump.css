@@ -1,0 +1,219 @@
+#content.crashdump {
+ width: 58em;
+ max-width: 100%;
+ margin-left: auto;
+ margin-right: auto;
+}
+
+#field-description-help { float: right }
+#properties div.trac-resizable, #field-description { width: 100% }
+
+#content.crashdump .trac-topnav {
+ float: none;
+ text-align: right;
+ margin-top: 0;
+}
+
+/* "Yellow crashdump box" */
+#crashdump, .crashdump_box {
+ background: #ffd;
+ border: 1px solid #dd9;
+ border-radius: .4em;
+ margin-top: .2em;
+ padding: .5em 1em;
+}
+
+.crashdump_box h4 {
+ padding: 0px;
+ margin: 0;
+ color: #222;
+ font-weight: normal;
+ font-size: 1.2em;
+ /*
+ font-size: 80%;
+ */
+ letter-spacing: 0;
+}
+
+#placeholder {
+ border: 0px;
+ margin: 0px;
+ padding: 0px;
+ position: relative;
+}
+
+div.loading_message {
+ color: #844;
+ font-size: 120%;
+ vertical-align: middle;
+ text-align: center;
+}
+
+.crashdump_box a:link, .crashdump_box a:visited {
+ background: url(expanded.png) 4px 50% no-repeat;
+ box-shadow: none;
+ border:none;
+ color: #222;
+ text-shadow: .04em .04em #fcfcfc;
+ padding: .2em .5em .3em 20px;
+}
+.crashdump_box a:link.collapsed, .crashdump_box a:visited.collapsed {
+ background: url(collapsed.png) 4px 50% no-repeat;
+ box-shadow: none;
+ border:none;
+ color: #222;
+ text-shadow: .04em .04em #fcfcfc;
+ padding: .2em .5em .3em 20px;
+}
+
+.delayfoldable :link:hover, .delayfoldable :visited:hover { background-color: transparent }
+.collapsed > .delayfoldable :link, .collapsed > .delayfoldable :visited {
+ background-image: url(../common/collapsed.png);
+}
+
+#crashdump > h2 .trac-id {
+ color: #844;
+ font-size: 145%;
+ vertical-align: middle;
+ margin: 0 .4em 0 0;
+}
+#crashdump > h2 .trac-status {
+ color: #844;
+ vertical-align: middle;
+}
+#crashdump > h2 .trac-type {
+ color: #955;
+ vertical-align: middle;
+}
+#crashdump > h2 .trac-resolution {
+ vertical-align: middle;
+}
+
+#crashdump .date {
+ color: #996;
+ float: right;
+ font-size: 85%;
+ position: relative;
+ top: -.2em;
+}
+#crashdump .date p { margin: .3em }
+
+table.properties {
+ clear: both;
+ border: none;
+ border-top: 1px solid #dd9;
+ border-collapse: collapse;
+}
+table.properties tr { border-bottom: 1px dotted #eed }
+table.properties td, table.properties th {
+ color: #663;
+ font-size: 80%;
+ padding: .5em 1em 0 0;
+ vertical-align: top;
+ text-align: left;
+}
+table.properties td.fullrow {
+ width: 90%;
+}
+table.properties th {
+ color: #663;
+ font-weight: normal;
+ white-space: nowrap;
+}
+table.properties th.missing { color: #d3d398; }
+table.properties td p:first-child { margin-top: 0 }
+table.properties td p:last-child { margin-bottom: 0 }
+table.properties .description { border-top: 1px solid #dd9 }
+
+#crashdump .description h3 {
+ border-bottom: 1px solid #dd9;
+ color: #663;
+ font-size: 100%;
+ font-weight: normal;
+}
+#crashdump .description h3 .lastmod {
+ font-size: 90%;
+}
+#crashdump .inlinebuttons {
+ float: right;
+ position: relative;
+ bottom: 0.3em;
+}
+
+
+.trac-shade { background-color: #eee }
+#trac-threaded-form { float: right }
+
+/* Threaded comments */
+ul.children {
+ margin-top: 1.5em;
+ padding-left: 2em;
+ list-style-image: url(../inreply.png);
+}
+ul.children > li.child {
+ padding-left: .5em;
+ margin-bottom: 1.5em;
+ border-left: 1px solid #bbb;
+ border-radius: 1em;
+}
+
+/* Comment contents */
+#changelog h3, #crashdumpchange h3 {
+ border-bottom: 1px solid #d7d7d7;
+ box-shadow: .1em .4em .7em 0 #f2f2f2;
+ padding: 0 .2em;
+ margin-bottom: .5em;
+ color: #999;
+ font-size: 100%;
+ font-weight: normal;
+}
+@media print {
+ #changelog h3, #crashdumpchange h3 { box-shadow: none }
+}
+
+pre.hexdump, pre.cmdline {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+div.memory_block, div.stackdump {
+    padding-left: 16pt;
+}
+td.memory_block, tr.memory_block, table.memory_block {
+    border: 0;
+    border-spacing: 0;
+    border-collapse: collapse;
+    width: 1px;
+    text-align:left;
+    vertical-align: top;
+    padding-left: 3pt;
+    padding-right: 3pt;
+    padding-top: 1pt;
+    padding-bottom: 1pt;
+    margin: 0px;
+}
+ol, ul {
+    padding-top: 0pt;
+    padding-bottom: 0pt;
+    padding-left: 2em;
+    margin: 0px;
+    white-space: nowrap;
+}
+ol li, ul li {
+    padding-top: 1pt;
+    padding-bottom: 1pt;
+}
+ul.environment,ul.dirlist {
+    list-style-type: square;
+    white-space: nowrap;
+}
+.crashdump-nav {
+ font-size: 80%;
+}
+.address {
+    font-family: mono;
+    white-space: nowrap;
+}

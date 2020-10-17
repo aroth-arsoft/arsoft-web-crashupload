@@ -4,8 +4,23 @@
 
 crashdump_use_jinja2 = False
 
+def _(msg):
+    return msg
+
+def tag_a(name, title=None, href=None, alt=None):
+    from xml.etree.ElementTree import Element, tostring
+    a = Element('a')
+    a.text = name
+    if href:
+        a.set('href', href)
+    if title:
+        a.set('title', title)
+    if alt:
+        a.set('alt', alt)
+    return tostring(a, encoding="utf8", method='html').decode()
+
 def _hex_format(number, prefix='0x', width=None, bits=None):
-    if isinstance(number, str) or isinstance(number, unicode):
+    if isinstance(number, str):
         try:
             number = int(number)
         except ValueError:
@@ -49,6 +64,9 @@ def hex_format(number, prefix='0x', width=None, bits=None):
     else:
         return _hex_format(number, prefix, width, bits)
 
+def hex_format_bits(number, bits):
+    return hex_format(number, bits=bits)
+
 def addr_format(number, prefix='0x', bits=64):
     if number == 0:
         return 'NULL'
@@ -73,21 +91,22 @@ def addr_format_32(number, prefix='0x'):
     else:
         return hex_format(number, prefix, bits=32)
 
+def addr_format_bits(number, bits=64):
+    return addr_format(number, bits=bits)
+
 def exception_code(platform_type, code, name):
-    from trac.util.html import html as tag
     if platform_type is None:
         return 'Platform unknown'
     elif platform_type == 'Linux':
-        return tag.a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Unix_signal')
+        return tag_a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Unix_signal')
     elif platform_type == 'Windows NT':
-        return tag.a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Windows_NT')
+        return tag_a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Windows_NT')
     elif platform_type == 'Windows':
-        return tag.a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Microsoft_Windows')
+        return tag_a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Microsoft_Windows')
     else:
-        return tag.a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Special:Search/' + str(platform_type))
+        return tag_a(str(name) + '(' + hex_format(code) + ')', href='https://en.wikipedia.org/wiki/Special:Search/' + str(platform_type))
 
 def format_bool_yesno(val):
-    from trac.util.translation import _
     if isinstance(val, str) or isinstance(val, unicode):
         try:
             val = bool(val)
@@ -103,11 +122,9 @@ def format_bool_yesno(val):
         return _('neither')
 
 def format_source_line(source, line, line_offset=None, source_url=None):
-    from trac.util.translation import _
     if source is None:
         return _('unknown')
     else:
-        from trac.util.html import html as tag
         title = str(source) + ':' + str(line)
         if line_offset is not None:
             title += '+' + hex_format(line_offset)
@@ -115,10 +132,9 @@ def format_source_line(source, line, line_offset=None, source_url=None):
             href = source_url
         else:
             href='file:///' + str(source)
-        return tag.a(title, href=href)
+        return tag_a(title, href=href)
 
 def format_function_plus_offset(function, funcoff=None):
-    from trac.util.translation import _
     if function is None:
         return _('unknown')
     else:
@@ -128,7 +144,6 @@ def format_function_plus_offset(function, funcoff=None):
             return str(function)
 
 def str_or_unknown(str):
-    from trac.util.translation import _
     if str is None:
         return _('unknown')
     else:
@@ -177,8 +192,7 @@ def format_cpu_type(cputype):
     else:
         href = 'http://en.wikipedia.org/wiki/Central_processing_unit'
         title = cputype
-    from trac.util.html import html as tag
-    return tag.a(title, title=cputype, href=href)
+    return tag_a(title, title=cputype, href=href)
 
 def format_cpu_vendor(vendor):
     if vendor == 'AuthenticAMD':
@@ -202,8 +216,7 @@ def format_cpu_vendor(vendor):
     else:
         title = vendor
         href = 'http://en.wikipedia.org/wiki/List_of_x86_manufacturers'
-    from trac.util.html import html as tag
-    return tag.a(title, title=vendor, href=href)
+    return tag_a(title, title=vendor, href=href)
 
 def format_cpu_name(vendor, name):
     # http://en.wikipedia.org/wiki/CPUID
@@ -266,8 +279,7 @@ def format_cpu_name(vendor, name):
     else:
         title = name
         href = 'http://en.wikipedia.org/wiki/List_of_x86_manufacturers'
-    from trac.util.html import html as tag
-    return tag.a(name, title=title, href=href)
+    return tag_a(name, title=title, href=href)
 
 def format_distribution_id(distro_id):
     if distro_id == 'Debian':
@@ -279,8 +291,7 @@ def format_distribution_id(distro_id):
     else:
         name = distro_id
         href = 'http://distrowatch.com/' + distro_id
-    from trac.util.html import html as tag
-    return tag.a(name, title=distro_id, href=href)
+    return tag_a(name, title=distro_id, href=href)
 
 def format_distribution_codename(distro_id, distro_codename):
     if distro_id == 'Debian':
@@ -292,8 +303,7 @@ def format_distribution_codename(distro_id, distro_codename):
     else:
         name = distro_id
         href = 'http://distrowatch.com/' + distro_id
-    from trac.util.html import html as tag
-    return tag.a(name, title=distro_id, href=href)
+    return tag_a(name, title=distro_id, href=href)
 
 def format_seconds(s):
     if s is None:
@@ -340,7 +350,7 @@ def format_trust_level(tl):
 
 _suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 def format_size(nbytes):
-    if isinstance(nbytes, str) or isinstance(nbytes, unicode):
+    if isinstance(nbytes, str):
         try:
             nbytes = int(nbytes)
         except ValueError:
@@ -400,8 +410,7 @@ def format_gl_extension_name(ext):
             ext_name = ext
     if vendor and ext_name:
         href = khronos_extension_base_url + '/%s/%s.txt' % (vendor, ext_name)
-    from trac.util.html import html as tag
-    return tag.a(name, title=title, href=href)
+    return tag_a(name, title=title, href=href)
 
 def format_version_number(num):
     if isinstance(num, str) or isinstance(num, unicode):
@@ -414,18 +423,16 @@ def format_version_number(num):
     return '%i.%i.%i.%i' % (m, n, o, p)
 
 def format_platform_type(platform_type):
-    from trac.util.html import html as tag
-    from trac.util.translation import _
     if platform_type is None:
         return _('Platform unknown')
     elif platform_type == 'Linux':
-        return tag.a('Linux', href='https://en.wikipedia.org/wiki/Linux')
+        return tag_a('Linux', href='https://en.wikipedia.org/wiki/Linux')
     elif platform_type == 'Windows NT':
-        return tag.a('Windows NT',href='https://en.wikipedia.org/wiki/Windows_NT')
+        return tag_a('Windows NT',href='https://en.wikipedia.org/wiki/Windows_NT')
     elif platform_type == 'Windows':
-        return tag.a('Windows', href='https://en.wikipedia.org/wiki/Microsoft_Windows')
+        return tag_a('Windows', href='https://en.wikipedia.org/wiki/Microsoft_Windows')
     else:
-        return tag.a(platform_type, href='https://en.wikipedia.org/wiki/Special:Search/' + str(platform_type))
+        return tag_a(platform_type, href='https://en.wikipedia.org/wiki/Special:Search/' + str(platform_type))
 
 def _get_version_from_string(number_str):
     elems = number_str.split('.')
@@ -456,15 +463,13 @@ def _get_version_from_numbers(os_version_number, os_build_number):
 
 
 def format_os_version(platform_type, os_version_number, os_build_number):
-    from trac.util.html import html as tag
-    from trac.util.translation import _
     if os_version_number is None:
         return _('unknown')
     major, minor, patch, build = _get_version_from_numbers(os_version_number, os_build_number)
     if platform_type is None:
         return _('unknown')
     elif platform_type == 'Linux':
-        return tag.a('Linux %i.%i.%i.%i' % (major, minor, patch, build), href='https://en.wikipedia.org/wiki/Linux')
+        return tag_a('Linux %i.%i.%i.%i' % (major, minor, patch, build), href='https://en.wikipedia.org/wiki/Linux')
     elif platform_type == 'Windows NT':
         #major, minor, patch, build = _get_version_from_string(os_version_number)
         productName = 'Windows %i.%i' % (major, minor)
@@ -518,9 +523,9 @@ def format_os_version(platform_type, os_version_number, os_build_number):
             text = '%s (%s)' % (productName, marketingName)
         else:
             text = productName
-        return tag.a(text, title=text, href=href) + ' %i.%i.%i.%i' % (major, minor, patch, build)
+        return tag_a(text, title=text, href=href) + ' %i.%i.%i.%i' % (major, minor, patch, build)
     elif platform_type == 'Windows':
-        return tag.a('Windows %s' % os_version_number, href='https://en.wikipedia.org/wiki/Microsoft_Windows')
+        return tag_a('Windows %s' % os_version_number, href='https://en.wikipedia.org/wiki/Microsoft_Windows')
     else:
         return _('unknown')
 
@@ -575,7 +580,6 @@ def thread_extra_info(thread):
         return ''
 
 def format_thread(thread):
-    from trac.util.translation import _
     if thread is None:
         return _('N/A')
     else:
@@ -593,7 +597,6 @@ def format_thread(thread):
         return ret
 
 def format_stack_frame(frame):
-    from trac.util.translation import _
     if frame is None:
         return _('N/A')
     else:

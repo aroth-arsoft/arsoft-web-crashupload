@@ -1,11 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"/>
-{% load static_url %}
-<link rel="stylesheet" type="text/css" href="{% static_url "main.css" %}" />
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block content %}
+
 {% if application %}
 {% if state %}
 <h1>Crashes of application {{ application }} with state {{ state }}</h1>
@@ -25,6 +21,7 @@
 <th>State</th>
 <th>Timestamp</th>
 <th>Application name</th>
+<th>Application file</th>
 <th>Client FQDN</th>
 <th>Client username</th>
 <th>Product version</th>
@@ -42,7 +39,8 @@
 {% endif %}
 </td>
 <td>{{ object.timestamp|date:"Y-m-d H:i:s" }}</td>
-<td><a href="{% url "list_filter_app" object.applicationName %}">{{ object.applicationName }}</a></td>
+<td><a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a></td>
+<td>{{ object.applicationFile }}</td>
 <td>{{ object.clientHostName }}</td>
 <td>{{ object.clientUserName }}</td>
 <td>{{ object.productVersion }}</td>
@@ -56,5 +54,5 @@
 {% if application %}
 <a href="{% url "home" %}">List all crashes</a>
 {% endif %}
-</body>
-</html>
+
+{% endblock %}
