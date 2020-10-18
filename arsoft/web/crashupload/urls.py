@@ -17,6 +17,7 @@ urlpatterns = [
     url(r'^list/state/(?P<state>[\w\-]+)$', CrashDumpListView.as_view(), name='list_filter_state'),
     url(r'^view/(?P<pk>\d+)$', CrashDumpDetails.as_view(), name='crash_details'),
     url(r'^view/(?P<pk>\d+)/view/(?P<page>\w+)$', CrashDumpDetailsSub.as_view(), name='crash_details_view'),
+    url(r'^view/(?P<pk>\d+)/view/(?P<page>\w+)/(?P<param>[0-9a-fA-F]+)$', CrashDumpDetailsSub.as_view(), name='crash_details_view_sub'),
     #url(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)(/(?P<flag>\w+)?)$', CrashDumpReport.as_view(), name='crash_report'),
     url(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)/(?P<flag>\w+)$', CrashDumpReport.as_view(), name='crash_report'),
     url(r'^submit$', submit, name='submit'),

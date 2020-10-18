@@ -61,12 +61,12 @@ class HexDumpMemoryBlock(object):
                     self.hex += ' '
                 if idx < line_length:
                     c = memory_line[idx]
-                    c_i = ord(c)
+                    c_i = int(c)
                     self.hex += '%02X' % c_i
                     if c_i < 32 or c_i >= 127:
                         self.ascii += '.'
                     else:
-                        self.ascii += c
+                        self.ascii += chr(c)
                 else:
                     self.hex += '  '
                     self.ascii += ' '
@@ -145,13 +145,23 @@ class HexDumpMemoryBlock(object):
         return ret
 
     def __getitem__(self, index):
-        return self._memory[index]
+        if isinstance(index, int):
+            return self._memory[index]
+        elif isinstance(index, slice):
+            return self._memory[index.start:index.stop: index.step]
+        else:
+            raise TypeError("index %s" % index)
 
     def __str__(self):
         return str(self.hexdump)
 
     def find(self, needle, start=0):
-        return self._memory.find(needle, start)
+        if isinstance(needle, bytes):
+            return self._memory.find(needle, start)
+        elif isinstance(needle, str):
+            return self._memory.find(needle.encode('us-ascii'), start)
+        else:
+            raise TypeError('insupported type for search in memory block: %s' % type(needle))
 
 class MemObject(object):
     def __init__(self, owner, memory, is_64_bit):
@@ -462,6 +472,15 @@ class XMLReport(object):
             if self._real_object is None:
                 object.__setattr__(self, '_real_object', getattr(self._report, self._field_name))
             return self._real_object[key]
+
+        def __repr__(self):
+            if self._real_object is None:
+                object.__setattr__(self, '_real_object', getattr(self._report, self._field_name))
+            return 'ProxyObject(%s, %s, %r)' % (
+                getattr(self, '_report'),
+                getattr(self, '_field_name'),
+                getattr(self, '_real_object')
+            )
 
     @staticmethod
     def unique(items):
@@ -815,12 +834,15 @@ class XMLReport(object):
         def __iter__(self):
             return iter(self._list)
 
+        def __len__(self):
+            return len(self._list)
+
         def __contains__(self, key):
             if isinstance(key, int):
                 for d in self._list:
                     if d.threadid == key and d.simplified == False:
                         return True
-            elif isinstance(key, str) or isinstance(key, unicode):
+            elif isinstance(key, str):
                 if key == 'simplified':
                     for d in self._list:
                         if d.simplified:
@@ -836,7 +858,7 @@ class XMLReport(object):
                 for d in self._list:
                     if d.threadid == key and d.simplified == False:
                         return d
-            elif isinstance(key, str) or isinstance(key, unicode):
+            elif isinstance(key, str):
                 if key == 'simplified':
                     for d in self._list:
                         if d.simplified:
@@ -1451,10 +1473,10 @@ if __name__ == '__main__':
         #print(m)
     #for m in xmlreport.memory_regions:
         #print(m)
-    #for m in xmlreport.stackdumps:
-        #print('thread %u %s exception (simple %s)' % (m.threadid, 'with' if m.exception else 'without', 'yes' if m.simplified else 'no'))
-        #for f in m.callstack:
-            #print(f)
+    for m in xmlreport.stackdumps:
+        print('thread %u %s exception (simple %s)' % (m.threadid, 'with' if m.exception else 'without', 'yes' if m.simplified else 'no'))
+        for f in m.callstack:
+            print(f)
 
     #dump = xmlreport.stackdumps['exception']
     #for f in dump.callstack:
@@ -1510,32 +1532,32 @@ if __name__ == '__main__':
         #print(xmlreport.exception.params)
     #dump_report(xmlreport, 'threads')
 
-    print(xmlreport.peb.image_base_address)
+    #print(xmlreport.peb.image_base_address)
 
-    slot = xmlreport.fast_protect_version_info.thread_name_tls_slot
-    print('slot index=%i'% slot)
+    #slot = xmlreport.fast_protect_version_info.thread_name_tls_slot
+    #print('slot index=%i'% slot)
 
-    r = xmlreport.find_in_memory_blocks('Clt')
-    for (m, index) in r:
-        print(m)
-        #print(str(m.hexdump))
+    #r = xmlreport.find_in_memory_blocks('Clt')
+    #for (m, index) in r:
+    #    print(m)
+    #    print(str(m.hexdump))
 
 
     #for t in [ xmlreport.threads[0] ]:
-    for t in xmlreport.threads:
-        teb = t.teb_data
-        if teb:
-            #print('%05x - %05x, PEB %x, TLS array %x' % (t.id, teb.threadid, teb.peb_address, teb.thread_local_storage_array_address))
-            #if teb.thread_local_storage_array:
-                #print('%05x - %x' % (t.id, teb.thread_local_storage_array[slot]))
-            #print('%05x - %x' % (t.id, teb.tls_slots[1]))
-            #print('  %05x - %s' % (t.id, t.teb_memory_region))
-            print('  %05x - %s thread name at %x' % (t.id, t.name, teb.tls_slots[slot]))
-            #print(teb.hexdump)
-            #print('%i - %x, %x, %x' % (t.id, teb.threadid, teb.peb_address, teb.thread_local_storage_array))
-
-            #for i in range(slot + 1):
-                #print('  slot[%i]=%x' %(i, t.tls_slots[i]))
+    #for t in xmlreport.threads:
+    #    teb = t.teb_data
+    #    if teb:
+    #        #print('%05x - %05x, PEB %x, TLS array %x' % (t.id, teb.threadid, teb.peb_address, teb.thread_local_storage_array_address))
+    #        #if teb.thread_local_storage_array:
+    #            #print('%05x - %x' % (t.id, teb.thread_local_storage_array[slot]))
+    #        #print('%05x - %x' % (t.id, teb.tls_slots[1]))
+    #        #print('  %05x - %s' % (t.id, t.teb_memory_region))
+    #        print('  %05x - %s thread name at %x' % (t.id, t.name, teb.tls_slots[slot]))
+    #        #print(teb.hexdump)
+    #        #print('%i - %x, %x, %x' % (t.id, teb.threadid, teb.peb_address, teb.thread_local_storage_array))
+    #
+    #        #for i in range(slot + 1):
+    #            #print('  slot[%i]=%x' %(i, t.tls_slots[i]))
     #dump_report(xmlreport, 'memory_blocks')
     #dump_report(xmlreport, 'memory_regions')
     
@@ -1548,7 +1570,7 @@ if __name__ == '__main__':
 
     #pp = XMLReport.ProxyObject(xmlreport, 'memory_blocks')
     #print(len(pp))
-#for m in pp:
+    #for m in pp:
         #print(m)
     #dump_report(xmlreport, 'memory_regions')
 

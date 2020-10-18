@@ -171,9 +171,19 @@ ul.children > li.child {
  #changelog h3, #crashdumpchange h3 { box-shadow: none }
 }
 
-pre.hexdump, pre.cmdline {
-    padding-top: 0px;
+pre.hexdump-offset, pre.hexdump-ascii, pre.cmdline {
+    padding-top: 0.5em;
     padding-bottom: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+pre.hexdump-hex {
+    padding-top: 0.5em;
+    padding-bottom: 0px;
+    padding-left: 1em;
+    padding-right: 1em;
     margin-top: 0px;
     margin-bottom: 0px;
     margin-left: 0px;

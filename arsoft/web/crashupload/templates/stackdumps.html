@@ -3,10 +3,11 @@
 {% for stackdump in stackdumps %}
 {% if not stackdump.simplified %}
 <a name="stackdump_{{stackdump.threadid}}"/>
-<div id="view___stackdump___{{stackdump.threadid}}" class="{% if not stackdump.exception %}collapsed{% endif %}">
-<h3 class="delayfoldable">{% format_thread stackdump.thread %}</h3>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#view___stackdump___{{stackdump.threadid}}">{% format_thread stackdump.thread %}</a></h4></div>
+      <div id="view___stackdump___{{stackdump.threadid}}" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 {% endif %}
 {% endfor %}
-
-<div>aaa</div>

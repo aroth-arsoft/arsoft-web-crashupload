@@ -54,6 +54,23 @@ def do_tag_function_wrapper3(func, parser, token):
             return self._func(self.number.resolve(context), self.number2.resolve(context), self.number3.resolve(context))
     return Node(func, number, number2, number3)
 
+def do_tag_function_wrapper4(func, parser, token):
+    try:
+        # split_contents() knows not to split quoted strings.
+        tag_name, number, number2, number3, number4 = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag takes three arguments" % token.contents.split()[0])
+    class Node(template.Node):
+        def __init__(self, func, number, number2, number3, number4):
+            self._func = func
+            self.number = template.Variable(number)
+            self.number2 = template.Variable(number2)
+            self.number3 = template.Variable(number3)
+            self.number4 = template.Variable(number4)
+        def render(self, context):
+            return self._func(self.number.resolve(context), self.number2.resolve(context), self.number3.resolve(context), self.number4.resolve(context))
+    return Node(func, number, number2, number3, number4)
+
 register.tag('format_size', partial(do_tag_function_wrapper, format_size))
 register.tag('format_seconds', partial(do_tag_function_wrapper, format_seconds))
 register.tag('format_milliseconds', partial(do_tag_function_wrapper, format_milliseconds))
@@ -64,6 +81,7 @@ register.tag('addr_format_bits', partial(do_tag_function_wrapper2, addr_format_b
 register.tag('format_trust_level', partial(do_tag_function_wrapper, format_trust_level))
 
 register.tag('format_source_line', partial(do_tag_function_wrapper2, format_source_line))
+register.tag('format_source_line_full', partial(do_tag_function_wrapper4, format_source_line))
 register.tag('exception_code', partial(do_tag_function_wrapper3, exception_code))
 register.tag('format_bool_yesno', partial(do_tag_function_wrapper, format_bool_yesno))
 register.tag('format_function_plus_offset', partial(do_tag_function_wrapper2, format_function_plus_offset))

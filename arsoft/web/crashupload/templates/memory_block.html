@@ -4,22 +4,22 @@
 {% if memory_block %}
     {% if memory_block.threadid %}
         <div class="crashdump-nav">
-            <a href="#thread_${memory_block.threadid}" title="Go to thread ${ hex_format(memory_block.threadid) }">Thread ${ hex_format(memory_block.threadid) }</a> &uarr;
+            <a href="#thread_{{memory_block.threadid}}" title="Go to thread {% hex_format memory_block.threadid %}">Thread {% hex_format memory_block.threadid %}</a> &uarr;
         </div>
     {% endif %}
     <table class="memory_block">
     <tr>
-    <td><pre class="hexdump">${memory_block.memory.hexdump.raw_offset}</pre></td>
-    <td><pre class="hexdump">${memory_block.memory.hexdump.raw_hex}</pre></td>
-    <td><pre class="hexdump">${memory_block.memory.hexdump.raw_ascii}</pre></td>
+    <td><pre class="hexdump-offset">{{hexdump.raw_offset}}</pre></td>
+    <td><pre class="hexdump-hex">{{hexdump.raw_hex}}</pre></td>
+    <td><pre class="hexdump-ascii">{{hexdump.raw_ascii}}</pre></td>
     </tr>
     </table>
     {% if memory_block.threadid %}
         <div class="crashdump-nav">
-            <a href="#thread_${memory_block.threadid}" title="Go to thread ${ hex_format(memory_block.threadid) }">Thread ${ hex_format(memory_block.threadid) }</a> &uarr;
+            <a href="#thread_{{memory_block.threadid}}" title="Go to thread {% hex_format memory_block.threadid %}">Thread {% hex_format memory_block.threadid %}</a> &uarr;
         </div>
     {% endif %}
 {% else %}
-Unable to find any memory block at ${ addr_format(memory_block_base) }
+Unable to find any memory block at {% addr_format_bits memory_block_base bits %}
 {% endif %}
 </div>

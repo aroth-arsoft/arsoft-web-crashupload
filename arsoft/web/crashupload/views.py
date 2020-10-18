@@ -25,6 +25,12 @@ from crashdump.xmlreport import XMLReport
 
 logger = logging.getLogger('arsoft.web.crashupload')
 
+def safe_get_as_int (l, default=None):
+    try:
+        return int(l)
+    except ValueError:
+        return default
+
 def add_utils_to_context(context, crash=None):
     context['hex_format'] = hex_format
     context['exception_code'] = exception_code
@@ -192,11 +198,34 @@ class CrashDumpDetailsSub(DetailView):
         page = kwargs.get('page')
         if page is None:
             raise Http404("Page not found")
-        self.template_name = '%s.html' % page
+        self.page = page
+        self.param = kwargs.get('param')
+        self.template_name = '%s.html' % self.page
 
     def get_context_data(self, **kwargs):
         context = super(CrashDumpDetailsSub, self).get_context_data(**kwargs)
         add_utils_to_context(context, crash=self.object)
+        if self.page in ['sysinfo', 'sysinfo_ex',
+                            'fast_protect_version_info', 'exception', 'memory_blocks', 'memory_regions', 'modules', 'threads', 'stackdumps',
+                            'file_info' ]:
+            pass
+        elif self.page == 'memory_block':
+            block_base = safe_get_as_int(self.param, 0)
+            memory_block = None
+            for b in context['memory_blocks']:
+                if b.base == block_base:
+                    memory_block = b
+                    break
+            memory = memory_block.memory if memory_block is not None else None
+            hexdump = memory.hexdump if memory is not None else None
+            context.update({'memory_block': memory_block, 'memory': memory, 'hexdump': hexdump, 'memory_block_base': block_base })
+        elif self.page == 'stackdump':
+            threadid = safe_get_as_int(self.param, 0)
+            stackdump = None
+            if threadid in context['stackdumps']:
+                stackdump = context['stackdumps'][threadid]
+            context.update({'stackdump': stackdump, 'threadid': threadid })
+
         return context
 
 class CrashDumpReport(DetailView):

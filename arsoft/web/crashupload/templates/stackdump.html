@@ -3,7 +3,7 @@
 <div class="stackdump">
 {% if stackdump %}
     <div class="crashdump-nav">
-        <a href="#threads" title="Go to thread list">Thread list</a> &uarr;&nbsp;<a href="#thread_${stackdump.threadid}" title="Go to thread ${ hex_format(stackdump.threadid) }">Thread ${ hex_format(stackdump.threadid) }</a> &uarr;
+        <a href="#threads" title="Go to thread list">Thread list</a> &uarr;&nbsp;<a href="#thread_{{stackdump.threadid}}" title="Go to thread {% hex_format stackdump.threadid %}">Thread {% hex_format stackdump.threadid %}</a> &uarr;
     </div>
     <table class="properties">
         <tr>
@@ -19,21 +19,21 @@
         {% if stackdump.callstack %}
         {% for frame in stackdump.callstack %}
         <tr>
-        <td>${frame.num}</td>
-        <td>${ format_trust_level(frame.trust_level) }</td>
-        <td><div class="address">${ addr_format(frame.addr) }</div></td>
-        <td><div class="address">${ addr_format(frame.retaddr) }</div></td>
-        <td>${ hex_format(frame.params, bits=bits) }</td>
+        <td>{{frame.num}}</td>
+        <td>{% format_trust_level frame.trust_level %}</td>
+        <td><div class="address">{% addr_format_bits frame.addr bits %}</div></td>
+        <td><div class="address">{% addr_format_bits frame.retaddr bits %}</div></td>
+        <td>{% hex_format_bits frame.params bits %}</td>
         <td>
             {% if frame.module %}
-            <a href="#module_${frame.module}">${frame.module}</a>
+            <a href="#module_{{frame.module}}">{{frame.module}}</a>
             {% else %}
             <div>N/A</div>
             {% endif %}
         </td>
-        <td>${format_function_plus_offset(frame.function, frame.funcoff)}</td>
+        <td>{% format_function_plus_offset frame.function frame.funcoff %}</td>
         <td>
-        ${format_source_line(frame.source, frame.line, frame.lineoff, frame.source_url)}
+        {% format_source_line_full frame.source frame.line frame.lineoff frame.source_url %}
         </td>
         </tr>
         {% endfor %}
@@ -43,11 +43,11 @@
     </table>
     {% if stackdump.callstack %}
     <div class="crashdump-nav">
-        <a href="#threads" title="Go to thread list">Thread list</a> &uarr;&nbsp;<a href="#thread_${stackdump.threadid}" title="Go to thread ${ hex_format(stackdump.threadid) }">Thread ${ hex_format(stackdump.threadid) }</a> &uarr;
+        <a href="#threads" title="Go to thread list">Thread list</a> &uarr;&nbsp;<a href="#thread_{{stackdump.threadid}}" title="Go to thread {% hex_format stackdump.threadid %}">Thread {% hex_format stackdump.threadid %}</a> &uarr;
     </div>
     {% endif %}
 {% else %}
-Unable to find stack dump for thread ${ hex_format(selected_stackdump_threadid) }
+Unable to find stack dump for thread {% hex_format selected_stackdump_threadid %}
 {% endif %}
 </div>
 
