@@ -131,7 +131,7 @@ class CrashDumpModel(models.Model):
     coredumpReportXMLFile = models.CharField('Coredump XML report file', null=True, max_length=256, help_text='relative path to the Coredump XML report file')
     coredumpReportHTMLFile = models.CharField('Coredump HTML report file', null=True, max_length=256, help_text='relative path to the Coredump HTML report file')
 
-
+    uuid = property(lambda self: self.crashid)
     exists = property(lambda self: self.crashid is not None)
 
     has_minidump = property(lambda self: self.minidumpFile or self.minidumpReportTextFile or self.minidumpReportXMLFile or self.minidumpReportHTMLFile)

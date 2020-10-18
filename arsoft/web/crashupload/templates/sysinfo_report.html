@@ -1,94 +1,47 @@
-# extends 'layout.html'
-<!DOCTYPE html>
-<html>
-  <head>
-    # block head
-    ${ super() }
-    <title>
-    # block title
-    System information report for CrashId#${object.id} - ${object.uuid}
-    # endblock title
-    </title>
-    <script type="text/javascript">
-        crashdump_docReady();
-    </script>
-    # endblock head
-  </head>
-  <body>
-    # block content
-        <div id="crashdump">
+{% extends 'base.html' %}
+{% load crashupload_utils %}
+
+{% block content %}
+
+<div id="crashdump">
             <div class="date">
-                <p>{% trans crashtime=pretty_dateinfo(object['crashtime']) %}Crashed ${crashtime}{% endtrans %}</p>
-                {% if object['reporttime'] %}<p>{% trans reporttime=pretty_dateinfo(object['reporttime']) %}Report generated ${reporttime}{% endtrans %}</p>{% endif %}
-                {% if object['uploadtime'] %}<p>{% trans uploadtime=pretty_dateinfo(object['uploadtime']) %}Uploaded ${uploadtime}{% endtrans %}</p>{% endif %}
-                {% if object['closetime'] %}<p>{% trans closetime=pretty_dateinfo(object['closetime']) %}Closed ${closetime}{% endtrans %}</p>{% endif %}
-                {% if object['changetime'] != object['uploadtime'] and object['changetime'] != object['closetime']%}
-                    <p>{% trans changetime=pretty_dateinfo(object['changetime']) %}Last modified ${changetime}{% endtrans %}</p>
-                {% endif %}
-                <p><a href="${href('crash', object.uuid)}" class="trac-id">Back to CrashId#${object.id}</a></p>
+                <p>Crashed {{object.crashtime}}</p>
+                <p><a href="{% url "crash_details" object.id %}" class="trac-id">Back to CrashId#{{object.id}}</a></p>
             </div>
 
             <h2>
-                <a href="${href('crash', object.uuid, 'sysinfo_report')}" class="trac-id">System information report for CrashId#${object.id} - {${object.uuid}}</a>
-                <span class="trac-status">
-                ${'status' in fields_map and fields[fields_map['status']].rendered or object['status']}
-                </span>
-                {% if object['type'] %}
-                <span class="trac-type">${'type' in fields_map and fields[fields_map['type']].rendered or object['type']}</span>
-                {% endif %}
-                {% if object['resolution'] %}
-                <span class="trac-resolution">
-                (${'resolution' in fields_map and fields[fields_map['resolution']].rendered or object['resolution']})
-                </span>
-                {% endif %}
+                <a href="{% url "sysinfo_report" object.id %}" class="trac-id">System information report for CrashId#{{object.id}} - {{object.uuid}}</a>
             </h2>
 <table class="properties">
-<tr>
+<tr><td>Id</td><td>{{ object.crashid }}</td></tr>
+<tr><td>State</td><td>{{ object.state.description }}</td></tr>
 {% if xmlfile_error %}
-<tr>
-<th>Error:</th><td colspan="3">${xmlfile_error}</td>
-</tr>
+<tr><th>XML Error:</th><td>{{ xmlfile_error }}</td></tr>
 {% endif %}
-<th>Reported by:</th><td>${object['reporter']}</td>
-<th>Owned by:</th><td>${object['owner']}</td>
+{% if minidumpfile_error %}
+<tr><th>Minidump Error:</th><td>{{ minidumpfile_error }}</td></tr>
+{% endif %}
+{% if show_debug_info %}
+<tr><th>Parse time:</th><td>{% format_seconds parsetime %}</td></tr>
+<tr><th>Database time:</th><td>{% format_seconds dbtime %}</td></tr>
+<tr><th>Is 64-Bit:</th><td>{{is_64_bit}}</td></tr>
+<tr><th>Bits:</th><td>{{bits}}</td></tr>
+{% endif %}
+<tr><td>Application name</td>
+    <td><a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a></td>
 </tr>
-<tr>
-<th>Priority:</th><td>${object['priority']}</td>
-<th>Severity:</th><td>${object['severity']}</td>
-</tr>
-<tr>
-<th>Version:</th><td>${object['version']}</td>
-<th>Milestone:</th><td>${object['milestone']}</td>
-</tr>
-<tr>
-<th>Application name:</th><td>${object['applicationname']}</td>
-<th>Component:</th><td>${object['component']}</td>
-</tr>
-<tr>
-<th>Keywords:</th><td>${object['keywords']}</td>
-<th>Cc:</th><td>${object['cc']}</td>
-</tr>
+<tr><td>Application file</td><td>{{ object.applicationFile }}</td></tr>
 <tr>
 <th>Linked tickets:</th><td><ul>
 {% for tkt in linked_tickets %}<li>${tkt}</li>{% endfor %}
 </ul>
 </td>
 </tr>
-{% if show_debug_info %}
-<tr>
-<th>Parse time:</th><td>${ format_seconds(parsetime) }</td>
-<th>Database time:</th><td>${ format_seconds(dbtime) }</td>
-</tr>
-<tr>
-<th>Is 64-Bit:</th><td>${is_64_bit}</td>
-<th>Bits:</th><td>${bits}</td>
-</tr>
-{% endif %}
 
 {% if system_info %}
 <tr>
-<th>FQDN:</th><td>${sysinfo_report['System/fqdn'] if sysinfo_report['System/fqdn'] else 'N/A'}</td>
-<th>Qt Library info:</th><td>${sysinfo_report['Qt/sysinfo/libraryinfobuild'] if sysinfo_report['Qt/sysinfo/libraryinfobuild'] else 'N/A'}</td>
+<th>FQDN:</th><td>{% sysinfo_report 'System/fqdn' %}</td>
+<th>Qt Library info:</th><td>{% sysinfo_report 'Qt/sysinfo/libraryinfobuild' %}</td>
 </tr>
 {% endif %}
 </table>
@@ -98,51 +51,75 @@
 
 {% if system_info %}
 <a name="sysinfo"/>
-<div id="sysinfo" class="crashdump_box">
-<h2 class="delayfoldable" id='sysinfo'>System information</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo">System information</a></h4></div>
+      <div id="sysinfo" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 {% endif %}
 
 {% if fast_protect_system_info %}
 <a name="sysinfo_opengl"/>
-<div id="sysinfo_opengl" class="collapsed crashdump_box">
-<h2 class="delayfoldable" id='sysinfo_opengl'>OpenGL information</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo_opengl">OpenGL information</a></h4></div>
+      <div id="sysinfo_opengl" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 
 <a name="sysinfo_env"/>
-<div id="sysinfo_env" class="collapsed crashdump_box">
-<h2 class="delayfoldable" id='sysinfo_env'>Environment</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo_env">Environment</a></h4></div>
+      <div id="sysinfo_env" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 
 <a name="sysinfo_terra4d_dirs"/>
-<div id="sysinfo_terra4d_dirs" class="collapsed crashdump_box">
-<h2 class="delayfoldable" id='sysinfo_terra4d_dirs'>Terra4D directories</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo_terra4d_dirs">Terra4D directories</a></h4></div>
+      <div id="sysinfo_terra4d_dirs" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 
 <a name="sysinfo_cpu"/>
-<div id="sysinfo_cpu" class="collapsed crashdump_box">
-<h2 class="delayfoldable" id='sysinfo_cpu'>CPU information</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo_cpu">CPU information</a></h4></div>
+      <div id="sysinfo_cpu" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 
 <a name="sysinfo_locale"/>
-<div id="sysinfo_locale" class="collapsed crashdump_box">
-<h2 class="delayfoldable" id='sysinfo_locale'>Locale</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo_locale">Locale</a></h4></div>
+      <div id="sysinfo_locale" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 
+
 <a name="sysinfo_network"/>
-<div id="sysinfo_network" class="collapsed crashdump_box">
-<h2 class="delayfoldable" id='sysinfo_network'>Network</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo_network">Network</a></h4></div>
+      <div id="sysinfo_network" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 {% endif %}
 
 {% if system_info %}
 <a name="sysinfo_rawdata"/>
-<div id="sysinfo_rawdata" class="collapsed crashdump_box">
-<h2 class="delayfoldable" id='sysinfo_rawdata'>Raw system information data</h2>
+<div class="panel-group crashdump_box">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4 class="panel-title"><a data-toggle="collapse" class="collapsed" href="#sysinfo_rawdata">Raw system information data</a></h4></div>
+      <div id="sysinfo_rawdata" class="panel-collapse collapse"><div id="placeholder">placeholder</div></div>
+    </div>
 </div>
 {% endif %}
 
-    # endblock content
+<a href="{% url "crash_details" object.id %}" class="trac-id">Back to CrashId#{{object.id}}</a>
 
-  </body>
-</html>
+{% endblock %}

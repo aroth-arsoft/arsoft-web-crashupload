@@ -26,10 +26,18 @@
     <td><a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a></td>
 </tr>
 <tr><td>Application file</td><td>{{ object.applicationFile }}</td></tr>
-<tr><td>Reporter FQDN</td><td>{{ object.reportHostName }}</td></tr>
-<tr><td>Reporter username</td><td>{{ object.reportUserName }}</td></tr>
+
+{% if fast_protect_system_info %}
+<tr><th>Crash&nbsp;FQDN</th><td class="fullrow">{{fast_protect_system_info.fqdn}}&nbsp;<a href="{% url "sysinfo_report" object.id %}" title="{{object.id}} system info">Show complete system info</a>
+</td></tr>
+<tr><th>Crash&nbsp;username</th><td class="fullrow">{{fast_protect_system_info.username}}</td></tr>
+{% else %}
 <tr><td>Client FQDN</td><td>{{ object.crashHostName }}</td></tr>
 <tr><td>Client username</td><td>{{ object.crashUserName }}</td></tr>
+{% endif %}
+<tr><th>Reporter&nbsp;FQDN</th><td class="fullrow">{{object.reportHostName}}</td></tr>
+<tr><th>Reporter&nbsp;username</th><td class="fullrow">{{object.reportUserName}}</td></tr>
+
 <tr><td>Product name</td><td>{{ object.productName}}</td></tr>
 <tr><td>Product version</td><td>{{ object.productVersion }}</td></tr>
 <tr><td>Product target version</td><td>{{ object.productTargetVersion }}</td></tr>
@@ -90,7 +98,7 @@
 {% endfor %}
 </ul></td></tr>
 
-<tr><td>Links ss</td><td><ul>
+<tr><td>Links</td><td><ul>
 {% for link in links %}
 <li><a href="{{link.target}}">{{ link.name }}</a></li>
 {% endfor %}

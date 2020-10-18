@@ -16,12 +16,12 @@ from io import StringIO
 import logging
 import time
 from .models import CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
-from .xmlreport import XMLReport
 from uuid import UUID
 
 from crashdump.utils import *
 from crashdump.minidump import MiniDump
 from crashdump.xmlreport import XMLReport
+from crashdump.systeminforeport import SystemInfoReport
 
 logger = logging.getLogger('arsoft.web.crashupload')
 
@@ -226,6 +226,37 @@ class CrashDumpDetailsSub(DetailView):
                 stackdump = context['stackdumps'][threadid]
             context.update({'stackdump': stackdump, 'threadid': threadid })
 
+        return context
+
+class CrashDumpSysInfo(DetailView):
+    model = CrashDumpModel
+    template_name = 'sysinfo_report.html'
+
+    def setup(self, request, *args, **kwargs):
+        super(CrashDumpSysInfo, self).setup(request, *args, **kwargs)
+        page = kwargs.get('page')
+        self.page = page
+        self.param = kwargs.get('param')
+        if self.page:
+            self.template_name = '%s.html' % self.page
+
+    def get_context_data(self, **kwargs):
+        start = time.time()
+        context = super(CrashDumpSysInfo, self).get_context_data(**kwargs)
+        add_utils_to_context(context, crash=self.object)
+        if 'xmlreport' in context:
+            xmlfile = context['xmlreport']
+            context['sysinfo_report'] = None
+            if isinstance(xmlfile, XMLReport) or (isinstance(xmlfile, string) and os.path.isfile(xmlfile)):
+                try:
+                    context['sysinfo_report'] = SystemInfoReport(xmlreport=xmlfile)
+                except SystemInfoReport.SystemInfoReportException as e:
+                    context['xmlfile_error'] = str(e)
+            else:
+                context['xmlfile_error'] = _("XML file %(file)s is unavailable", file=xmlfile)
+
+        end = time.time()
+        context['dbtime'] = end - start
         return context
 
 class CrashDumpReport(DetailView):

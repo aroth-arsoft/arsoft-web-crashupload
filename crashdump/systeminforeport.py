@@ -246,6 +246,18 @@ class _SystemInfoNetwork(object):
     def __iter__(self):
         return iter(self._interfaces)
 
+class _OpenGLExtensions(object):
+    def __init__(self, owner, section, key_path, default_value):
+        self._list = []
+        size = section.getAsInteger('size', default=0)
+        for i in range(1, size + 1):
+            self._list.append(section.get('Extension%i' % i))
+
+    def __iter__(self):
+        return iter(self._list)
+    def __len__(self):
+        return len(self._list)
+
 class SystemInfoReport(object):
     _plain_arrays = ['OpenGLExtensions/Extension']
     _tuples = {
@@ -254,12 +266,13 @@ class SystemInfoReport(object):
         'Windows/hotfix': ['id'],
         'Network/Interface': ['index', 'name', 'description', 'hwaddr', 'loopback', 'up', 'running', 'wireless', 'pointtopoint', 'multicast', 'broadcast', 'addr'],
 
-        'terra3d-dirs': _Terra3DDirectories,
+        'terra3d_dirs': _Terra3DDirectories,
         'CPU': _SystemInfoCPU,
         'locale': _SystemInfoLocale,
         'Network': _SystemInfoNetwork,
+        'OpenGLExtensions': _OpenGLExtensions,
         }
-    _dicts = ['Environment']
+    _dicts = ['Environment', 'terra3d']
 
     class SystemInfoReportException(Exception):
         def __init__(self, report, message):
@@ -346,7 +359,7 @@ class SystemInfoReport(object):
             section, key_path = key.split('/', 1)
             key_path = key_path.replace('/', '\\')
         else:
-            section = key
+            section = key.replace('_', '-')
             key_path = None
         if key in SystemInfoReport._plain_arrays:
             return self._get_as_plain_array(section, key_path, default_value)
@@ -418,10 +431,12 @@ if __name__ == '__main__':
 
     #print(sysinfo.get('Qt/sysinfo/libraryinfobuild'))
 
-    #print(sysinfo['OpenGLExtensions/Extension'])
+    print(sysinfo['OpenGLExtensions'])
+    for e in sysinfo['OpenGLExtensions']:
+        print(e)
     #print(sysinfo['System/Path'])
     #print(sysinfo['Environment'])
-    sysinfo.save('/tmp/sysinfo.ini')
+    #sysinfo.save('/tmp/sysinfo.ini')
     #print(sysinfo['Network/Interface'])
     #print('Win32' if sysinfo.is_platform_windows else 'Posix')
     #for dir in sysinfo['terra3d-dirs']:

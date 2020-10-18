@@ -1,10 +1,10 @@
 <table class="properties">
-    {% for item in sysinfo_report['Network'] %}
-    <tr><th>${item.description}</th>
-    <td>Hardware address: ${item.hwaddr}
+    {% for item in sysinfo_report.Network %}
+    <tr><th>{{item.description}}</th>
+    <td>Hardware address: {{item.hwaddr}}
     {% if item.addr %}
     <br/><ul>
-    {% for addr in item.addr  %}<li>${ addr }</li>{% endfor %}
+    {% for addr in item.addr  %}<li>{{ addr }}</li>{% endfor %}
     </ul>
     {% endif %}
     </td>

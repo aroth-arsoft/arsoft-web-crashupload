@@ -1,5 +1,5 @@
 <table class="properties">
-    {% for dir in sysinfo_report['terra3d-dirs'] %}
-        <tr><th>${dir.description}</th><td>${dir.value}</td></tr>
+    {% for dir in sysinfo_report.terra3d_dirs %}
+        <tr><th>{{dir.description}}</th><td>{{dir.value}}</td></tr>
     {% endfor %}
 </table>
