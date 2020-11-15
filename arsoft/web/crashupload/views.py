@@ -9,13 +9,16 @@ from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.views.generic.detail import DetailView
 from django import forms
-from .forms import UploadFileForm
+from django_tables2 import SingleTableView
 from django.conf import settings
+
 import os.path
 from io import StringIO
 import logging
 import time
 from .models import CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
+from .tables import CrashDumpModelTable
+from .forms import UploadFileForm
 from uuid import UUID
 
 from crashdump.utils import *
@@ -133,8 +136,9 @@ class CrashDumpModelViewForm(forms.ModelForm):
         model = CrashDumpModel
         fields = '__all__'
 
-class CrashDumpListView(ListView):
+class CrashDumpListView(SingleTableView):
     model = CrashDumpModel
+    table_class = CrashDumpModelTable
     template_name = 'list.html'
     application = None
     state = None
@@ -449,6 +453,7 @@ def submit(request):
             buildtype = request.POST.get('buildtype')
             buildpostfix = request.POST.get('buildpostfix')
             machinetype = request.POST.get('machinetype')
+            cputype = safe_get_as_int(request.POST.get('cputype'), -1)
             systemname = request.POST.get('systemname')
             osversion = request.POST.get('osversion')
             osrelease = request.POST.get('osrelease')
@@ -515,6 +520,7 @@ def submit(request):
             db_entry.buildPostfix = buildpostfix
 
             db_entry.machineType = machinetype
+            db_entry.cpuType = cputype
             db_entry.systemName = systemname
             db_entry.osVersion = osversion
             db_entry.osRelease = osrelease

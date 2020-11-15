@@ -19,14 +19,14 @@
 <td>{% if thread.name %}{{thread.name}}{% else %}N/A{% endif %}</td>
 <td>{% format_stack_frame thread.location %}</td>
 <td>
-    {% if thread.memory %}<a href="#memory_block_{{thread.memory}}"><div class="address">{% addr_format_bits thread.memory bits %}</div></a>
+    {% if thread.memory %}<div class="address"><a href="#memory_block_{{thread.memory}}">{% addr_format_bits thread.memory bits %}</a></div>
     {% else %}
     N/A
     {% endif %}
 </td>
 <td><div class="address">{% addr_format_bits thread.start_addr bits %}</div></td>
-<td>{{ thread.create_time|date }}</td>
-<td>{{ thread.exit_time|date }}</td>
+<td>{{ thread.create_time|date:"Y-m-d H:i:s" }}</td>
+<td>{{ thread.exit_time|date:"Y-m-d H:i:s" }}</td>
 <td>{% format_milliseconds thread.kernel_time %}</td>
 <td>{% format_milliseconds thread.user_time %}</td>
 <td>{% hex_format thread.cpu_affinity %}</td>

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # kate: space-indent on; indent-width 4; mixedindent off; indent-mode python;
 
@@ -118,6 +118,7 @@ class import_crashes_app(object):
         buildtype = ''
         buildpostfix = ''
         machinetype = ''
+        cputype = ''
         systemname = ''
         osversion = ''
         osrelease = ''
@@ -145,6 +146,8 @@ class import_crashes_app(object):
                 producttargetversion = xmlreport.fast_protect_version_info.product_target_version
                 buildtype = xmlreport.fast_protect_version_info.product_build_type
                 buildpostfix = xmlreport.fast_protect_version_info.product_build_postfix
+            if xmlreport.system_info is not None:
+                cputype = xmlreport.system_info.cpu_type_id
             if xmlreport.fast_protect_system_info is not None:
                 machinetype = xmlreport.fast_protect_system_info.machine_type
                 crashfqdn = xmlreport.fast_protect_system_info.fqdn
@@ -181,6 +184,7 @@ class import_crashes_app(object):
         fields += [ ('crashusername', crashusername) ]
         fields += [ ('buildtype', buildtype) ]
         fields += [ ('buildpostfix', buildpostfix) ]
+        fields += [ ('cputype', cputype) ]
         fields += [ ('machinetype', machinetype) ]
         fields += [ ('systemname', systemname) ]
         fields += [ ('osversion', osversion) ]
@@ -189,6 +193,9 @@ class import_crashes_app(object):
         fields += [ ('applicationfile', applicationfile) ]
         fields += [ ('applicationname', applicationname) ]
         fields += [ ('force',  'true' if self._force else 'false') ]
+
+        for (k,v) in fields:
+            print('%s=>%s' % (k,v))
 
 
         content_type, body = MultipartFormdataEncoder().encode(fields, files)

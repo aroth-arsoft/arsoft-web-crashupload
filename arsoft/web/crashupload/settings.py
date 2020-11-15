@@ -12,7 +12,7 @@ initialize_settings(__name__, __file__)
 
 SITE_ID = 1
 
-INSTALLED_APPS.append('django.contrib.admin')
+INSTALLED_APPS.extend(['django.contrib.admin', 'django_tables2'])
 MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 
 DATABASES = {

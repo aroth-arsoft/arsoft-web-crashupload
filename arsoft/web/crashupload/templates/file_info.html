@@ -7,7 +7,7 @@
 </tr>
 {% for item in file_info.log %}
 <tr>
-<td>{{ item.time|date }}&nbsp;{{ item.time|time }}</td>
+<td>{{ item.time|date:"r" }}</td>
 <td>{{item.text}}</td>
 </tr>
 {% endfor %}

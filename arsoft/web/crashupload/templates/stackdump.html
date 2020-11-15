@@ -23,7 +23,7 @@
         <td>{% format_trust_level frame.trust_level %}</td>
         <td><div class="address">{% addr_format_bits frame.addr bits %}</div></td>
         <td><div class="address">{% addr_format_bits frame.retaddr bits %}</div></td>
-        <td>{% hex_format_bits frame.params bits %}</td>
+        <td><div class="address">{% hex_format_bits frame.params bits %}</div></td>
         <td>
             {% if frame.module %}
             <a href="#module_{{frame.module}}">{{frame.module}}</a>

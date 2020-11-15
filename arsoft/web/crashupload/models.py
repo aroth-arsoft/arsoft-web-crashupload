@@ -1,3 +1,4 @@
+from crashdump.utils import format_os_version_short, get_os_version_number, get_os_build_number
 from django.db import models, migrations
 
 class CrashDumpState(models.Model):
@@ -114,10 +115,13 @@ class CrashDumpModel(models.Model):
         (CPU_TYPE_ARM64, 'ARM64'),
     )
     cpuType = models.IntegerField('CPU type', choices=CPU_TYPES, default=CPU_TYPE_UNKNOWN, help_text='CPU type')
+    cpu_type = property(lambda self: CrashDumpModel.CPU_TYPES[self.cpuType + 1][1] if self.cpuType != CrashDumpModel.CPU_TYPE_UNKNOWN else 'Unknown')
 
     systemName = models.CharField('System name', max_length=24, help_text='name of operating system')
     osVersion = models.CharField('OS version', max_length=24, help_text='version of operating system')
     osRelease = models.CharField('OS release', max_length=24, help_text='release of operating system')
+    os_version_number = property(lambda self: get_os_version_number(self.platform_type, self.osVersion, self.osRelease) )
+    os_build_number = property(lambda self: get_os_build_number(self.platform_type, self.osVersion, self.osRelease) )
     osMachine = models.CharField('OS machine', max_length=24, help_text='machine of operating system')
 
     systemInfoData = models.TextField('System info', max_length=65536, null=True, help_text='system information')
@@ -136,6 +140,10 @@ class CrashDumpModel(models.Model):
 
     has_minidump = property(lambda self: self.minidumpFile or self.minidumpReportTextFile or self.minidumpReportXMLFile or self.minidumpReportHTMLFile)
     has_coredump = property(lambda self: self.coredumpFile or self.coredumpReportTextFile or self.coredumpReportXMLFile or self.coredumpReportHTMLFile)
+
+    platform_type = property(lambda self: self.systemName)
+
+    osInfo = property(lambda self: format_os_version_short(self.platform_type, self.os_version_number, self.os_build_number) )
 
     @property
     def is_64_bit(self):

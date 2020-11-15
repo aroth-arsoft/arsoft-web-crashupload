@@ -43,12 +43,8 @@
 <tr><td>Product target version</td><td>{{ object.productTargetVersion }}</td></tr>
 <tr><td>Build type</td><td>{{ object.buildType }}</td></tr>
 <tr><td>Build postfix</td><td>{{ object.buildPostfix }}</td></tr>
-<tr><td>Machine type</td><td>{{ object.machineType }}</td></tr>
-
-<tr><td>System name</td><td>{{ object.systemName }}</td></tr>
-<tr><td>OS version</td><td>{{ object.osVersion }}</td></tr>
-<tr><td>OS release</td><td>{{ object.osRelease }}</td></tr>
-<tr><td>OS machine</td><td>{{ object.osMachine }}</td></tr>
+<tr><td>Platform&nbsp;type</td><td>{%format_platform_type object.platform_type %}/{% format_cpu_type object.cpu_type %}</td></tr>
+<tr><td>OS&nbsp;version</td><td>{%format_os_version object.platform_type object.os_version_number object.os_build_number %}</td></tr>
 
 {% if object.has_minidump %}
     <tr><th>Minidump file</th><td class="fullrow">

@@ -71,9 +71,9 @@ def addr_format(number, prefix='0x', bits=64):
     if number == 0:
         return 'NULL'
     elif number < 256:
-        return hex_format(number, 'NULL+' + prefix, bits)
+        return hex_format(number, 'NULL+' + prefix, bits=bits)
     else:
-        return hex_format(number, prefix, bits)
+        return hex_format(number, prefix, bits=bits)
 
 def addr_format_64(number, prefix='0x'):
     if number == 0:
@@ -150,48 +150,49 @@ def str_or_unknown(str):
         return str
 
 def format_cpu_type(cputype):
-    if cputype == 'AMD64':
+    cputype = cputype.lower()
+    if cputype == 'amd64':
         href='http://en.wikipedia.org/wiki/X86-64'
         title = 'x86-64 (also known as x64, x86_64 and AMD64)'
-    elif cputype == 'X86':
+    elif cputype == 'x86':
         href='http://en.wikipedia.org/wiki/X86'
         title = 'x86 (also known as i386)'
-    elif cputype == 'MIPS':
+    elif cputype == 'mips':
         href='http://en.wikipedia.org/wiki/MIPS_instruction_set'
         title = 'MIPS  instruction set'
-    elif cputype == 'Alpha':
+    elif cputype == 'alpha':
         href='http://en.wikipedia.org/wiki/DEC_Alpha'
         title = 'Alpha, originally known as Alpha AXP'
-    elif cputype == 'Alpha64':
+    elif cputype == 'alpha64':
         href='http://en.wikipedia.org/wiki/DEC_Alpha'
         title = 'Alpha64, originally known as Alpha AXP'
-    elif cputype == 'PowerPC':
+    elif cputype == 'powerpc':
         href='http://en.wikipedia.org/wiki/PowerPC'
         title = 'PowerPC'
-    elif cputype == 'PowerPC64':
+    elif cputype == 'powerpc64':
         href='http://en.wikipedia.org/wiki/Ppc64'
         title = 'PowerPC64 or ppc64'
-    elif cputype == 'ARM':
+    elif cputype == 'arm':
         href='http://en.wikipedia.org/wiki/ARM_architecture'
         title = 'ARM'
-    elif cputype == 'ARM64':
+    elif cputype == 'arm64':
         href='http://en.wikipedia.org/wiki/ARM_architecture#64-bit'
         title = 'ARM 64-bit'
-    elif cputype == 'Sparc':
+    elif cputype == 'sparc':
         href='http://en.wikipedia.org/wiki/SPARC'
         title = 'SPARC ("scalable processor architecture")'
-    elif cputype == 'IA64':
+    elif cputype == 'ia64':
         href='http://en.wikipedia.org/wiki/Itanium'
         title = 'Intel Itanium architecture (IA-64)'
-    elif cputype == 'MSIL':
+    elif cputype == 'msil':
         href='http://en.wikipedia.org/wiki/Common_Intermediate_Language'
         title = 'Microsoft Intermediate Language (MSIL)'
-    elif cputype == 'x64 WOW':
+    elif cputype == 'x64 wow':
         href='http://en.wikipedia.org/wiki/WoW64'
         title = 'Microsoft WoW64'
     else:
         href = 'http://en.wikipedia.org/wiki/Central_processing_unit'
-        title = cputype
+        title = 'Unknown:%s' % cputype
     return tag_a(title, title=cputype, href=href)
 
 def format_cpu_vendor(vendor):
@@ -362,7 +363,7 @@ def format_size(nbytes):
         nbytes /= 1024.
         i += 1
     f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
-    return '%s %s' % (f, _suffixes[i])
+    return '%s&nbsp;%s' % (f, _suffixes[i])
 
 def format_memory_usagetype(usage):
     if usage == 0 or usage is None:
@@ -451,83 +452,157 @@ def _get_version_from_string(number_str):
     return major, minor, patch, build
 
 def _get_version_from_numbers(os_version_number, os_build_number):
-    #print('_get_version_from_numbers %s, %s' % (os_version_number, os_build_number))
-    major = os_version_number >> 48 & 0xffff
-    minor = os_version_number >> 32 & 0xffff
-    patch = os_version_number >> 16 & 0xffff
-    build = os_version_number & 0xffff
-    if build == 0 and os_build_number:
-        build = int(os_build_number) if os_build_number is not None else 0
+    print('_get_version_from_numbers %s, %s' % (os_version_number, os_build_number))
+    if isinstance(os_version_number, int):
+        major = os_version_number >> 48 & 0xffff
+        minor = os_version_number >> 32 & 0xffff
+        patch = os_version_number >> 16 & 0xffff
+        build = os_version_number & 0xffff
+        if build == 0 and os_build_number:
+            build = int(os_build_number) if os_build_number is not None else 0
+    else:
+        major, minor, patch, build = _get_version_from_string(os_version_number)
     #print('%x, %s -> %i.%i.%i.%i' % (os_version_number, os_build_number, major, minor, patch, build))
     return major, minor, patch, build
 
-
-def format_os_version(platform_type, os_version_number, os_build_number):
-    if os_version_number is None:
-        return _('unknown')
-    major, minor, patch, build = _get_version_from_numbers(os_version_number, os_build_number)
-    if platform_type is None:
-        return _('unknown')
-    elif platform_type == 'Linux':
-        return tag_a('Linux %i.%i.%i.%i' % (major, minor, patch, build), href='https://en.wikipedia.org/wiki/Linux')
+def get_os_version_number(platform_type, os_version_number, os_build_number):
+    if platform_type is None or os_version_number is None:
+        return 0
+    if platform_type == 'Linux':
+        major, minor, patch, build = _get_version_from_string(os_version_number)
     elif platform_type == 'Windows NT':
-        #major, minor, patch, build = _get_version_from_string(os_version_number)
+        major, minor, patch, build = _get_version_from_string(os_version_number)
+        if major >= 10:
+            build = patch
+            patch = 0
+    else:
+        major = 0
+        minor = 0
+        patch = 0
+        build = 0
+    ret = (major << 48) | (minor << 32) | (patch << 16) | build
+    print('ver in %s -> %x' % (os_version_number, ret))
+    return ret
+
+def get_os_build_number(platform_type, os_version_number, os_build_number):
+    if platform_type is None or os_version_number is None:
+        return 0
+    if platform_type == 'Linux':
+        build = 0
+    elif platform_type == 'Windows NT':
+        major, minor, patch, build = _get_version_from_string(os_version_number)
+        if major >= 10:
+            build = patch
+    else:
+        build = 0
+    print('build in %s -> %x' % (os_version_number, build))
+    return build
+
+def os_version_info(platform_type, os_version_number, os_build_number):
+    ret = {'text': 'unknown' }
+    if platform_type is None or os_version_number is None:
+        return ret
+    major, minor, patch, build = _get_version_from_numbers(os_version_number, os_build_number)
+    if platform_type == 'Linux':
+        ret['text'] = 'Linux %i.%i.%i.%i' % (major, minor, patch, build)
+        ret['href'] = 'https://en.wikipedia.org/wiki/Linux'
+    elif platform_type == 'Windows NT':
         productName = 'Windows %i.%i' % (major, minor)
-        href='https://en.wikipedia.org/wiki/Microsoft_Windows'
         marketingName = None
         if (major < 6):
             productName = "Windows XP"
-            href='https://en.wikipedia.org/wiki/Windows_XP'
+            ret['short'] = 'WinXP'
+            ret['href'] = 'https://en.wikipedia.org/wiki/Windows_XP'
         elif (major == 6 and minor == 0):
             productName = "Windows Vista"
-            href='https://en.wikipedia.org/wiki/Windows_Vista'
+            ret['short'] = 'WinVista'
+            ret['href'] = 'https://en.wikipedia.org/wiki/Windows_Vista'
         elif (major == 6 and minor == 1):
             productName = "Windows 7"
-            href='https://en.wikipedia.org/wiki/Windows_7'
+            ret['short'] = 'Win7'
+            ret['href'] = 'https://en.wikipedia.org/wiki/Windows_7'
         elif (major == 6 and minor == 2):
             productName = "Windows 8"
-            href='https://en.wikipedia.org/wiki/Windows_8'
+            ret['short'] = 'Win8'
+            ret['href'] = 'https://en.wikipedia.org/wiki/Windows_8'
         elif (major == 6 and minor == 3):
             productName = "Windows 8.1"
-            href='https://en.wikipedia.org/wiki/Windows_8'
+            ret['short'] = 'Win8.1'
+            ret['href'] = 'https://en.wikipedia.org/wiki/Windows_8'
         elif (major == 10):
-            href='https://en.wikipedia.org/wiki/Windows_10'
+            ret['href'] = 'https://en.wikipedia.org/wiki/Windows_10'
             # See https://en.wikipedia.org/wiki/Windows_10_version_history
             if build <= 10240:
-                productName = "Windows 10";
+                ret['short'] = 'Win10'
+                productName = "Windows 10"
                 marketingName = ''
             elif(build <= 10586):
+                ret['short'] = 'Win10/1511'
                 productName = "Windows 10 Version 1511"
                 marketingName = "November Update"
             elif (build <= 14393):
+                ret['short'] = 'Win10/1607'
                 productName = "Windows 10 Version 1607"
                 marketingName = "Anniversary Update"
             elif (build <= 15063):
+                ret['short'] = 'Win10/1703'
                 productName = "Windows 10 Version 1703"
                 marketingName = "Creators Update"
             elif (build <= 16299):
+                ret['short'] = 'Win10/1709'
                 productName = "Windows 10 Version 1709"
                 marketingName = "Fall Creators Update"
             elif (build <= 17134):
+                ret['short'] = 'Win10/1803'
                 productName = "Windows 10 Version 1803"
                 marketingName = "April 2018 Update"
             elif (build <= 18204):
+                ret['short'] = 'Win10/1809'
                 productName = "Windows 10 Version 1809"
                 marketingName = "October 2018 Update"
             elif (build <= 18362):
+                ret['short'] = 'Win10/1903'
                 productName = "Windows 10 Version 1903"
                 marketingName = "May 2019 Update"
+            elif (build <= 18363):
+                ret['short'] = 'Win10/1909'
+                productName = "Windows 10 Version 1909"
+                marketingName = "November 2019 Update"
+            elif (build <= 19041):
+                ret['short'] = 'Win10/2004'
+                productName = "Windows 10 Version 2004"
+                marketingName = "May 2020 Update"
+            elif (build <= 19042):
+                ret['short'] = 'Win10/1903'
+                productName = "Windows 10 Version 20H2"
+                marketingName = '' # TBA
             else:
+                ret['short'] = 'Win10/TBA'
                 productName = 'Windows 10 Build %i' % build
         if marketingName:
-            text = '%s (%s)' % (productName, marketingName)
+            ret['text'] = '%s (%s)' % (productName, marketingName)
         else:
-            text = productName
-        return tag_a(text, title=text, href=href) + ' %i.%i.%i.%i' % (major, minor, patch, build)
+            ret['text'] = productName
+        ret['full'] = ret['text'] + ' %i.%i.%i.%i' % (major, minor, patch, build)
+
     elif platform_type == 'Windows':
-        return tag_a('Windows %s' % os_version_number, href='https://en.wikipedia.org/wiki/Microsoft_Windows')
+        ret['text'] = 'Windows %i.%i' % (major, minor)
+        ret['href'] = 'https://en.wikipedia.org/wiki/Microsoft_Windows'
+    return ret
+
+def format_os_version(platform_type, os_version_number, os_build_number):
+    info = os_version_info(platform_type, os_version_number, os_build_number)
+    if 'href' in info:
+        return tag_a(info.get('text'), href=info.get('href'))
     else:
-        return _('unknown')
+        return info.get('text')
+
+def format_os_version_short(platform_type, os_version_number, os_build_number):
+    info = os_version_info(platform_type, os_version_number, os_build_number)
+    if 'short' in info:
+        return info.get('short')
+    else:
+        return info.get('text')
 
 def language_from_qlocale_language_enum(num):
     _codes = {

@@ -17,7 +17,7 @@
 <div class="address">{% addr_format_bits module.base bits %}</div>
 </td>
 <td>{% format_size module.size %}</td>
-<td>{{ module.timestamp|date }}&nbsp;{{ module.timestamp|time }}</td>
+<td>{{ module.timestamp|date:"Y-m-d H:i:s" }}</td>
 <td>{{module.product_version}}</td>
 <td>{{module.file_version}}</td>
 <td>{{module.flags}}</td>
