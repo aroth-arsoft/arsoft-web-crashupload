@@ -10,13 +10,11 @@ setup(name='arsoft-web-crashupload',
 		author_email='aroth@arsoft-online.com',
 		url='http://www.arsoft-online.com/',
 		packages=['arsoft.web.crashupload'],
-		scripts=[],
+		scripts=['run'],
 		data_files=[
             ('/etc/arsoft/web/crashupload/static', ['arsoft/web/crashupload/static/main.css']),
             ('/etc/arsoft/web/crashupload/templates', [
-                'arsoft/web/crashupload/templates/crashdumpmodel_list.html',
-                'arsoft/web/crashupload/templates/crashdumpmodel_report.html',
-                'arsoft/web/crashupload/templates/crashdumpmodel_detail.html'
+                'arsoft/web/crashupload/templates/*.html'
                 ]),
             ('/usr/lib/arsoft-web-crashupload', ['manage.py']),
             ]

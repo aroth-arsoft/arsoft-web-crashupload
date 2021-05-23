@@ -41,10 +41,7 @@ function venv_export_archive() {
     local prefix=`basename $SCRIPTDIR`
     local format='tar.gz'
     local outfile="$outdir/$prefix-$version.$format"
-    local ref='refs/remotes/origin/master'
-    if [ -f "$SCRIPTDIR/../.git/refs/heads/master" ]; then
-        ref='refs/heads/master'
-    fi
+    local ref='refs/heads/master'
     git -C "$SCRIPTDIR" archive --format=$format --prefix=$prefix/ -o "$outfile" "$ref"
 }
 
@@ -144,8 +141,6 @@ function venv_build_wheels() {
 function venv_build_docker() {
     local build_image="$1"
     local app_binary_depends="$2"
-    local app_use_mssql="$3"
-    local app_use_mysql="$4"
     #local from_tag='3-alpine'
     local from_tag='3.8-slim'
     local tag='latest'
@@ -158,7 +153,7 @@ function venv_build_docker() {
     local tmpdir=`mktemp -d`
     local dockerfile="$tmpdir/Dockerfile"
     local appname=`basename $SCRIPTDIR`
-    local FLASK_SERVER_PORT=`awk '/FLASK_SERVER_PORT/ { print $3}' $SCRIPTDIR/settings.py`
+    local FLASK_SERVER_PORT=8000
 
     venv_build_wheels || return 1
 
@@ -183,60 +178,12 @@ RUN test ! -d /tmp/wheel && mkdir -p /tmp/wheel ; \
     rm -rf /tmp/wheel && \
     pip install -r /app/$appname/requirements.txt && \
     mkdir /app/etc && \
-    mv /app/$appname/settings.py /app/etc && \
-    ln -s ../etc/settings.py /app/$appname/settings.py && \
     mv /app/$appname/logging.conf /app/etc && \
     ln -s ../etc/logging.conf /app/$appname/logging.conf
 EOF
 
-    if [ $app_use_mssql -ne 0 -a $app_use_mysql -ne 0 ]; then
-        local msodbcsql17_file="${msodbcsql17_url##*/}"
-        curl -o "$tmpdir/$msodbcsql17_file" "$msodbcsql17_url"
 
-        local mysql_odbc_file="${mysql_odbc_url##*/}"
-        curl -L -o "$tmpdir/$mysql_odbc_file" "$mysql_odbc_url"
-
-        # NOTE: MSSQL fails to connect with latest OpenSSL versions because of TLS1.2. To fix the connect error
-        #       the default SSL params need to be tweaked. This issue especially occurs for SQL servers, which
-        #       haven't installed the latest patches/updates from M$ (like on Vienna airport).
-        #       See https://github.com/microsoft/msphpsql/issues/252 and
-        #           https://github.com/microsoft/msphpsql/issues/1021
-        # BEGIN: MSSQL ODBC Driver
-        cat >> "$dockerfile" <<EOF
-ADD msodbcsql17_*.deb mysql-connector-odbc_*.deb /tmp/
-RUN apt update -y && \
-    ACCEPT_EULA=Y apt install -y $app_binary_depends /tmp/msodbcsql17_*.deb /tmp/mysql-connector-odbc_*.deb && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm /tmp/msodbcsql17_* /tmp/mysql-connector-odbc_* && \
-    sed -i 's/TLSv1.2/TLSv1/g' /etc/ssl/openssl.cnf && \
-    sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /etc/ssl/openssl.cnf
-EOF
-        # END: MSSQL ODBC Driver
-    elif [ $app_use_mssql -ne 0 ]; then
-
-
-        # NOTE: MSSQL fails to connect with latest OpenSSL versions because of TLS1.2. To fix the connect error
-        #       the default SSL params need to be tweaked. This issue especially occurs for SQL servers, which
-        #       haven't installed the latest patches/updates from M$ (like on Vienna airport).
-        #       See https://github.com/microsoft/msphpsql/issues/252 and
-        #           https://github.com/microsoft/msphpsql/issues/1021
-        # BEGIN: MSSQL ODBC Driver
-        local msodbcsql17_file="${msodbcsql17_url##*/}"
-        curl -o "$tmpdir/$msodbcsql17_file" "$msodbcsql17_url"
-        # BEGIN: MSSQL ODBC Driver
-        cat >> "$dockerfile" <<EOF
-ADD msodbcsql17_*.deb /tmp/
-RUN apt update -y && \
-    ACCEPT_EULA=Y apt install -y $app_binary_depends /tmp/msodbcsql17_* && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm /tmp/msodbcsql17_* && \
-    sed -i 's/TLSv1.2/TLSv1/g' /etc/ssl/openssl.cnf && \
-    sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /etc/ssl/openssl.cnf
-EOF
-        # END: MSSQL ODBC Driver
-    elif [ ! -z "$app_binary_depends" ]; then
+    if [ ! -z "$app_binary_depends" ]; then
        # add any required binary packages
         cat >> "$dockerfile" <<EOF
 RUN apt update -y && \
@@ -320,8 +267,6 @@ venv_rpm_run=0
 venv_docker=0
 venv_docker_image=0
 venv_docker_binary_depends=''
-venv_docker_use_mssql=1
-venv_docker_use_mysql=1
 venv_export=0
 venv_run_installed=0
 venv_build_wheels=0
@@ -384,7 +329,7 @@ elif [ $venv_rpm_run -ne 0 ]; then
     RES=$?
     exit $RES
 elif [ $venv_docker -ne 0 ]; then
-    venv_build_docker "$venv_docker_image" "$venv_docker_binary_depends" "$venv_docker_use_mssql" "$venv_docker_use_mysql"
+    venv_build_docker "$venv_docker_image" "$venv_docker_binary_depends"
     RES=$?
     exit $RES
 elif [ $venv_build_wheels -ne 0 ]; then
