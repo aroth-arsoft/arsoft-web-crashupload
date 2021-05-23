@@ -26,8 +26,9 @@ def gunicorn_dispatch_request(environ, start_response):
     # set script prefix from BASE_PATH/HTTP_BASE_PATH passed along by
     # the HTTP server (e.g. nginx).
     # Possible nginx config:
+    #   proxy_set_header BASE_PATH "<%= @uri %>";
+    #   proxy_set_header FORCE_SCRIPT_NAME "<%= @uri %>";
     #   proxy_set_header SCRIPT_URL $request_uri;
-    print('base=%s' % environ['BASE_PATH'])
     set_script_prefix(environ['BASE_PATH'])
     os.environ['BASE_PATH'] = environ['BASE_PATH']
     from arsoft.web.crashupload.wsgi import application as wsgi_application

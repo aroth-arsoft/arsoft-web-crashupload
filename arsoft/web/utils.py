@@ -89,7 +89,16 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     appname = settings_module
     settings_module_elems = settings_module.split('.')
     setttings_dir = os.path.dirname(setttings_file)
-    if settings_module_elems[-1] == 'settings':
+
+    in_docker = os.getenv('container', '') == 'docker'
+
+    if in_docker:
+        appname_elems = settings_module_elems[:-1]
+        appname = '.'.join(appname_elems)
+        appdir = '/app'
+        app_etc_dir = '/app/etc'
+        app_data_dir = '/app/data'
+    elif settings_module_elems[-1] == 'settings':
         appname_elems = settings_module_elems[:-1]
         appname = '.'.join(appname_elems)
         settings_dir_end = '/'.join(appname_elems)
@@ -112,12 +121,17 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     else:
         settings_obj.BASE_PATH = ''
 
-    #print('initialize_settings for ' + appname + ' appdir ' + appdir + ' debug=' + str(in_devserver) + ' basepath=' + str(settings_obj.BASE_PATH))
+    print('initialize_settings for ' + appname + ' appdir ' + appdir +
+          ' app_data_dir ' + app_data_dir +
+          ' debug=' + str(in_devserver) + ' basepath=' + str(settings_obj.BASE_PATH))
 
     if 'debug' in options:
         settings_obj.DEBUG = options['debug']
     else:
-        settings_obj.DEBUG = in_devserver
+        if in_docker:
+            settings_obj.DEBUG = int(os.environ.get('GUNICORN_DEBUG', '0')) != 0
+        else:
+            settings_obj.DEBUG = in_devserver
 
     # If DISABLE_DEBUG_INFO_PAGE is set the 
     settings_obj.DISABLE_DEBUG_INFO_PAGE = False
@@ -308,31 +322,32 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
                     # But the emails are plain text by default - HTML is nicer
                     'include_html': True,
                 },
-                # Log to a text file that can be rotated by logrotate
-                'logfile': {
-                    'level': 'DEBUG',
-                    'class': 'logging.handlers.WatchedFileHandler',
-                    'filename': os.path.join(settings_obj.LOG_DIR, appname + '.log')
-                },
             },
             'loggers': {
                 'django.request': {
-                    'handlers': ['logfile'],
+                    'handlers': ['console'] if in_docker else ['logfile'],
                     'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
                     'propagate': True,
                 },
                 # Might as well log any errors anywhere else in Django
                 'django': {
-                    'handlers': ['logfile'],
+                    'handlers': ['console'] if in_docker else ['logfile'],
                     'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
                     'propagate': True,
                 },
                 appname: {
-                    'handlers': ['console', 'logfile'],
+                    'handlers': ['console'] if in_docker else ['console', 'logfile'],
                     'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
                     'propagate': True,
                 },
             }
+        }
+    if not in_docker:
+        # Log to a text file that can be rotated by logrotate
+        settings_obj.LOGGING['handlers']['logfile'] = {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler' if in_docker else 'logging.handlers.WatchedFileHandler',
+            'filename': os.path.join(settings_obj.LOG_DIR, appname + '.log')
         }
 
     custom_settings_file = os.path.join(settings_obj.CONFIG_DIR, 'settings.py')

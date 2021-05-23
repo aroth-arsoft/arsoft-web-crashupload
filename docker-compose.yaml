@@ -1,0 +1,19 @@
+version: "2.3"
+services:
+    crashupload:
+        container_name: crashupload
+        environment:
+            - GUNICORN_DEBUG=1
+        image: rothan/arsoft-web-crashupload:latest
+        restart: "no"
+        ports:
+            - "8067:8000"
+        volumes:
+            - /etc/krb5.conf:/etc/krb5.conf:ro
+            - ./data:/app/data
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
+
