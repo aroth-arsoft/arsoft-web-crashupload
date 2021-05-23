@@ -14,13 +14,19 @@
         <th>Number of CPUs</th><td>{{fast_protect_system_info.num_logical_cpus}} logical, {{fast_protect_system_info.num_physical_cpus}} physical</td>
         <th>Hyper-Threading</th><td>{{fast_protect_system_info.hyperthread}}</td>
     </tr>
-    <tr><th>OpenGL vendor</th><td>{{fast_protect_system_info.opengl_vendor}}</td></tr>
-    <tr><th>OpenGL renderer</th><td>{{fast_protect_system_info.opengl_renderer}}</td></tr>
-    <tr><th>OpenGL version</th><td>{{fast_protect_system_info.opengl_version}}</td></tr>
-    <tr><th>OpenGL vendor id</th><td>{{fast_protect_system_info.opengl_vendor_id}}</td></tr>
-    <tr><th>OpenGL driver id</th><td>{{fast_protect_system_info.opengl_driver_id}}</td></tr>
+    <tr>
+        <th>OpenGL vendor</th><td>{{fast_protect_system_info.opengl_vendor}}</td>
+        <th>OpenGL renderer</th><td>{{fast_protect_system_info.opengl_renderer}}</td>
+    </tr>
+    <tr>
+        <th>OpenGL version</th><td>{{fast_protect_system_info.opengl_version}}</td>
+        <th>OpenGL driver version</th><td>{{fast_protect_system_info.opengl_driver_version}}</td>
+    </tr>
+    <tr>
+        <th>OpenGL vendor id</th><td>{{fast_protect_system_info.opengl_vendor_id}}</td>
+        <th>OpenGL driver id</th><td>{{fast_protect_system_info.opengl_driver_id}}</td>
+    </tr>
     <tr><th>OpenGL chip class</th><td>{{fast_protect_system_info.opengl_chip_class}}</td></tr>
-    <tr><th>OpenGL driver version</th><td>{{fast_protect_system_info.opengl_driver_version}}</td></tr>
     <tr><th>OpenGL hardware ok</th><td>{{fast_protect_system_info.opengl_hardware_ok}}</td></tr>
     <tr><th>OpenGL use pbuffer</th><td>{{fast_protect_system_info.opengl_use_pbuffer}}</td></tr>
     <tr><th>OpenGL hardware error</th><td>{{fast_protect_system_info.opengl_hardware_error}}</td></tr>
@@ -42,12 +48,18 @@
     {% if processstatuswin32.session_id %}<tr><th>Session id</th><td>{{processstatuswin32.session_id}}</td></tr>{% endif %}
 {% endif %}
 {% if processmemoryinfowin32 %}
-    <tr><th>Page fault count</th><td>{{processmemoryinfowin32.page_fault_count}}</td></tr>
-    <tr><th>Working set size</th><td>{% format_size processmemoryinfowin32.working_set_size %}, peak at {% format_size processmemoryinfowin32.peak_working_set_size %}</td></tr>
-    <tr><th>Private usage</th><td>{% format_size processmemoryinfowin32.private_usage %}</td></tr>
-    <tr><th>Quota paged pool usage</th><td>{% format_size processmemoryinfowin32.quota_paged_pool_usage %}, peak at {% format_size processmemoryinfowin32.quota_peak_paged_pool_usage %}</td></tr>
-    <tr><th>Quota non-paged pool usage</th><td>{% format_size processmemoryinfowin32.quota_non_paged_pool_usage %}, peak at {% format_size processmemoryinfowin32.quota_peak_non_paged_pool_usage %}</td></tr>
-    <tr><th>Pagefile usage</th><td>{% format_size processmemoryinfowin32.pagefile_usage %}, peak at {% format_size processmemoryinfowin32.peak_pagefile_usage %}</td></tr>
+    <tr>
+        <th>Working set size</th><td>{% format_size processmemoryinfowin32.working_set_size %}, peak at {% format_size processmemoryinfowin32.peak_working_set_size %}</td>
+        <th>Private usage</th><td>{% format_size processmemoryinfowin32.private_usage %}</td>
+    </tr>
+    <tr>
+        <th>Quota paged pool usage</th><td>{% format_size processmemoryinfowin32.quota_paged_pool_usage %}, peak at {% format_size processmemoryinfowin32.quota_peak_paged_pool_usage %}</td>
+        <th>Quota non-paged pool usage</th><td>{% format_size processmemoryinfowin32.quota_non_paged_pool_usage %}, peak at {% format_size processmemoryinfowin32.quota_peak_non_paged_pool_usage %}</td>
+    </tr>
+    <tr>
+        <th>Pagefile usage</th><td>{% format_size processmemoryinfowin32.pagefile_usage %}, peak at {% format_size processmemoryinfowin32.peak_pagefile_usage %}</td>
+        <th>Page fault count</th><td>{{processmemoryinfowin32.page_fault_count}}</td>
+    </tr>
 {% endif %}
 {% if processstatuslinux %}
     <tr><th>Process name</th><td>{{processstatuslinux.name}} (state {{processstatuslinux.state}})</td></tr>

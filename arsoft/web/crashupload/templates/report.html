@@ -6,8 +6,10 @@
 <h1 class="title">Crash {{ object.crashid }} of {{ object.get_applicationName }} at {{ object.crashtimestamp|date:"Y-m-d H:i:s" }}</h1>
 <div id="crashdump">
 <table class="properties">
-<tr><td>Id</td><td>{{ object.crashid }}</td></tr>
-<tr><td>State</td><td>{{ object.state.description }}</td></tr>
+<tr>
+  <th>Id</th><td>{{ object.crashid }}</td>
+  <th>State</th><td>{{ object.state.description }}</td>
+</tr>
 {% if xmlfile_error %}
 <tr><th>XML Error:</th><td>{{ xmlfile_error }}</td></tr>
 {% endif %}
@@ -15,36 +17,54 @@
 <tr><th>Minidump Error:</th><td>{{ minidumpfile_error }}</td></tr>
 {% endif %}
 {% if show_debug_info %}
-<tr><th>Parse time:</th><td>{% format_seconds parsetime %}</td></tr>
-<tr><th>Database time:</th><td>{% format_seconds dbtime %}</td></tr>
-<tr><th>Is 64-Bit:</th><td>{{is_64_bit}}</td></tr>
-<tr><th>Bits:</th><td>{{bits}}</td></tr>
-{% endif %}
-<tr><td>Crash Timestamp</td><td>{{ object.crashtimestamp|date:"Y-m-d H:i:s" }}</td></tr>
-<tr><td>Report Timestamp</td><td>{{ object.reporttimestamp|date:"Y-m-d H:i:s" }}</td></tr>
-<tr><td>Application name</td>
-    <td><a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a></td>
+<tr>
+  <th>Parse time:</th><td>{% format_seconds parsetime %}</td>
+  <th>Database time:</th><td>{% format_seconds dbtime %}</td>
 </tr>
-<tr><td>Application file</td><td>{{ object.applicationFile }}</td></tr>
+<tr>
+  <th>Bits:</th><td>{{bits}}</td>
+  <th>Is 64-Bit:</th><td>{{is_64_bit}}</td>
+</tr>
+{% endif %}
+<tr>
+  <th>Crash&nbsp;Timestamp</th><td>{{ object.crashtimestamp|date:"Y-m-d H:i:s" }}</td>
+  <th>Report&nbsp;Timestamp</th><td>{{ object.reporttimestamp|date:"Y-m-d H:i:s" }}</td>
+</tr>
+<tr>
+    <th>Application&nbsp;name</th>
+    <td><a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a></td>
+    <th>Application&nbsp;file</th><td>{{ object.applicationFile }}</td>
+</tr>
 
 {% if fast_protect_system_info %}
-<tr><th>Crash&nbsp;FQDN</th><td class="fullrow">{{fast_protect_system_info.fqdn}}&nbsp;<a href="{% url "sysinfo_report" object.id %}" title="{{object.id}} system info">Show complete system info</a>
-</td></tr>
-<tr><th>Crash&nbsp;username</th><td class="fullrow">{{fast_protect_system_info.username}}</td></tr>
+<tr>
+  <th>Crash&nbsp;FQDN</th><td>{{fast_protect_system_info.fqdn}}&nbsp;<a href="{% url "sysinfo_report" object.id %}" title="{{object.id}} system info">Show complete system info</a></td>
+  <th>Crash&nbsp;username</th><td>{{fast_protect_system_info.username}}</td>
+</tr>
 {% else %}
-<tr><td>Client FQDN</td><td>{{ object.crashHostName }}</td></tr>
-<tr><td>Client username</td><td>{{ object.crashUserName }}</td></tr>
+<tr>
+  <th>Client&nbsp;FQDN</th><td>{{ object.crashHostName }}</td>
+  <th>Client&nbsp;username</th><td>{{ object.crashUserName }}</td>
+</tr>
 {% endif %}
-<tr><th>Reporter&nbsp;FQDN</th><td class="fullrow">{{object.reportHostName}}</td></tr>
-<tr><th>Reporter&nbsp;username</th><td class="fullrow">{{object.reportUserName}}</td></tr>
+<tr>
+  <th>Reporter&nbsp;FQDN</th><td>{{object.reportHostName}}</td>
+  <th>Reporter&nbsp;username</th><td>{{object.reportUserName}}</td>
+</tr>
 
 <tr><td>Product name</td><td>{{ object.productName}}</td></tr>
-<tr><td>Product version</td><td>{{ object.productVersion }}</td></tr>
-<tr><td>Product target version</td><td>{{ object.productTargetVersion }}</td></tr>
-<tr><td>Build type</td><td>{{ object.buildType }}</td></tr>
-<tr><td>Build postfix</td><td>{{ object.buildPostfix }}</td></tr>
-<tr><td>Platform&nbsp;type</td><td>{%format_platform_type object.platform_type %}/{% format_cpu_type object.cpu_type %}</td></tr>
-<tr><td>OS&nbsp;version</td><td>{%format_os_version object.platform_type object.os_version_number object.os_build_number %}</td></tr>
+<tr>
+  <th>Product version</th><td>{{ object.productVersion }}</td>
+  <th>Product target version</th><td>{{ object.productTargetVersion }}</td>
+</tr>
+<tr>
+  <th>Build type</th><td>{{ object.buildType }}</td>
+  <th>Build postfix</th><td>{{ object.buildPostfix }}</td>
+</tr>
+<tr>
+  <th>OS&nbsp;version</th><td>{%format_os_version object.platform_type object.os_version_number object.os_build_number %}</td>
+  <th>Platform&nbsp;type</th><td>{%format_platform_type object.platform_type %}/{% format_cpu_type object.cpu_type %}</td>
+</tr>
 
 {% if object.has_minidump %}
     <tr><th>Minidump file</th><td class="fullrow">
@@ -80,25 +100,44 @@
 </td></tr>
 {% endif %}
 
-<tr><td>System info</td><td><pre>{{ object.systemInfoData }}</pre></td></tr>
-<tr><td>Gfx capabilities</td><td>
+<tr><th>System info</th><td>
+  {% if object.systemInfoData %}  
+  <pre>{{ object.systemInfoData }}</pre>
+  {% else %}  
+  N/A
+  {% endif %}  
+</td></tr>
+<tr><th>Gfx capabilities</th><td>
 {% if object.gfxCapsFile %}
 <a href="{% url "crash_report" object.id "gfxCaps" "raw" %}">Download</a>
 &nbsp;<a href="{% url "crash_report" object.id "gfxCaps" "text" %}">Plain text</a>
+{% else %}
+N/A
 {% endif %}
 </td></tr>
 
-<tr><td>Attachments</td><td><ul>
-{% for attachment in attachments %}
-<li>{{ attachment.name }}</li>
-{% endfor %}
-</ul></td></tr>
+<tr><th>Attachments</th><td>
+{% if attachments %}
+  <ul>
+  {% for attachment in attachments %}
+  <li>{{ attachment.name }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+None
+{% endif %}
+</td></tr>
 
-<tr><td>Links</td><td><ul>
+<tr><th>Links</th><td>
+{% if links %}
+  <ul>
 {% for link in links %}
 <li><a href="{{link.target}}">{{ link.name }}</a></li>
 {% endfor %}
 </ul>
+{% else %}
+None
+{% endif %}
 </td></tr>
 
 </table>

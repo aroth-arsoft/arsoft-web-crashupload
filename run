@@ -49,7 +49,7 @@ function venv_export_archive() {
 }
 
 function venv_run_gunicorn() {
-    local FLASK_SERVER_PORT=`awk '/FLASK_SERVER_PORT/ { print $3}' $SCRIPTDIR/settings.py`
+    local FLASK_SERVER_PORT='8000'
     local opts=''
     opts="$opts --chdir $SCRIPTDIR"
     if [ -f "$SCRIPTDIR/server_cert.pem" -a -f "$SCRIPTDIR/server_key.pem" ]; then
@@ -58,11 +58,12 @@ function venv_run_gunicorn() {
     if [ -f "$SCRIPTDIR/logging.conf" ]; then
         opts="$opts --log-config=$SCRIPTDIR/logging.conf"
     fi
+
     opts="$opts --bind 0.0.0.0:$FLASK_SERVER_PORT"
     if [ $verbose -ne 0 ]; then
         opts="$opts --log-level debug"
     fi
-    gunicorn $opts app:app
+    HTTP_SCRIPT_URL=$SCRIPTDIR gunicorn $opts app:application
     RES=$?
 }
 
@@ -303,14 +304,10 @@ EOF
 
 function venv_run() {
     . "$VENV_DIR/bin/activate"
-    if [ $venv_gunicorn -ne 0 ]; then
-        venv_run_gunicorn
-        RES=$?
-    else
-        python3 "$SCRIPTDIR/app.py"
-        RES=$?
-    fi
+    venv_run_gunicorn
+    RES=$?
     deactivate
+    return $RES
 }
 
 

@@ -3,6 +3,7 @@
 # kate: space-indent on; indent-width 4; mixedindent off; indent-mode python;
 from io import StringIO
 from arsoft.inifile import IniFile
+import datetime
 
 class FastprotectVersionInfo(object):
     def __init__(self, rawdata):
@@ -26,6 +27,7 @@ class FastprotectVersionInfo(object):
         self.manual_revision = ini.get(None, 'sourceManualRevision')
         self.jenkins_job_name = ini.get(None, 'jenkinsJobName')
         self.jenkins_build_number = ini.getAsInteger(None, 'jenkinsJobBuildNumber')
+        self.jenkins_build_date_unix = ini.getAsInteger(None, 'jenkinsJobBuildDateUnix')
         self.jenkins_build_id = ini.get(None, 'jenkinsJobBuildId')
         self.jenkins_build_tag = ini.get(None, 'jenkinsJobBuildTag')
         self.jenkins_build_url = ini.get(None, 'jenkinsJobBuildUrl')
@@ -34,6 +36,8 @@ class FastprotectVersionInfo(object):
         self.jenkins_master = ini.get(None, 'jenkinsMaster')
         self.jenkins_nodename = ini.get(None, 'jenkinsNodename')
         self.threadname_tlsslot = ini.getAsInteger(None, 'threadNameTLSSlot')
+
+        self.jenkins_build_date = datetime.utcfromtimestamp(ts)
 
     def __str__(self):
         return '%s %s (%s)' % (self.product_name, self.product_target_version, self.product_version)

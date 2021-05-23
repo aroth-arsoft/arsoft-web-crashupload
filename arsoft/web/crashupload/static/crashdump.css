@@ -125,6 +125,16 @@ table.properties td p:first-child { margin-top: 0 }
 table.properties td p:last-child { margin-bottom: 0 }
 table.properties .description { border-top: 1px solid #dd9 }
 
+table.properties > tbody > tr > th {
+    color: #663;
+    font-weight: normal;
+    text-align: left;
+    width: 20%;
+}
+table.properties > tbody > tr > td {
+    width: 30%;
+}
+
 #crashdump .description h3 {
  border-bottom: 1px solid #dd9;
  color: #663;

@@ -945,6 +945,11 @@ class XMLReport(object):
             rep = self.sytem_info_report
             return rep['System/MachineType']
 
+        @property
+        def text(self):
+            rep = self.sytem_info_report
+            return rep.text
+
     class ProcessStatusLinux(XMLReportEntity):
         def __init__(self, owner):
             super(XMLReport.ProcessStatusLinux, self).__init__(owner)

@@ -1,22 +1,30 @@
 {% load crashupload_utils %}
 
 <table class="properties">
-    <tr><th>OpenGL vendor</th><td>{{fast_protect_system_info.opengl_vendor}}</td></tr>
-    <tr><th>OpenGL renderer</th><td>{{fast_protect_system_info.opengl_renderer}}</td></tr>
-    <tr><th>OpenGL version</th><td>{{fast_protect_system_info.opengl_version}}</td></tr>
-    <tr><th>OpenGL vendor id</th><td>{{fast_protect_system_info.opengl_vendor_id}}</td></tr>
-    <tr><th>OpenGL driver id</th><td>{{fast_protect_system_info.opengl_driver_id}}</td></tr>
+    <tr>
+        <th>OpenGL vendor</th><td>{{fast_protect_system_info.opengl_vendor}}</td>
+        <th>OpenGL renderer</th><td>{{fast_protect_system_info.opengl_renderer}}</td>
+    </tr>
+    <tr>
+        <th>OpenGL version</th><td>{{fast_protect_system_info.opengl_version}}</td>
+        <th>OpenGL driver</th><td>{{fast_protect_system_info.opengl_driver_version}}, module {{ sysinfo_report.terra3d.OpenGLDriverModule }}, {{ sysinfo_report.terra3d.OpenGLDriverModuleVersion }}</td>
+    </tr>
+    <tr>
+        <th>OpenGL vendor id</th><td>{{fast_protect_system_info.opengl_vendor_id}}</td>
+        <th>OpenGL driver id</th><td>{{fast_protect_system_info.opengl_driver_id}}</td>
+    </tr>
     <tr><th>OpenGL chip class</th><td>{{fast_protect_system_info.opengl_chip_class}}</td></tr>
-    <tr><th>OpenGL driver</th><td>{{fast_protect_system_info.opengl_driver_version}}, module {{ sysinfo_report.terra3d.OpenGLDriverModule }}, {{ sysinfo_report.terra3d.OpenGLDriverModuleVersion }}</td></tr>
     <tr><th>OpenGL hardware ok</th><td>{{fast_protect_system_info.opengl_hardware_ok}}</td></tr>
     <tr><th>OpenGL use pbuffer</th><td>{{fast_protect_system_info.opengl_use_pbuffer}}</td></tr>
     <tr><th>OpenGL hardware error</th><td>{{fast_protect_system_info.opengl_hardware_error}}</td></tr>
     <tr><th>OpenGL pbuffer error</th><td>{{fast_protect_system_info.opengl_pbuffer_error}}</td></tr>
 
     <tr><th>Primary display</th><td>{{ sysinfo_report.terra3d.PrimaryDisplayDeviceString }}</td></tr>
-    <tr><th>Video BIOS</th><td>{{ sysinfo_report.terra3d.VideoBiosVersion }}, {{ sysinfo_report.terra3d.VideoBiosDate }}</td></tr>
-    <tr><th>Video memory size</th><td>{{ sysinfo_report.terra3d.VideoMemorySize }}</td></tr>
-    <tr><th>Video service</th><td>{{ sysinfo_report.terra3d.VideoService }}</td></tr>
+    <tr>
+        <th>Video BIOS</th><td>{{ sysinfo_report.terra3d.VideoBiosVersion|default:"unknown" }}, {{ sysinfo_report.terra3d.VideoBiosDate|default:"unknown" }}</td>
+        <th>Video service</th><td>{{ sysinfo_report.terra3d.VideoService }}</td>
+    </tr>
+    <tr><th>Video memory size</th><td>{% format_size sysinfo_report.terra3d.VideoMemorySize %}</td></tr>
 
     <tr><th>Texture compressions</th>
         <td><ul>

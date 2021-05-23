@@ -298,6 +298,7 @@ class SystemInfoReport(object):
         self._ini = None
         self.platform_type = None
         self.is_64_bit = True
+        self.text = None
 
         if filename is not None:
             self.open(filename=filename)
@@ -384,10 +385,12 @@ class SystemInfoReport(object):
         return self.platform_type == 'Win32' or self.platform_type == 'Windows NT'
 
     def open(self, filename=None, xmlreport=None, minidump=None):
+        self.text = None
         if filename:
             try:
                 self._ini = IniFile(filename, commentPrefix=';', keyValueSeperator='=', qt=True)
                 self._filename = filename
+                self.text = self._ini.asString()
             except IOError as e:
                 raise SystemInfoReport.SystemInfoReportIOError(self, str(e))
         elif xmlreport is not None:
@@ -396,10 +399,12 @@ class SystemInfoReport(object):
                 raise SystemInfoReport.SystemInfoReportIOError(self, 'No system info include in XMLReport %s' % (xmlreport.filename))
             if sys.version_info[0] > 2:
                 from io import StringIO
-                stream = StringIO(xmlreport.fast_protect_system_info.rawdata.raw.decode('utf8'))
+                self.text = xmlreport.fast_protect_system_info.rawdata.raw.decode('utf8')
+                stream = StringIO(self.text)
             else:
                 from StringIO import StringIO
-                stream = StringIO(xmlreport.fast_protect_system_info.rawdata.raw)
+                self.text = xmlreport.fast_protect_system_info.rawdata.raw
+                stream = StringIO(self.text)
             self._ini = IniFile(filename=None, commentPrefix=';', keyValueSeperator='=', qt=True)
             self._ini.open(stream)
             self.platform_type = xmlreport.platform_type
@@ -417,7 +422,7 @@ if __name__ == '__main__':
         print('No system info report file(s) specified')
         sys.exit(1)
 
-    if 1:
+    if 0:
         sysinfo = SystemInfoReport(sys.argv[1])
     else:
         xmlreport = XMLReport(sys.argv[1])
@@ -432,8 +437,9 @@ if __name__ == '__main__':
     #print(sysinfo.get('Qt/sysinfo/libraryinfobuild'))
 
     print(sysinfo['OpenGLExtensions'])
-    for e in sysinfo['OpenGLExtensions']:
-        print(e)
+    if sysinfo['OpenGLExtensions']:
+        for e in sysinfo['OpenGLExtensions']:
+            print(e)
     #print(sysinfo['System/Path'])
     #print(sysinfo['Environment'])
     #sysinfo.save('/tmp/sysinfo.ini')
@@ -450,8 +456,11 @@ if __name__ == '__main__':
     #for item in sysinfo['locale']:
         #print('%s=%s' % (item.description, item.value))
 
-    for item in sysinfo['Network']:
-        print('%s=%s' % (item.description, item.hwaddr))
-        for addr in item.addr:
-            print('  %s' % (addr))
+    if sysinfo['Network']:
+        for item in sysinfo['Network']:
+            print('%s=%s' % (item.description, item.hwaddr))
+            for addr in item.addr:
+                print('  %s' % (addr))
 
+    #print(sysinfo.text)
+    print(xmlreport.fast_protect_system_info.text)
