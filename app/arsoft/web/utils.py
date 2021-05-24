@@ -92,22 +92,20 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
 
     in_docker = os.getenv('container', '') == 'docker'
 
-    if in_docker:
-        appname_elems = settings_module_elems[:-1]
-        appname = '.'.join(appname_elems)
-        appdir = '/app'
-        app_etc_dir = '/app/etc'
-        app_data_dir = '/app/data'
-    elif settings_module_elems[-1] == 'settings':
+    if settings_module_elems[-1] == 'settings':
         appname_elems = settings_module_elems[:-1]
         appname = '.'.join(appname_elems)
         settings_dir_end = '/'.join(appname_elems)
-        app_etc_dir = os.path.join('/etc', settings_dir_end)
+        if in_docker:
+            app_etc_dir = '/app/etc'
+            app_data_dir = '/app/data'
+        else:
+            app_etc_dir = os.path.join('/etc', settings_dir_end)
+            app_data_dir = os.path.join('/var/lib', settings_dir_end)
         if setttings_dir.endswith(settings_dir_end):
             appdir = setttings_dir[:-len(settings_dir_end)]
         else:
             appdir = setttings_dir
-        app_data_dir = os.path.join('/var/lib', settings_dir_end)
     else:
         appdir = setttings_dir
         app_etc_dir = setttings_dir
@@ -208,7 +206,7 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     
     # Additional locations of static files and the  List of finder classes 
     # that know how to find static files in various locations.
-    if in_devserver:
+    if in_devserver or in_docker:
         app_static_dir = os.path.join(appdir, 'static')
         if os.path.exists(app_static_dir):
             settings_obj.STATICFILES_DIRS = [ app_static_dir ]
@@ -216,11 +214,14 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
             settings_obj.STATICFILES_DIRS = []
     else:
         settings_obj.STATICFILES_DIRS = [ os.path.join(app_etc_dir, 'static') ]
-    settings_obj.STATICFILES_FINDERS = [ 'django.contrib.staticfiles.finders.FileSystemFinder', 'django.contrib.staticfiles.finders.AppDirectoriesFinder' ]
+    settings_obj.STATICFILES_FINDERS = [
+        'django.contrib.staticfiles.finders.FileSystemFinder',
+        'django.contrib.staticfiles.finders.AppDirectoriesFinder'
+        ]
 
     # set up the template directories and loaders
     template_dirs = []
-    if in_devserver:
+    if in_devserver or in_docker:
         app_template_dir = os.path.join(appdir, 'templates')
         if os.path.exists(app_template_dir):
             template_dirs = [ app_template_dir ]
@@ -252,13 +253,13 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     ]
 
     # set config directory
-    if in_devserver:
+    if in_devserver or in_docker:
         settings_obj.CONFIG_DIR = os.path.join(appdir, 'config')
     else:
         settings_obj.CONFIG_DIR = os.path.join(app_etc_dir, 'config')
 
     # set application data directory
-    if in_devserver:
+    if in_devserver or in_docker:
         settings_obj.APP_DATA_DIR = os.path.join(appdir, 'data')
     else:
         settings_obj.APP_DATA_DIR = app_data_dir
@@ -277,7 +278,7 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
             'arsoft.web',
             appname
             ]
-    if in_devserver:
+    if in_devserver or in_docker:
         settings_obj.LOG_DIR = os.path.join(appdir, 'data')
         if not os.path.isdir(settings_obj.LOG_DIR):
             # create LOG_DIR if it does not exists
@@ -355,7 +356,17 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     if os.path.exists(custom_settings_file):
         exec(compile(open(custom_settings_file).read(), custom_settings_file, 'exec'))
 
-    #print(settings_obj.INSTALLED_APPS)
+    print('settings_obj.CONFIG_DIR=%s' % (settings_obj.CONFIG_DIR))
+    print('settings_obj.APP_DATA_DIR=%s' % (settings_obj.APP_DATA_DIR))
+    print('settings_obj.LOG_DIR=%s' % (settings_obj.LOG_DIR))
+    print('settings_obj.STATICFILES_DIRS=%s' % (settings_obj.STATICFILES_DIRS))
+    print('settings_obj.STATICFILES_FINDERS=%s' % (settings_obj.STATICFILES_FINDERS))
+    print('settings_obj.STATIC_ROOT=%s' % (settings_obj.STATIC_ROOT))
+    print('settings_obj.STATIC_URL=%s' % (settings_obj.STATIC_URL))
+    print('settings_obj.MEDIA_ROOT=%s' % (settings_obj.MEDIA_ROOT))
+    print('settings_obj.MEDIA_URL=%s' % (settings_obj.MEDIA_URL))
+    print('settings_obj.ROOT_URLCONF=%s' % (settings_obj.ROOT_URLCONF))
+    print('settings_obj.TEMPLATES=%s' % (settings_obj.TEMPLATES))
 
 def django_request_info_view(request):
     import datetime
