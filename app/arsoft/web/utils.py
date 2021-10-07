@@ -96,21 +96,25 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
         appname_elems = settings_module_elems[:-1]
         appname = '.'.join(appname_elems)
         settings_dir_end = '/'.join(appname_elems)
-        if in_docker:
-            app_etc_dir = '/app/etc'
-            app_data_dir = '/app/data'
-        else:
-            app_etc_dir = os.path.join('/etc', settings_dir_end)
-            app_data_dir = os.path.join('/var/lib', settings_dir_end)
         if setttings_dir.endswith(settings_dir_end):
             appdir = setttings_dir[:-len(settings_dir_end)]
         else:
             appdir = setttings_dir
     else:
+        settings_dir_end = setttings_dir
         appdir = setttings_dir
         app_etc_dir = setttings_dir
         app_data_dir = setttings_dir
-    in_devserver = _is_running_in_devserver(appdir)
+    in_devserver = _is_running_in_devserver(appdir)        
+    if in_docker:
+        app_etc_dir = '/app/etc'
+        app_data_dir = '/app/data'
+    elif in_devserver:
+        app_etc_dir = os.path.join(appdir, 'etc')
+        app_data_dir = os.path.join(appdir, 'data')
+    else:
+        app_etc_dir = os.path.join('/etc', settings_dir_end)
+        app_data_dir = os.path.join('/var/lib', settings_dir_end)
 
     if 'BASE_PATH' in os.environ:
         settings_obj.BASE_PATH = os.environ['BASE_PATH']
@@ -372,11 +376,12 @@ def django_request_info_view(request):
     import datetime
     from django.http import HttpResponse
     from django.template import Template, Context
-    from django.core.urlresolvers import get_script_prefix
+    from django.urls import get_script_prefix
     from django import get_version
 
     disable = is_debug_info_disabled()
     if disable:
+        from django.http import HttpResponseForbidden
         return HttpResponseForbidden('Debug info pages disabled.', content_type='text/plain')
 
     script_prefix = get_script_prefix()
@@ -407,7 +412,7 @@ def django_env_info_view(request):
     import datetime
     from django.http import HttpResponse, HttpResponseForbidden
     from django.template import Template, Context
-    from django.core.urlresolvers import get_script_prefix
+    from django.urls import get_script_prefix
     from django import get_version
 
     script_prefix = get_script_prefix()
@@ -436,7 +441,7 @@ def django_settings_view(request):
     from django.http import HttpResponse, HttpResponseForbidden
     from django.template import Template, Context
     from django.utils.encoding import force_bytes, smart_text
-    from django.core.urlresolvers import get_script_prefix
+    from django.urls import get_script_prefix
     from django import get_version
 
     disable = is_debug_info_disabled()
@@ -495,7 +500,7 @@ class _url_pattern_wrapper(object):
 
     @property
     def reverse_url(self):
-        from django.core.urlresolvers import reverse, NoReverseMatch
+        from django.urls import reverse, NoReverseMatch
         url = None
         try:
             url = reverse(self.full_qualified_name)
@@ -505,7 +510,7 @@ class _url_pattern_wrapper(object):
 
     @property
     def full_url(self):
-        from django.core.urlresolvers import LocaleRegexProvider
+        from django.urls import LocaleRegexProvider
         if isinstance(self.url, LocaleRegexProvider):
             ret = [ self.url.regex.pattern ]
         else:
@@ -516,7 +521,7 @@ class _url_pattern_wrapper(object):
 
     @property
     def full_name(self):
-        from django.core.urlresolvers import RegexURLResolver, RegexURLPattern
+        from django.urls import RegexURLResolver, RegexURLPattern
         if isinstance(self.url, RegexURLResolver):
             if isinstance(self.url.urlconf_name, list) and len(self.url.urlconf_name):
                 # Don't bother to output the whole list, it can be huge
@@ -534,7 +539,7 @@ class _url_pattern_wrapper(object):
 
 
 def _flatten_url_list(obj, parent_obj=None, level=0):
-    from django.core.urlresolvers import RegexURLResolver, RegexURLPattern
+    from django.urls import RegexURLResolver, RegexURLPattern
     ret = []
     wrapped_obj = _url_pattern_wrapper(obj, parent_obj, level)
     if isinstance(obj, RegexURLResolver):
@@ -556,7 +561,7 @@ def _flatten_url_list(obj, parent_obj=None, level=0):
     return ret
 
 def _flatten_url_dict(obj, parent_obj=None, level=0):
-    from django.core.urlresolvers import RegexURLResolver, RegexURLPattern
+    from django.urls import RegexURLResolver, RegexURLPattern
     ret = {}
     wrapped_obj = _url_pattern_wrapper(obj, parent_obj, level)
     if isinstance(obj, RegexURLResolver):
@@ -596,7 +601,7 @@ def django_urls_view(request):
     from django.http import HttpResponse, HttpResponseForbidden
     from django.template import Template, Context
     from django.utils.encoding import force_bytes, smart_text
-    from django.core.urlresolvers import get_script_prefix, get_resolver
+    from django.urls import get_script_prefix, get_resolver
     from django import get_version
 
     disable = is_debug_info_disabled()
