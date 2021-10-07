@@ -4,6 +4,7 @@ from django.contrib import admin
 from arsoft.web.utils import django_debug_urls
 
 from .views import CrashDumpListView, CrashDumpDetails, CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, submit
+from .migrate import migrate
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -23,6 +24,7 @@ urlpatterns = [
     #url(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)(/(?P<flag>\w+)?)$', CrashDumpReport.as_view(), name='crash_report'),
     url(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)/(?P<flag>\w+)$', CrashDumpReport.as_view(), name='crash_report'),
     url(r'^submit$', submit, name='submit'),
+    url(r'^migrate$', migrate, name='migrate'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

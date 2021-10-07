@@ -123,9 +123,10 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     else:
         settings_obj.BASE_PATH = ''
 
-    print('initialize_settings for ' + appname + ' appdir ' + appdir +
-          ' app_data_dir ' + app_data_dir +
-          ' debug=' + str(in_devserver) + ' basepath=' + str(settings_obj.BASE_PATH))
+    if 0:
+        print('initialize_settings for ' + appname + ' appdir ' + appdir +
+              ' app_data_dir ' + app_data_dir +
+              ' debug=' + str(in_devserver) + ' basepath=' + str(settings_obj.BASE_PATH))
 
     if 'debug' in options:
         settings_obj.DEBUG = options['debug']
@@ -360,17 +361,18 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     if os.path.exists(custom_settings_file):
         exec(compile(open(custom_settings_file).read(), custom_settings_file, 'exec'))
 
-    print('settings_obj.CONFIG_DIR=%s' % (settings_obj.CONFIG_DIR))
-    print('settings_obj.APP_DATA_DIR=%s' % (settings_obj.APP_DATA_DIR))
-    print('settings_obj.LOG_DIR=%s' % (settings_obj.LOG_DIR))
-    print('settings_obj.STATICFILES_DIRS=%s' % (settings_obj.STATICFILES_DIRS))
-    print('settings_obj.STATICFILES_FINDERS=%s' % (settings_obj.STATICFILES_FINDERS))
-    print('settings_obj.STATIC_ROOT=%s' % (settings_obj.STATIC_ROOT))
-    print('settings_obj.STATIC_URL=%s' % (settings_obj.STATIC_URL))
-    print('settings_obj.MEDIA_ROOT=%s' % (settings_obj.MEDIA_ROOT))
-    print('settings_obj.MEDIA_URL=%s' % (settings_obj.MEDIA_URL))
-    print('settings_obj.ROOT_URLCONF=%s' % (settings_obj.ROOT_URLCONF))
-    print('settings_obj.TEMPLATES=%s' % (settings_obj.TEMPLATES))
+    if 0:
+        print('settings_obj.CONFIG_DIR=%s' % (settings_obj.CONFIG_DIR))
+        print('settings_obj.APP_DATA_DIR=%s' % (settings_obj.APP_DATA_DIR))
+        print('settings_obj.LOG_DIR=%s' % (settings_obj.LOG_DIR))
+        print('settings_obj.STATICFILES_DIRS=%s' % (settings_obj.STATICFILES_DIRS))
+        print('settings_obj.STATICFILES_FINDERS=%s' % (settings_obj.STATICFILES_FINDERS))
+        print('settings_obj.STATIC_ROOT=%s' % (settings_obj.STATIC_ROOT))
+        print('settings_obj.STATIC_URL=%s' % (settings_obj.STATIC_URL))
+        print('settings_obj.MEDIA_ROOT=%s' % (settings_obj.MEDIA_ROOT))
+        print('settings_obj.MEDIA_URL=%s' % (settings_obj.MEDIA_URL))
+        print('settings_obj.ROOT_URLCONF=%s' % (settings_obj.ROOT_URLCONF))
+        print('settings_obj.TEMPLATES=%s' % (settings_obj.TEMPLATES))
 
 def django_request_info_view(request):
     import datetime

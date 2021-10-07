@@ -12,6 +12,7 @@ setup(name='arsoft-web-crashupload',
 		packages=['arsoft.web.crashupload'],
 		scripts=['run'],
 		data_files=[
+			('/usr/share/arsoft/web/crashupload/fixtures', ['fixtures/*.json']),
             ('/etc/arsoft/web/crashupload/static', ['arsoft/web/crashupload/static/main.css']),
             ('/etc/arsoft/web/crashupload/templates', [
                 'arsoft/web/crashupload/templates/*.html'

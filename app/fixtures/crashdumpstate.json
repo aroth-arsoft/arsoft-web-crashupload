@@ -1,0 +1,1 @@
+[{"model": "crashupload.crashdumpstate", "pk": 1, "fields": {"name": "new", "description": "New"}}, {"model": "crashupload.crashdumpstate", "pk": 2, "fields": {"name": "closed", "description": "Closed"}}, {"model": "crashupload.crashdumpstate", "pk": 3, "fields": {"name": "duplicate", "description": "Duplicate"}}]
