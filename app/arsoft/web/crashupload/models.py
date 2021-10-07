@@ -2,6 +2,7 @@ from crashdump.utils import format_os_version_short, get_os_version_number, get_
 from django.db import models, migrations
 
 class CrashDumpState(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField('Name', max_length=32, help_text='short name of the state')
     description = models.CharField('Description', max_length=256, help_text='description of the attachment')
 
@@ -22,6 +23,7 @@ class CrashDumpModel(models.Model):
             except:
                 return False
 
+    id = models.AutoField(primary_key=True)
     crashid = models.CharField('Crash id', max_length=36, unique=True, help_text='unique identifier of the crash')
     state = models.ForeignKey(CrashDumpState, on_delete=models.CASCADE)
     crashtimestamp = models.DateTimeField('Crash Timestamp', auto_now_add=True)
@@ -187,6 +189,7 @@ class CrashDumpModel(models.Model):
             return a
 
 class CrashDumpAttachment(models.Model):
+    id = models.AutoField(primary_key=True)
     crash = models.ForeignKey(CrashDumpModel, on_delete=models.CASCADE)
     name = models.CharField('Name', max_length=256, help_text='name of the attachment')
     description = models.TextField('Description', max_length=8192, help_text='description of the attachment')
@@ -197,6 +200,7 @@ class CrashDumpAttachment(models.Model):
         verbose_name_plural = "Crash attachments"
 
 class CrashDumpLink(models.Model):
+    id = models.AutoField(primary_key=True)
     crash = models.ForeignKey(CrashDumpModel, on_delete=models.CASCADE)
     name = models.CharField('Name', max_length=256, null=True, help_text='name of the link')
     url = models.TextField('URL', max_length=2048, help_text='URL')
