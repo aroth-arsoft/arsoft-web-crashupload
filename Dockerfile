@@ -13,7 +13,9 @@ LABEL maintainer="docker@fastprotect.net"
 ENV container=docker LANG=C.UTF-8
 
 #RUN apk add --no-cache libxml2 libxslt
+RUN apk add --no-cache unixodbc mariadb-connector-odbc
 
+# odbc-mariadb
 ADD ./app/ /app/
 #COPY --from=builder /src/*.whl /tmp
 RUN pip install -r /app/requirements.txt && \

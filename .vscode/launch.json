@@ -12,6 +12,13 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": ["runserver"],
+            "env": {
+                "MIGRATE_DB_DRIVER":"MariaDB",
+                "MIGRATE_DB_HOST":"127.0.0.1",
+                "MIGRATE_DB_DATABASE":"trac_live",
+                "MIGRATE_DB_USER":"root",
+                "MIGRATE_DB_PASSWORD":"jwdb",
+            },
             "django": true
 
         }
