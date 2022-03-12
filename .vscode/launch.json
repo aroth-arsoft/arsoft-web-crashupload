@@ -10,7 +10,21 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": true
+        },
+        {
+            "name": "GUnicorn: Webapp",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/venv/bin/gunicorn",
+            "cwd": "${workspaceFolder}/app",
+            "justMyCode": false,
+            "args": ["app:application",
+                "--bind=0.0.0.0:8000", "--reload", 
+                "--log-level", "debug"
+            ],
+            "envFile": "${workspaceFolder}/.env",
+            //"postDebugTask": "killdebugger"
         },
         {
             "name": "Python: manage.py",

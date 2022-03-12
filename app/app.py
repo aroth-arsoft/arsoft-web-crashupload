@@ -5,8 +5,16 @@
 import os
 import sys
 
+_os_env_base_path_done = False
+_os_env_base_path = None
+
 def gunicorn_dispatch_request(environ, start_response):
-    environ['BASE_PATH'] = environ.get('HTTP_BASE_PATH', '')
+    global _os_env_base_path_done, _os_env_base_path
+    environ['BASE_PATH'] = environ.get('HTTP_BASE_PATH', _os_env_base_path)
+    if environ['BASE_PATH'] is None and not _os_env_base_path_done:
+        _os_env_base_path_done = True
+        _os_env_base_path = os.getenv('HTTP_BASE_PATH', '')
+        environ['BASE_PATH'] = _os_env_base_path
     script_url = environ.get('HTTP_SCRIPT_URL', '')
     path_info = environ.get('PATH_INFO', '/')
     if path_info == '/' and script_url and script_url[-1] != '/':

@@ -2,7 +2,6 @@ from django.template import RequestContext, loader
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-#import pyodbc
 import MySQLdb
 import MySQLdb.cursors
 
@@ -39,10 +38,11 @@ class MigrateDb:
                 host=settings['HOST'],port=settings['PORT'],user=settings['USER'],password=settings['PASSWORD'],database=settings['DATABASE'],
                 cursorclass=MySQLdb.cursors.DictCursor)
         else:
-            self.cnxn = pyodbc.connect(f"DRIVER={{{settings['DRIVER']}}};Server={settings['HOST']};Port={settings['PORT']};Database={settings['DATABASE']};UID={settings['USER']};PWD={settings['PASSWORD']};CHARSET=UTF8")
-            self.cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)
-            self.cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
-            self.cnxn.setencoding(encoding=encoding)
+            raise NotImplementedError
+            # self.cnxn = pyodbc.connect(f"DRIVER={{{settings['DRIVER']}}};Server={settings['HOST']};Port={settings['PORT']};Database={settings['DATABASE']};UID={settings['USER']};PWD={settings['PASSWORD']};CHARSET=UTF8")
+            # self.cnxn.setdecoding(pyodbc.SQL_CHAR, encoding=encoding)
+            # self.cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding=encoding)
+            # self.cnxn.setencoding(encoding=encoding)
 
         self.cursor = self.cnxn.cursor()
 

@@ -283,13 +283,10 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
             'arsoft.web',
             appname
             ]
-    if in_devserver or in_docker:
-        settings_obj.LOG_DIR = os.path.join(appdir, 'data')
-        if not os.path.isdir(settings_obj.LOG_DIR):
-            # create LOG_DIR if it does not exists
-            os.makedirs(settings_obj.LOG_DIR)
-    else:
-        settings_obj.LOG_DIR = '/var/log/django'
+    settings_obj.LOG_DIR = os.path.join(appdir, 'data')
+    if not os.path.isdir(settings_obj.LOG_DIR):
+        # create LOG_DIR if it does not exists
+        os.makedirs(settings_obj.LOG_DIR)
     # A sample logging configuration. The only tangible logging
     # performed by this configuration is to send an email to
     # the site admins on every HTTP 500 error when DEBUG=False.
@@ -442,7 +439,6 @@ def django_settings_view(request):
     from django.conf import settings
     from django.http import HttpResponse, HttpResponseForbidden
     from django.template import Template, Context
-    from django.utils.encoding import force_bytes, smart_text
     from django.urls import get_script_prefix
     from django import get_version
 
@@ -602,7 +598,6 @@ def django_urls_view(request):
     from django.conf import settings
     from django.http import HttpResponse, HttpResponseForbidden
     from django.template import Template, Context
-    from django.utils.encoding import force_bytes, smart_text
     from django.urls import get_script_prefix, get_resolver
     from django import get_version
 
@@ -641,7 +636,6 @@ def django_debug_info(request):
     from django.conf import settings
     from django.http import HttpResponse, HttpResponseForbidden
     from django.template import Template, Context, Engine
-    from django.utils.encoding import force_bytes, smart_text
     from django.urls import get_script_prefix, get_resolver
     from django import get_version
 
@@ -674,15 +668,15 @@ def django_debug_info(request):
     return HttpResponse(t.render(c), content_type='text/html')
 
 def django_debug_urls(options={}):
-    from django.conf.urls import url
+    from django.urls import re_path
 
     # add debug handler here
     urlpatterns = [
-        url(r'^$', django_debug_info, name='debug_django_info'),
-        url(r'^request$', django_request_info_view, name='debug_django_request'),
-        url(r'^env$', django_env_info_view, name='debug_django_env'),
-        url(r'^settings$', django_settings_view, name='debug_django_settings'),
-        url(r'^urls$', django_urls_view, name='debug_django_urls'),
+        re_path(r'^$', django_debug_info, name='debug_django_info'),
+        re_path(r'^request$', django_request_info_view, name='debug_django_request'),
+        re_path(r'^env$', django_env_info_view, name='debug_django_env'),
+        re_path(r'^settings$', django_settings_view, name='debug_django_settings'),
+        re_path(r'^urls$', django_urls_view, name='debug_django_urls'),
         ]
     return urlpatterns
 
