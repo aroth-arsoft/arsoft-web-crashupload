@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 import MySQLdb
 import MySQLdb.cursors
 
+
 import logging
 
 from .models import CrashDumpModel, CrashDumpState
@@ -110,7 +111,12 @@ def _sql_to_model(fields, record):
 def migrate(request):
     from django.conf import settings
 
-    db = MigrateDb(settings)
+    try:
+        db = MigrateDb(settings)
+    except MySQLdb.Error as e:
+        body = "Failed to connect to database: " + str(e)
+        return HttpResponse(body, status=500, content_type="text/plain")
+
     file = None
     error_message = None
 

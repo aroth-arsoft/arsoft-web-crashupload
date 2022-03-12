@@ -234,12 +234,14 @@ ul.environment li {
     font-family: monospace;
     white-space: nowrap;
 }
-.crashdump-nav {
- font-size: 80%;
-}
 .address {
     font-family: monospace;
     white-space: nowrap;
+}
+
+.pagination li {
+    padding-left: 2pt;
+    padding-right: 2pt;
 }
 
 

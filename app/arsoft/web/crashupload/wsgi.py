@@ -14,7 +14,6 @@ framework.
 
 """
 import os
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arsoft.web.crashupload.settings")
 
 # This application object is used by any WSGI server configured to use this
@@ -22,6 +21,21 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "arsoft.web.crashupload.settings
 # setting points here.
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
+
+from django.conf import settings as django_settings
+import json
+
+NAV_ITEMS_JSON = getattr(django_settings,
+                        'NAV_ITEMS_JSON',
+                        '')
+
+django_settings.NAV_ITEMS = []
+try:
+    if NAV_ITEMS_JSON:
+        django_settings.NAV_ITEMS = json.loads(NAV_ITEMS_JSON)
+except Exception:
+    pass
+
 
 # Apply WSGI middleware here.
 # from helloworld.wsgi import HelloWorldApplication

@@ -15,12 +15,31 @@ SITE_ID = 1
 INSTALLED_APPS.extend(['django.contrib.admin', 'django_tables2'])
 MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 
+# Database
+# https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(APP_DATA_DIR, 'crashupload.db')
     }
 }
+
+
+#DATABASES = {
+    #'default': {
+        #'ENGINE': 'django.db.backends.mysql',
+        #'OPTIONS': {
+            #'read_default_file': '/etc/mysql/my.cnf',
+        #},
+    #}
+#}
+# In my.cnf
+#[client]
+#database = blog_data
+#user = djangouser
+#password = your_actual_password
+#default-character-set = utf8
+
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '(l*vxapxd##_58l*-i@9g6%ao3xq53u6rs^sqf87*5q*9woswk'
@@ -30,6 +49,10 @@ SECRET_KEY = '(l*vxapxd##_58l*-i@9g6%ao3xq53u6rs^sqf87*5q*9woswk'
 ALLOWED_HOSTS = ['*']
 
 MEDIA_ROOT = APP_DATA_DIR
+
+APP_STYLE = os.getenv('APP_STYLE', 'crashdump.css')
+
+NAV_ITEMS_JSON = os.getenv('NAV_ITEMS', '')
 
 MIGRATE_DB_DRIVER = os.getenv('MIGRATE_DB_DRIVER', 'MariaDB')
 MIGRATE_DB_HOST = os.getenv('MIGRATE_DB_HOST', '127.0.0.1')

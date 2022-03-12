@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load crashupload_utils %}
 
 {% block content %}
@@ -7,7 +7,7 @@
 <div id="crashdump">
 <table class="properties">
 <tr>
-  <th>Id</th><td>{{ object.crashid }}</td>
+  <th>Id</th><td>{{ object.crashid }} (PK {{ object.id }})</td>
   <th>State</th><td>{{ object.state.description }}</td>
 </tr>
 {% if xmlfile_error %}

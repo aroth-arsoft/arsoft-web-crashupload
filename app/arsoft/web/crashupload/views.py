@@ -3,11 +3,12 @@ from django.urls import reverse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.views.generic.detail import DetailView
+from django.views.generic.base import RedirectView
 from django import forms
 from django_tables2 import SingleTableView
 from django.conf import settings
@@ -20,6 +21,7 @@ from .models import CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAtta
 from .tables import CrashDumpModelTable
 from .forms import UploadFileForm
 from uuid import UUID
+from django.conf import settings as django_settings
 
 from crashdump.utils import *
 from crashdump.minidump import MiniDump
@@ -35,6 +37,8 @@ def safe_get_as_int (l, default=None):
         return default
 
 def add_utils_to_context(context, crash=None):
+
+    context['nav_items'] = django_settings.NAV_ITEMS
     context['hex_format'] = hex_format
     context['exception_code'] = exception_code
     context['format_bool_yesno'] = format_bool_yesno
@@ -86,6 +90,8 @@ def add_utils_to_context(context, crash=None):
         context['minidumpfile_size'] = 0
         context['coredumpfile_size'] = 0
         context['xmlfile_size'] = 0
+        context['reporttextfile_size'] = 0
+        context['reporthtmlfile_size'] = 0
         context['show_debug_info'] = True
         context['parsetime'] = 0
         context['dbtime'] = 0
@@ -192,6 +198,12 @@ class CrashDumpDetails(DetailView):
         end = time.time()
         context['dbtime'] = end - start
         return context
+
+
+class CrashDumpDetailsFromCrashId(RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        obj = get_object_or_404(CrashDumpModel, crashid=kwargs['crashid'])
+        return reverse('crash_details', args=[obj.id] )
 
 class CrashDumpDetailsSub(DetailView):
     model = CrashDumpModel
@@ -400,8 +412,7 @@ def _store_dump_file(crashid, request, name):
 def _get_dump_filename(crashobj, filename):
     if not filename:
         return None
-    #item_name = 'dumpdata/%s/%s' % (crashobj.crashid, filename)
-    item_name = filename
+    item_name = 'dumpdata/%s' % (filename)
     if default_storage.exists(item_name):
         return default_storage.path(item_name)
     else:

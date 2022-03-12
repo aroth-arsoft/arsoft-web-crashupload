@@ -40,3 +40,4 @@ nosetests.xml
 /dumpdata/
 /venv/
 *.tar.gz
+.env
