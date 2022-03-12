@@ -435,6 +435,21 @@ def format_platform_type(platform_type):
     else:
         return tag_a(platform_type, href='https://en.wikipedia.org/wiki/Special:Search/' + str(platform_type))
 
+def _get_version_digit(s):
+    i = -1
+    for j, c in enumerate(s):
+        if not str.isnumeric(c):
+            i = j
+            break
+    if i > 0:
+        s = s[0:i]
+    ret = None
+    try:
+        ret = int(s)
+    except ValueError:
+        pass
+    return ret
+
 def _get_version_from_string(number_str):
     elems = number_str.split('.')
     major = 0
@@ -442,17 +457,17 @@ def _get_version_from_string(number_str):
     patch = 0
     build = 0
     if len(elems) >= 1:
-        major = int(elems[0])
+        major = _get_version_digit(elems[0])
     if len(elems) >= 2:
-        minor = int(elems[1])
+        minor = _get_version_digit(elems[1])
     if len(elems) >= 3:
-        patch = int(elems[2])
+        patch = _get_version_digit(elems[2])
     if len(elems) >= 4:
-        build = int(elems[3])
+        build = _get_version_digit(elems[3])
     return major, minor, patch, build
 
 def _get_version_from_numbers(os_version_number, os_build_number):
-    print('_get_version_from_numbers %s, %s' % (os_version_number, os_build_number))
+    #print('_get_version_from_numbers %s, %s' % (os_version_number, os_build_number))
     if isinstance(os_version_number, int):
         major = os_version_number >> 48 & 0xffff
         minor = os_version_number >> 32 & 0xffff
@@ -481,7 +496,7 @@ def get_os_version_number(platform_type, os_version_number, os_build_number):
         patch = 0
         build = 0
     ret = (major << 48) | (minor << 32) | (patch << 16) | build
-    print('ver in %s -> %x' % (os_version_number, ret))
+    #print('ver in %s -> %x' % (os_version_number, ret))
     return ret
 
 def get_os_build_number(platform_type, os_version_number, os_build_number):
@@ -495,7 +510,7 @@ def get_os_build_number(platform_type, os_version_number, os_build_number):
             build = patch
     else:
         build = 0
-    print('build in %s -> %x' % (os_version_number, build))
+    #print('build in %s -> %x' % (os_version_number, build))
     return build
 
 def os_version_info(platform_type, os_version_number, os_build_number):
@@ -683,3 +698,7 @@ def format_stack_frame(frame):
                 return frame.addr
         else:
             return format_function_plus_offset(frame.function, frame.funcoff)
+
+if __name__ == '__main__':
+    x = _get_version_from_string("6.1 Service Pack 1")
+    print(x)
