@@ -4,6 +4,7 @@ services:
         container_name: crashupload
         environment:
             - GUNICORN_DEBUG=1
+            - BASE_PATH=/crashupload
         image: rothan/arsoft-web-crashupload:latest
         restart: "no"
         ports:
