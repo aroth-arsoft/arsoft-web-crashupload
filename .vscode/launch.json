@@ -20,7 +20,7 @@
             "cwd": "${workspaceFolder}/app",
             "justMyCode": false,
             "args": ["app:application",
-                "--bind=0.0.0.0:8000", "--reload", 
+                "--bind=0.0.0.0:8000", "--reload", "--timeout", "300",
                 "--log-level", "debug"
             ],
             "envFile": "${workspaceFolder}/.env",

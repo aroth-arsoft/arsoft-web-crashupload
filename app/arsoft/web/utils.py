@@ -39,6 +39,12 @@ def _is_running_in_devserver(appdir):
     else:
         return False
 
+def _is_running_gunicorn_debug():
+    in_docker = os.getenv('container', '') == 'docker'
+    if in_docker:
+        return False
+    else:
+        return int(os.environ.get('GUNICORN_DEBUG', '0')) != 0
 
 HIDDEN_SETTINGS = re.compile('API|TOKEN|KEY|SECRET|PASS|PROFANITIES_LIST|SIGNATURE')
 
@@ -106,10 +112,11 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
         app_etc_dir = setttings_dir
         app_data_dir = setttings_dir
     in_devserver = _is_running_in_devserver(appdir)        
+    in_gunicorn_debug = _is_running_gunicorn_debug()
     if in_docker:
         app_etc_dir = '/app/etc'
         app_data_dir = '/app/data'
-    elif in_devserver:
+    elif in_devserver or in_gunicorn_debug:
         app_etc_dir = os.path.join(appdir, 'etc')
         app_data_dir = os.path.join(appdir, 'data')
     else:
@@ -131,10 +138,10 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     if 'debug' in options:
         settings_obj.DEBUG = options['debug']
     else:
-        if in_docker:
-            settings_obj.DEBUG = int(os.environ.get('GUNICORN_DEBUG', '0')) != 0
+        if in_devserver:
+            settings_obj.DEBUG = True
         else:
-            settings_obj.DEBUG = in_devserver
+            settings_obj.DEBUG = int(os.environ.get('GUNICORN_DEBUG', '0')) != 0
 
     # If DISABLE_DEBUG_INFO_PAGE is set the 
     settings_obj.DISABLE_DEBUG_INFO_PAGE = False
@@ -226,7 +233,7 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
 
     # set up the template directories and loaders
     template_dirs = []
-    if in_devserver or in_docker:
+    if in_devserver or in_docker or in_gunicorn_debug:
         app_template_dir = os.path.join(appdir, 'templates')
         if os.path.exists(app_template_dir):
             template_dirs = [ app_template_dir ]
@@ -258,13 +265,13 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     ]
 
     # set config directory
-    if in_devserver or in_docker:
+    if in_devserver or in_docker or in_gunicorn_debug:
         settings_obj.CONFIG_DIR = os.path.join(appdir, 'config')
     else:
         settings_obj.CONFIG_DIR = os.path.join(app_etc_dir, 'config')
 
     # set application data directory
-    if in_devserver or in_docker:
+    if in_devserver or in_docker or in_gunicorn_debug:
         settings_obj.APP_DATA_DIR = os.path.join(appdir, 'data')
     else:
         settings_obj.APP_DATA_DIR = app_data_dir
@@ -493,7 +500,11 @@ class _url_pattern_wrapper(object):
         if namespace is not None:
             ret = namespace + ':' + self.url.name
         else:
-            ret = self.url.name
+            from django.urls.resolvers import URLResolver
+            if isinstance(self.url, URLResolver):
+                ret = self.url.urlconf_name
+            else:
+                ret = self.url.name
         return ret
 
     @property
@@ -508,27 +519,20 @@ class _url_pattern_wrapper(object):
 
     @property
     def full_url(self):
-        from django.urls import LocaleRegexProvider
-        if isinstance(self.url, LocaleRegexProvider):
-            ret = [ self.url.regex.pattern ]
+        from django.urls.resolvers import URLResolver
+        if isinstance(self.url, URLResolver):
+            ret = [self.url.urlconf_name]
         else:
-            ret = [ self.url.name ]
+            ret = [self.url.name]
         if self.parent is not None:
             ret.insert(0, self.parent.full_url)
         return ','.join(ret)
 
     @property
     def full_name(self):
-        from django.urls import RegexURLResolver, RegexURLPattern
-        if isinstance(self.url, RegexURLResolver):
-            if isinstance(self.url.urlconf_name, list) and len(self.url.urlconf_name):
-                # Don't bother to output the whole list, it can be huge
-                urlconf_repr = '<%s list>' % self.url.urlconf_name[0].__class__.__name__
-            else:
-                urlconf_repr = repr(self.url.urlconf_name)
-            ret = [ urlconf_repr ]
-        elif isinstance(self.url, RegexURLPattern):
-            ret = [ self.url.name ]
+        from django.urls.resolvers import URLResolver
+        if isinstance(self.url, URLResolver):
+            ret = [ self.url.urlconf_name ]
         else:
             ret = [ str(self.url) ]
         if self.parent is not None:
@@ -537,16 +541,11 @@ class _url_pattern_wrapper(object):
 
 
 def _flatten_url_list(obj, parent_obj=None, level=0):
-    from django.urls import RegexURLResolver, RegexURLPattern
+    from django.urls.resolvers import URLResolver
     ret = []
     wrapped_obj = _url_pattern_wrapper(obj, parent_obj, level)
-    if isinstance(obj, RegexURLResolver):
-        for p in obj.url_patterns:
-            if hasattr(p, 'url_patterns'):
-                r = _flatten_url_list(p, wrapped_obj, level=level+1)
-                ret.extend(r)
-            else:
-                ret.append(_url_pattern_wrapper(p, wrapped_obj, level))
+    if isinstance(obj, URLResolver):
+        ret.append(wrapped_obj)
     elif isinstance(obj, list):
         for p in obj:
             if hasattr(p, 'url_patterns'):
@@ -559,18 +558,11 @@ def _flatten_url_list(obj, parent_obj=None, level=0):
     return ret
 
 def _flatten_url_dict(obj, parent_obj=None, level=0):
-    from django.urls import RegexURLResolver, RegexURLPattern
+    from django.urls.resolvers import URLResolver
     ret = {}
     wrapped_obj = _url_pattern_wrapper(obj, parent_obj, level)
-    if isinstance(obj, RegexURLResolver):
-        for p in obj.url_patterns:
-            if hasattr(p, 'url_patterns'):
-                r = _flatten_url_dict(p, wrapped_obj, level=level+1)
-                ret.update(r)
-            else:
-                pobj = _url_pattern_wrapper(p, wrapped_obj, level)
-                if pobj.full_qualified_name is not None:
-                    ret[pobj.full_qualified_name] = pobj
+    if isinstance(obj, URLResolver):
+        ret[wrapped_obj.full_qualified_name] = wrapped_obj
     elif isinstance(obj, list):
         for p in obj:
             if hasattr(p, 'url_patterns'):
