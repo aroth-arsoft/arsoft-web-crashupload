@@ -11,7 +11,8 @@ services:
             - "8067:8000"
         volumes:
             - /etc/krb5.conf:/etc/krb5.conf:ro
-            - ./data:/app/data
+            - ./app/data:/app/data
+            - ./app/dumpdata:/app/dumpdata
             - ./app/static:/app/static
         logging:
             driver: "json-file"

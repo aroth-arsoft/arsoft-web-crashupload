@@ -218,7 +218,7 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     
     # Additional locations of static files and the  List of finder classes 
     # that know how to find static files in various locations.
-    if in_devserver or in_docker:
+    if in_devserver or in_docker or in_gunicorn_debug:
         app_static_dir = os.path.join(appdir, 'static')
         if os.path.exists(app_static_dir):
             settings_obj.STATICFILES_DIRS = [ app_static_dir ]
@@ -1312,6 +1312,54 @@ DEBUG_SETTINGS_VIEW_TEMPLATE = """
       <tr>
         <th>settings module:</th>
         <td><code>{{ settings.SETTINGS_MODULE }}</code></td>
+      </tr>
+
+
+      <tr>
+        <th>CONFIG_DIR:</th>
+        <td><code>{{ settings.CONFIG_DIR }}</code></td>
+      </tr>
+      <tr>
+        <th>APP_DATA_DIR:</th>
+        <td><code>{{ settings.APP_DATA_DIR }}</code></td>
+      </tr>
+
+      <tr>
+        <th>LOG_DIR:</th>
+        <td><code>{{ settings.LOG_DIR }}</code></td>
+      </tr>
+      <tr>
+        <th>STATICFILES_DIRS:</th>
+        <td><code>{{ settings.STATICFILES_DIRS }}</code></td>
+      </tr>
+      <tr>
+        <th>STATICFILES_FINDERS:</th>
+        <td><code>{{ settings.STATICFILES_FINDERS }}</code></td>
+      </tr>
+      <tr>
+        <th>STATIC_ROOT:</th>
+        <td><code>{{ settings.STATIC_ROOT }}</code></td>
+      </tr>
+      <tr>
+        <th>STATIC_URL:</th>
+        <td><code>{{ settings.STATIC_URL }}</code></td>
+      </tr>
+
+      <tr>
+        <th>MEDIA_ROOT:</th>
+        <td><code>{{ settings.MEDIA_ROOT }}</code></td>
+      </tr>
+      <tr>
+        <th>MEDIA_URL:</th>
+        <td><code>{{ settings.MEDIA_URL }}</code></td>
+      </tr>
+      <tr>
+        <th>ROOT_URLCONF:</th>
+        <td><code>{{ settings.ROOT_URLCONF }}</code></td>
+      </tr>
+      <tr>
+        <th>TEMPLATES:</th>
+        <td><code>{{ settings.TEMPLATES }}</code></td>
       </tr>
     </table>
   </div>

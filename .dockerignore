@@ -35,9 +35,10 @@ nosetests.xml
 .project
 .pydevproject
 
-/build/
-/data/
-/dumpdata/
-/venv/
+.git
+build
+app/data
+app/dumpdata
+venv
 *.tar.gz
 .env

@@ -246,6 +246,8 @@ ul.environment li {
 
 
 .table-sortable > thead > tr > th {
+    font-size: 110%;
+    font-weight: bold;
     cursor: pointer;
     position: relative;
     padding-right: 10px;

@@ -1,4 +1,5 @@
 {% load static_url %}
+{% load static %}
 {% load crashupload_utils %}
 
 <!DOCTYPE html>
@@ -18,6 +19,12 @@
 
     <title>Crashdump</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script
+        type="text/javascript"
+        src="{% static "django_tables2_column_shifter/js/django_tables2_column_shifter.min.js" %}">
+    </script>
+
     <script src="{% static_url "crashdump.js" %}"></script>
     <script type="text/javascript">
         crashdump_docReady();

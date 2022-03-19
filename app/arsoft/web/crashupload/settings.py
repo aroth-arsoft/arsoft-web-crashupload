@@ -12,7 +12,11 @@ initialize_settings(__name__, __file__)
 
 SITE_ID = 1
 
-INSTALLED_APPS.extend(['django.contrib.admin', 'django_tables2'])
+INSTALLED_APPS.extend(
+    ['django.contrib.admin',
+     'django_tables2',
+     'django_tables2_column_shifter',
+     ])
 MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 
 # Database
@@ -53,6 +57,9 @@ MEDIA_ROOT = APP_DATA_DIR
 APP_STYLE = os.getenv('APP_STYLE', 'crashdump.css')
 
 NAV_ITEMS_JSON = os.getenv('NAV_ITEMS', '')
+
+SHORT_DATETIME_FORMAT = 'Y-m-d H:i'
+DATETIME_FORMAT = 'Y-m-d H:i'
 
 MIGRATE_DB_DRIVER = os.getenv('MIGRATE_DB_DRIVER', 'MariaDB')
 MIGRATE_DB_HOST = os.getenv('MIGRATE_DB_HOST', '127.0.0.1')
