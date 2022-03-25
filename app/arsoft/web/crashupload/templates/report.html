@@ -5,9 +5,9 @@
 
 <h1 class="title">Crash {{ object.crashid }} of {{ object.get_applicationName }} at {{ object.crashtimestamp|date:"Y-m-d H:i:s" }}</h1>
 <div id="crashdump">
-<table class="properties">
+<table class="report">
 <tr>
-  <th>Id</th><td>{{ object.crashid }} (PK {{ object.id }})</td>
+  <th>Id</th><td><div class='crashid'>{{ object.crashid }}</div> (PK {{ object.id }})</td>
   <th>State</th><td>{{ object.state.description }}</td>
 </tr>
 {% if xmlfile_error %}
@@ -52,7 +52,7 @@
   <th>Reporter&nbsp;username</th><td>{{object.reportUserName}}</td>
 </tr>
 
-<tr><td>Product name</td><td>{{ object.productName}}</td></tr>
+<tr><th>Product name</th><td>{{ object.productName}}</td></tr>
 <tr>
   <th>Product version</th><td>{{ object.productVersion }}</td>
   <th>Product target version</th><td>{{ object.productTargetVersion }}</td>

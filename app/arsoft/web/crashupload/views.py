@@ -1,3 +1,4 @@
+from random import choices
 from django.template import RequestContext, loader
 from django.urls import reverse
 from django.core.files.storage import default_storage
@@ -10,7 +11,9 @@ from django.views.generic.edit import UpdateView
 from django.views.generic.detail import DetailView
 from django.views.generic.base import RedirectView
 from django import forms
-from django_tables2 import SingleTableView
+from django_tables2.views import SingleTableView, SingleTableMixin
+from django_filters.views import FilterView
+import django_filters
 from django.conf import settings
 
 import os.path
@@ -142,12 +145,41 @@ class CrashDumpModelViewForm(forms.ModelForm):
         model = CrashDumpModel
         fields = '__all__'
 
-class CrashDumpListView(SingleTableView):
+
+class CrashDumpFilter(django_filters.FilterSet):
+    #state = django_filters.ModelChoiceFilter(queryset=CrashDumpState.objects.all())
+    #state = django_filters.ModelChoiceFilter(queryset=CrashDumpState.objects.values_list('id', 'name'))
+    applicationName = django_filters.CharFilter(lookup_expr='iexact')
+    reportHostName = django_filters.CharFilter(lookup_expr='iexact')
+    reportUserName = django_filters.CharFilter(lookup_expr='iexact')
+    crashHostName = django_filters.CharFilter(lookup_expr='iexact')
+    crashUserName = django_filters.CharFilter(lookup_expr='iexact')
+    buildType = django_filters.ChoiceFilter(choices=CrashDumpModel.BUILDTYPES)
+
+    class Meta:
+        model = CrashDumpModel
+        fields = [
+            'state',
+            'applicationName', 
+            'reportHostName', 'reportUserName',
+            'crashHostName', 'crashUserName',
+            'buildType','productTargetVersion'
+            ]
+
+    def __init__(self, *args, **kwargs):
+        super(CrashDumpFilter, self).__init__(*args, **kwargs)
+        # You need to override the label_from_instance method in the filter's form field
+        self.filters['state'].field.label_from_instance = lambda obj: obj.name
+
+
+class CrashDumpListView(SingleTableMixin, FilterView):
     model = CrashDumpModel
     table_class = CrashDumpModelTable
     template_name = 'list.html'
     application = None
     state = None
+
+    filterset_class = CrashDumpFilter
 
     def dispatch(self, request, *args, **kwargs):
         if 'application' in kwargs:
@@ -166,15 +198,15 @@ class CrashDumpListView(SingleTableView):
         add_utils_to_context(context)
         return context
 
-    def get_queryset(self):
-        if self.application and self.state:
-            return self.model.objects.filter(applicationName=self.application, state=CrashDumpState.objects.get(name=self.state))
-        elif self.application:
-            return self.model.objects.filter(applicationName=self.application)
-        elif self.state:
-            return self.model.objects.filter(state=CrashDumpState.objects.get(name=self.state))
-        else:
-            return super(CrashDumpListView, self).get_queryset()
+    # def get_queryset(self):
+    #     if self.application and self.state:
+    #         return self.model.objects.filter(applicationName=self.application, state=CrashDumpState.objects.get(name=self.state))
+    #     elif self.application:
+    #         return self.model.objects.filter(applicationName=self.application)
+    #     elif self.state:
+    #         return self.model.objects.filter(state=CrashDumpState.objects.get(name=self.state))
+    #     else:
+    #         return super(CrashDumpListView, self).get_queryset()
 
 class CrashDumpDetails(DetailView):
     model = CrashDumpModel

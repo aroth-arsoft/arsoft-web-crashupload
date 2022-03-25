@@ -34,6 +34,13 @@
  */
  letter-spacing: 0;
 }
+td.id a {
+    font-family: monospace;
+}
+td div.crashid {
+    font-family: monospace;
+    display: inline;
+}
 
 #placeholder {
  border: 0px;
@@ -98,19 +105,22 @@ div.loading_message {
 }
 #crashdump .date p { margin: .3em }
 
-table.properties {
+table.properties, table.report {
  clear: both;
  border: none;
  border-top: 1px solid #dd9;
  border-collapse: collapse;
 }
-table.properties tr { border-bottom: 1px dotted #eed }
-table.properties td, table.properties th {
- color: #663;
+table.properties tr, table.report tr { 
+    border-bottom: 1px dotted #eed 
+}
+table.properties td, table.report td {
+ color: black;
  font-size: 80%;
  padding: .5em 1em 0 0;
  vertical-align: top;
  text-align: left;
+ white-space: nowrap;
 }
 table.properties td.fullrow {
  width: 90%;
@@ -118,7 +128,13 @@ table.properties td.fullrow {
 table.properties th {
  color: #663;
  font-weight: normal;
+}
+table.report th {
+ color: #663;
+ font-size: 80%;
+ font-weight: normal;
  white-space: nowrap;
+ padding: .5em 1em 0 0;
 }
 table.properties th.missing { color: #d3d398; }
 table.properties td p:first-child { margin-top: 0 }

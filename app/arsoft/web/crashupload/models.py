@@ -38,19 +38,19 @@ class CrashDumpModel(models.Model):
     crashUserName = models.CharField('Crash user', max_length=256, null=True, help_text='username of the crash application')
 
     productName = models.CharField('Product name', max_length=256, help_text='name of the product')
-    productCodeName = models.CharField('Product code name', max_length=256, help_text='code name of the product')
+    productCodeName = models.CharField('Code name', max_length=256, help_text='code name of the product')
     productVersion = models.CharField('Product version', max_length=24, help_text='version of the product')
-    productTargetVersion = models.CharField('Product target version', max_length=24, help_text='target version of the product')
+    productTargetVersion = models.CharField('Target version', max_length=24, help_text='target version of the product')
 
     DEBUG = 'DEBUG'
     RELWITHDEBINFO = 'RELWITHDEBINFO'
     RELEASE = 'RELEASE'
     MINSIZEREL = 'MINSIZEREL'
     BUILDTYPES = (
-        (DEBUG, 'Debug'),
-        (RELWITHDEBINFO, 'Release with debug info'),
-        (RELEASE, 'Release'),
-        (MINSIZEREL, 'Minimum size release'),
+        (DEBUG, 'DEBUG'),
+        (RELWITHDEBINFO, 'RELWITHDEBINFO'),
+        (RELEASE, 'RELEASE'),
+        (MINSIZEREL, 'MINSIZEREL'),
     )
     buildType = models.CharField('Build type', max_length=16, choices=BUILDTYPES, default=RELEASE, help_text='build type')
 
@@ -117,7 +117,20 @@ class CrashDumpModel(models.Model):
         (CPU_TYPE_ARM64, 'ARM64'),
     )
     cpuType = models.IntegerField('CPU type', choices=CPU_TYPES, default=CPU_TYPE_UNKNOWN, help_text='CPU type')
-    cpu_type = property(lambda self: CrashDumpModel.CPU_TYPES[self.cpuType + 1][1] if self.cpuType != CrashDumpModel.CPU_TYPE_UNKNOWN else 'Unknown')
+    
+    @property
+    def cpu_type(self):
+        cpuType = self.cpuType
+        if cpuType == CrashDumpModel.CPU_TYPE_UNKNOWN:
+            if self.osMachine == 'amd64' or self.osMachine == 'x86_64':
+                cpuType = CrashDumpModel.CPU_TYPE_AMD64
+            elif self.osMachine == 'x86':
+                cpuType = CrashDumpModel.CPU_TYPE_X86
+
+        if cpuType != CrashDumpModel.CPU_TYPE_UNKNOWN:
+            return CrashDumpModel.CPU_TYPES[cpuType + 1][1]
+        else:
+            return 'Unknown'
 
     systemName = models.CharField('System name', max_length=24, help_text='name of operating system')
     osVersion = models.CharField('OS version', max_length=24, help_text='version of operating system')
@@ -143,9 +156,18 @@ class CrashDumpModel(models.Model):
     has_minidump = property(lambda self: self.minidumpFile or self.minidumpReportTextFile or self.minidumpReportXMLFile or self.minidumpReportHTMLFile)
     has_coredump = property(lambda self: self.coredumpFile or self.coredumpReportTextFile or self.coredumpReportXMLFile or self.coredumpReportHTMLFile)
 
-    platform_type = property(lambda self: self.systemName)
+    @property
+    def platform_type(self):
+        if self.systemName == 'Linux':
+            return self.systemName
+        elif self.systemName != 'Windows NT' and self.systemName.startswith('Windows'):
+            return 'Windows NT'
+        else:
+            return self.systemName
 
-    osInfo = property(lambda self: format_os_version_short(self.platform_type, self.os_version_number, self.os_build_number) )
+    @property
+    def osInfo(self):
+        return format_os_version_short(self.platform_type, self.os_version_number, self.os_build_number)
 
     @property
     def is_64_bit(self):

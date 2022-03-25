@@ -1,6 +1,8 @@
 gunicorn>=19.0
 Django>=4.0.3
-django-tables2>=2.4.0
-django-tables2-column-shifter>=2.0.3
+django-tables2==2.4.0
+django-tables2-column-shifter==2.0.3
+django-filter==21.1
+django-bootstrap4==22.1
 lxml>=4.6.*
 mysqlclient>=2.1.0

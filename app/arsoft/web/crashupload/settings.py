@@ -16,6 +16,8 @@ INSTALLED_APPS.extend(
     ['django.contrib.admin',
      'django_tables2',
      'django_tables2_column_shifter',
+     'django_filters',
+     'bootstrap4',
      ])
 MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 

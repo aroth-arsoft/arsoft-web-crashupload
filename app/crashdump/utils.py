@@ -588,12 +588,30 @@ def os_version_info(platform_type, os_version_number, os_build_number):
                 productName = "Windows 10 Version 2004"
                 marketingName = "May 2020 Update"
             elif (build <= 19042):
-                ret['short'] = 'Win10/1903'
+                ret['short'] = 'Win10/20H2'
                 productName = "Windows 10 Version 20H2"
-                marketingName = '' # TBA
+                marketingName = '20H2'
+            elif (build <= 19043):
+                ret['short'] = 'Win10/21H1'
+                productName = "Windows 10 Version 21H1"
+                marketingName = '21H1'
+            elif (build <= 19044):
+                ret['short'] = 'Win10/21H2'
+                productName = "Windows 10 Version 21H2"
+                marketingName = '21H2'
             else:
                 ret['short'] = 'Win10/TBA'
                 productName = 'Windows 10 Build %i' % build
+        elif (major == 11):
+            ret['href'] = 'https://en.wikipedia.org/wiki/Windows_11'
+            # See https://en.wikipedia.org/wiki/Windows_11_version_history
+            if (build <= 22000):
+                ret['short'] = 'Win11/21H1'
+                productName = "Windows 11 Version 21H1"
+                marketingName = '21H1'
+            else:
+                ret['short'] = 'Win11/TBA'
+                productName = 'Windows 11 Build %i' % build
         if marketingName:
             ret['text'] = '%s (%s)' % (productName, marketingName)
         else:
