@@ -13,7 +13,7 @@ services:
             - /etc/krb5.conf:/etc/krb5.conf:ro
             - ./app/data:/app/data
             - ./app/dumpdata:/app/dumpdata
-            - ./app/static:/app/static
+            #- ./app/static:/app/static
         logging:
             driver: "json-file"
             options:

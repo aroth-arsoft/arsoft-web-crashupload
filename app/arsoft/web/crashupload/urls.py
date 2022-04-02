@@ -38,3 +38,9 @@ urlpatterns = [
     # Uncomment the next line to enable the admin:
     re_path(r'^debug/', include(django_debug_urls())),
 ]
+
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
+# ... the rest of your URLconf goes here ...
+
+urlpatterns += staticfiles_urlpatterns("/static")

@@ -17,9 +17,11 @@ def get_bytes_from_wsgi(environ, key, default):
     # Re-encode to recover the original bytestring.
     return value.encode("iso-8859-1")
 
+http_base_path = os.environ.get('BASE_PATH', '')
+
 def gunicorn_dispatch_request(environ, start_response):
 
-    base_path = get_bytes_from_wsgi(environ, "HTTP_BASE_PATH", "")
+    base_path = get_bytes_from_wsgi(environ, "HTTP_BASE_PATH", http_base_path)
     if base_path:
         len_base_path = len(base_path)
        
