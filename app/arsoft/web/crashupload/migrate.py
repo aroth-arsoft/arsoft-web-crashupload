@@ -169,14 +169,17 @@ def migrate(request):
         'coredumpreporthtmlfile':MigrateField('coredumpReportHTMLFile'),  
     }
 
+    num_records = 0
+    num_new_records = 0
     try:
         db.cursor.execute(f"select " + _sql_query_fields(crashdump_fields) + " from crashdump")
         for item in db.cursor.fetchall():
-
+            num_records += 1
             existing = CrashDumpModel.objects.filter(crashid=item['uuid'])
             if not existing:
                 newcrash = CrashDumpModel(**_sql_to_model(crashdump_fields, item))
                 newcrash.save()
+                num_new_records += 1
 
     except MySQLdb.Error as e:
         print(e)
@@ -184,5 +187,5 @@ def migrate(request):
         print(ex)
     
 
-    body = "No crash dump data provided."
-    return HttpResponse(body, status=400, content_type="text/plain")
+    body = "%i crashes found, %i new crashes imported" % (num_records, num_new_records)
+    return HttpResponse(body, status=200, content_type="text/plain")
