@@ -30,6 +30,11 @@ if [ ! -d "$script_dir/data/dumpdata" ]; then
     mkdir "$script_dir/data/dumpdata"
 fi
 
+if [ ! -d "$script_dir/static" ]; then
+    mkdir "$script_dir/static"
+fi
+echo 'yes' | python "$script_dir/manage.py" collectstatic
+
 chmod 755 "$script_dir/data/dumpdata"
 chown "$gunicorn_user" "$script_dir/data/dumpdata"
 

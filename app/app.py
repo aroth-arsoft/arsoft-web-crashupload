@@ -23,15 +23,16 @@ def gunicorn_dispatch_request(environ, start_response):
 
     base_path = get_bytes_from_wsgi(environ, "HTTP_BASE_PATH", http_base_path)
     if base_path:
-        len_base_path = len(base_path)
-       
-        split_path = get_bytes_from_wsgi(environ, 'PATH_INFO', '').split(b'/')
-       
-        environ['SCRIPT_NAME'] = b'/'.join(split_path[:2])
-        environ['PATH_INFO'] = b'/'+b'/'.join(split_path[2:])
+        #len_base_path = len(base_path)
+        path_info = get_bytes_from_wsgi(environ, 'PATH_INFO', '')
+        if path_info.startswith(base_path):
+            split_path = path_info.split(b'/')
+        
+            environ['SCRIPT_NAME'] = b'/'.join(split_path[:2])
+            environ['PATH_INFO'] = b'/'+b'/'.join(split_path[2:])
 
-        environ['SCRIPT_NAME'] = environ['SCRIPT_NAME'].decode("iso-8859-1")
-        environ['PATH_INFO'] = environ['PATH_INFO'].decode("iso-8859-1")
+            environ['SCRIPT_NAME'] = environ['SCRIPT_NAME'].decode("iso-8859-1")
+            environ['PATH_INFO'] = environ['PATH_INFO'].decode("iso-8859-1")
 
     verbose = False
     if 'GUNICORN_DEBUG' in environ:

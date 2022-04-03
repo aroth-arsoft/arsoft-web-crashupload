@@ -33,7 +33,7 @@ RUN pip install /tmp/*.whl && rm -rf /tmp/*.whl && \
     pip install -r /app/requirements.txt && \
     adduser -S -s /bin/sh app
 
-VOLUME /app/static/ /app/templates/
+#VOLUME /app/static/
 
 EXPOSE 8000
 CMD ["/bin/sh", "/app/entrypoint.sh"]

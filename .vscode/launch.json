@@ -13,7 +13,7 @@
             "justMyCode": true
         },
         {
-            "name": "GUnicorn: Webapp",
+            "name": "GUnicorn: Debug",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/venv/bin/gunicorn",
@@ -25,6 +25,24 @@
                 "--env", "BASE_PATH=/crashupload",
             ],
             "envFile": "${workspaceFolder}/.env",
+            //"postDebugTask": "killdebugger"
+        },
+        {
+            "name": "GUnicorn: Release",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/venv/bin/gunicorn",
+            "cwd": "${workspaceFolder}/app",
+            "justMyCode": false,
+            "args": ["app:application",
+                "--bind=0.0.0.0:8000", "--reload", "--timeout", "300",
+                "--log-level", "debug",
+                "--env", "BASE_PATH=/crashupload",
+            ],
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "GUNICORN_DEBUG": "0",
+            }
             //"postDebugTask": "killdebugger"
         },
         {
