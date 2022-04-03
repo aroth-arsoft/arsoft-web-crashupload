@@ -40,11 +40,11 @@ def _is_running_in_devserver(appdir):
         return False
 
 def _is_running_gunicorn_debug():
-    in_docker = os.getenv('container', '') == 'docker'
+    in_docker = os.path.isfile('/.dockerenv')
     if in_docker:
         return False
     else:
-        return int(os.environ.get('GUNICORN_DEBUG', '0')) != 0
+        return 'gunicorn' in os.getenv('SERVER_SOFTWARE', '')
 
 HIDDEN_SETTINGS = re.compile('API|TOKEN|KEY|SECRET|PASS|PROFANITIES_LIST|SIGNATURE')
 

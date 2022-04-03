@@ -5,8 +5,8 @@ from django.contrib import admin
 from arsoft.web.utils import django_debug_urls, django_debug_404
 from django.conf.urls import handler404, handler500, handler403, handler400
 
-from .views import CrashDumpListView, CrashDumpDetails, CrashDumpDetailsFromCrashId, view_404, \
-    CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, submit, view_404
+from .views import CrashDumpListView, CrashDumpDetails, CrashDumpDetailsFromCrashId, \
+    CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, submit
 from .migrate import migrate
 
 # Uncomment the next two lines to enable the admin:
