@@ -1,6 +1,6 @@
 from django.template import RequestContext, loader
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseServerError, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import MySQLdb
 import MySQLdb.cursors
@@ -172,20 +172,29 @@ def migrate(request):
     num_records = 0
     num_new_records = 0
     try:
+        new_state = CrashDumpState.objects.filter(name='new')
+        if new_state:
+            new_state = new_state[0]
+        else:
+            return HttpResponseServerError('CrashDumpState new missing')
+            
         db.cursor.execute(f"select " + _sql_query_fields(crashdump_fields) + " from crashdump")
         for item in db.cursor.fetchall():
             num_records += 1
             existing = CrashDumpModel.objects.filter(crashid=item['uuid'])
             if not existing:
                 newcrash = CrashDumpModel(**_sql_to_model(crashdump_fields, item))
+                if newcrash.state is None:
+                    newcrash.state = new_state
                 newcrash.save()
                 num_new_records += 1
 
     except MySQLdb.Error as e:
-        print(e)
+        return HttpResponseServerError('MySQL Error %s' % e)
+
     except TypeError as ex:
-        print(ex)
-    
+        return HttpResponseServerError('Type Error %s' % e)
+  
 
     body = "%i crashes found, %i new crashes imported" % (num_records, num_new_records)
     return HttpResponse(body, status=200, content_type="text/plain")

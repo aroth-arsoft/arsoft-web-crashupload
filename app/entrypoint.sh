@@ -7,6 +7,7 @@ gunicorn_num_threads=${GUNICORN_NUM_THREADS:-2}
 gunicorn_debug=${GUNICORN_DEBUG:-0}
 gunicorn_opts=''
 db_file='crashupload.db'
+load_initialdata=0
 
 if [ $gunicorn_debug -ne 0 ]; then
     gunicorn_opts="$gunicorn_opts -R --capture-output --log-level=DEBUG"
@@ -18,13 +19,22 @@ fi
 
 chmod 755 "$script_dir/data"
 
+if [ ! -f "$script_dir/data/$db_file" ]; then
+    load_initialdata=1
+fi
+
 if [ -f "$script_dir/data/$db_file" -a ! -s "$script_dir/data/$db_file" ]; then
     echo "remove empty DB file $script_dir/data/$db_file"
     rm "$script_dir/data/$db_file"
+    load_initialdata=1
 fi
 
 python "$script_dir/manage.py" migrate --noinput
 chown "$gunicorn_user" "$script_dir/data" "$script_dir/data/$db_file"
+
+if [ $load_initialdata -ne 0 ]; then
+    python "$script_dir/manage.py" loaddata "$script_dir/fixtures/crashdumpstate.json"
+fi
 
 if [ ! -d "$script_dir/data/dumpdata" ]; then
     mkdir "$script_dir/data/dumpdata"
