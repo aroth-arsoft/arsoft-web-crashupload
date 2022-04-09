@@ -29,7 +29,7 @@ urlpatterns = [
     #re_path(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)(/(?P<flag>\w+)?)$', CrashDumpReport.as_view(), name='crash_report'),
     re_path(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)/(?P<flag>\w+)$', CrashDumpReport.as_view(), name='crash_report'),
     re_path(r'^submit$', submit, name='submit'),
-    re_path(r'^migrate$', migrate, name='migrate'),
+    #re_path(r'^migrate$', migrate, name='migrate'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # re_path(r'^admin/doc/', include('django.contrib.admindocs.urls')),
@@ -39,6 +39,7 @@ urlpatterns = [
 
     # Uncomment the next line to enable the admin:
     re_path(r'^debug/', include(django_debug_urls())),
+    re_path(r'^admin/', admin.site.urls),
 ]
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns

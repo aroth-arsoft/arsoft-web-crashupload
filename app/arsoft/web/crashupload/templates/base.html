@@ -20,6 +20,9 @@
     <title>Crashdump</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
+    <link rel="stylesheet" type="text/css" href="{% static "jquery.svg.css" %}"> 
+    <script type="text/javascript" src="{% static "jquery.svg.min.js" %}"></script>
+
     <script
         type="text/javascript"
         src="{% static "django_tables2_column_shifter/js/django_tables2_column_shifter.min.js" %}">
@@ -27,15 +30,28 @@
 
     <script src="{% static_url "crashdump.js" %}"></script>
     <script type="text/javascript">
-        crashdump_docReady();
+$(document).ready(function() {
+    crashdump_docReady();
+
+    $("#svgload").svg({
+        onLoad: function()
+            {
+            var svg = $("#svgload").svg('get');
+            svg.load('{% static_url 'logo.svg' %}', {addTo: true,  changeSize: true});                  
+            //svg.css('svglogo');
+            },
+        settings: {}}
+        );  
+    });
+</Script>           
     </script>
 
 </head>
 <body>
-<nav class="navbar navbar-expand">
-    <div class="container">
+<nav class="navbar navbar-crashupload navbar-expand">
+    <div class="navbar-crashupload-container">
         <a class="navbar-brand" href="#">
-            <img src="{% static_url 'logo.png' %}" width="70" height="70" alt="">
+            <div id="svgload" style="display:inline;"></div>&nbsp;Crashupload
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,15 +60,9 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item active">
-                    <a class="nav-link" href="{% url "home" %}">Home <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="{% url "home" %}">Home<span class="sr-only">(current)</span></a>
                 </li>
             </ul>
-            <ul class="navbar-nav mx-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="{% url "migrate" %}">Migrate <span class="sr-only">(current)</span></a>
-                </li>
-            </ul>
-
             <ul class="navbar-nav">
                 {% for nav_item in nav_items %}
                 <li class="nav-item">
@@ -64,6 +74,11 @@
                     </a>
                 </li>
                 {% endfor %}
+            </ul>
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{% url "admin:index" %}">Admin<span class="sr-only">(current)</span></a>
+                </li>
             </ul>
 
         </div>

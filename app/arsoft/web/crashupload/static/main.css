@@ -60,3 +60,43 @@ pre {
     margin-top: auto;
     margin-bottom: auto;
 }
+.navbar-crashupload {
+    background-color: #292961;
+    color: #d1d1f0;
+}
+.navbar-crashupload-container {
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: 0;
+    margin-left: 0;
+    align-items: center;
+    display: flex;
+}
+#svgload,svg {
+    width: 55px;
+    height: 55px;
+    margin: 0;
+    fill: white;
+}
+a.navbar-brand {
+    color: #d1d1f0;
+
+}
+a.nav-link {
+    color: #d1d1f0;
+}
+.btn-filter {
+    border-width: 0;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;    
+    line-height: 1rem;
+    color: #303030;
+    fill: currentColor;
+    box-shadow: inset 0 0 0 1px #bfbfbf;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;    
+}
