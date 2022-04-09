@@ -45,6 +45,7 @@ pre {
 .title {
     text-align:center;
     font-size:large;
+    margin-top: 0.5em;
 }
 .crashuploadform  {
     position:relative;

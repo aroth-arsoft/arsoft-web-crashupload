@@ -11,10 +11,13 @@
   <th>State</th><td>{{ object.state.description }}</td>
 </tr>
 {% if xmlfile_error %}
-<tr><th>XML Error:</th><td>{{ xmlfile_error }}</td></tr>
+<tr><th>XML Error:</th><td><div class='crasherror'>{{ xmlfile_error }}</div></td></tr>
 {% endif %}
 {% if minidumpfile_error %}
-<tr><th>Minidump Error:</th><td>{{ minidumpfile_error }}</td></tr>
+<tr><th>Minidump Error:</th><td><div class='crasherror'>{{ minidumpfile_error }}</div></td></tr>
+{% endif %}
+{% if error %}
+<tr><th>Error:</th><td><div class='crasherror'>{{ error }}</div></td></tr>
 {% endif %}
 {% if show_debug_info %}
 <tr>
@@ -52,7 +55,17 @@
   <th>Reporter&nbsp;username</th><td>{{object.reportUserName}}</td>
 </tr>
 
-<tr><th>Product name</th><td>{{ object.productName}}</td></tr>
+<tr>
+    <th>Product name</th><td>{{ object.productName}}</td>
+    <th>Project page</th>
+    <td>
+      {% if project %}  
+      <a href="{{ project.url }}" target="_blank">{{ project.name }}</a>
+      {% else %}  
+      N/A
+      {% endif %}  
+    </td>
+</tr>
 <tr>
   <th>Product version</th><td>{{ object.productVersion }}</td>
   <th>Product target version</th><td>{{ object.productTargetVersion }}</td>
@@ -118,11 +131,11 @@ N/A
 
 <tr><th>Attachments</th><td>
 {% if attachments %}
-  <ul>
-  {% for attachment in attachments %}
-  <li>{{ attachment.name }}</li>
-  {% endfor %}
-</ul>
+  <ul class="crashattach">
+    {% for attachment in attachments %}
+    <li><a href="{{attachment.name}}" target="_blank">{{ attachment.name }}</a></li>
+    {% endfor %}
+  </ul>
 {% else %}
 None
 {% endif %}
@@ -130,11 +143,18 @@ None
 
 <tr><th>Links</th><td>
 {% if links %}
-  <ul>
-{% for link in links %}
-<li><a href="{{link.target}}">{{ link.name }}</a></li>
-{% endfor %}
-</ul>
+  <ul class="crashlink">
+     {% for link in links %}
+     <li><a href="{{link.url}}" target="_blank">{{ link.name }}</a></li>
+     {% endfor %}
+  </ul>
+{% elif project %}
+<form id="crashdump-report-link" method="post" action="{% url "crash_new_link" object.id %}" novalidate>
+  {% csrf_token %} 
+  <input type="hidden" name="id" value="{{ object.id }}"/>
+  <input type="hidden" name="new-issue" value="1"/>
+  <button type="submit" class="button" title="Create New Issue">New Issue</button>
+</form>
 {% else %}
 None
 {% endif %}

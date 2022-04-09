@@ -242,6 +242,10 @@ ol li, ul li {
     padding-top: 1pt;
     padding-bottom: 1pt;
 }
+ul.crashlink, ul.crashattach {
+    margin-top: 0;
+    margin-bottom: 0;
+}
 ul.environment,ul.dirlist {
     list-style-type: square;
     white-space: nowrap;
@@ -306,4 +310,9 @@ ul.environment li {
     border-right: 5px solid transparent;
     border-top: 5px solid #333;
     border-bottom: 5px solid transparent;
+}
+.crasherror {
+    display: inline;
+    color: darkred;
+    font-weight: bold;
 }

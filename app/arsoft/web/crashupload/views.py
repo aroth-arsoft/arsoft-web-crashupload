@@ -1,4 +1,5 @@
 from random import choices
+from urllib import request
 from django.template import RequestContext, loader
 from django.urls import reverse
 from django.core.files.storage import default_storage
@@ -20,7 +21,7 @@ import os.path
 from io import StringIO
 import logging
 import time
-from .models import CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
+from .models import CrashDumpProject, CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
 from .tables import CrashDumpModelTable
 from .forms import UploadFileForm
 from uuid import UUID
@@ -217,19 +218,116 @@ class CrashDumpDetails(DetailView):
 
         context = super(CrashDumpDetails, self).get_context_data(**kwargs)
         try:
-            links = CrashDumpLink.objects.get(crash=self.object.id)
+            links = CrashDumpLink.objects.filter(crash=self.object.id)
         except CrashDumpLink.DoesNotExist:
             links = None
         try:
-            attachments = CrashDumpAttachment.objects.get(crash=self.object.id)
+            attachments = CrashDumpAttachment.objects.filter(crash=self.object.id)
         except CrashDumpAttachment.DoesNotExist:
             attachments = None
+        error = self.request.GET.get('error')
+        if error:
+            context['error'] = error
+
+        project = CrashDumpProject.findByCodename(self.object.productCodeName)
+
+        context['project'] = project
         context['links'] = links
         context['attachments'] = attachments
         add_utils_to_context(context, crash=self.object)
         end = time.time()
         context['dbtime'] = end - start
         return context
+
+
+def gitlab_create_issue(url, token, issue):
+    ret = None
+    error = None
+    # https://docs.gitlab.com/ee/api/issues.html#new-issue
+    import requests
+    requests.packages.urllib3.disable_warnings()
+    if not url.endswith('/issues'):
+        url += '/issues'
+    headers = {'PRIVATE-TOKEN': token}
+    params = {
+        'title': issue.get('title', None), 
+        'description': issue.get('description', ''), 
+        'labels': ','.join(issue.get('labels', [])), 
+        'issue_type': issue.get('issue_type', 'issue'), 
+        'confidential': '1' if issue.get('confidential', False) else '0'
+         }
+    try:
+        response = requests.post(url, headers=headers, params=params)
+        if (response.status_code >= 200) and (response.status_code < 300):
+            h = response.headers.get('content-type')
+            if h and ';' in h:
+                h, _ = h.split(';',1)
+            if h is not None and h == 'application/json':
+                response.encoding = 'utf-8-sig' #fix encoding BOM error
+                issue_result = response.json()
+
+                web_url = issue_result.get('web_url')
+                #project_id = issue_result.get('id')
+                issue_id = issue_result.get('iid')
+                #links = issue_result.get('_links', {})
+                #issue_link = links.get('self')
+                #project_link = links.get('project')
+
+                ret = {'id': issue_id, 'url': web_url}
+
+        else:
+            error = 'HTTP Error %s: %s' % (response.status_code, response.reason)
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+        error = e
+    return ret, error
+
+def patch_url(url, params=None):
+    from urllib.parse import urlencode, parse_qsl, urlparse, urlunparse
+    url_parts = list(urlparse(url))
+    query = dict(parse_qsl(url_parts[4]))
+    if params is not None:
+        query.update(params)
+    url_parts[4] = urlencode(query)
+    return urlunparse(url_parts)
+
+
+def crashdump_new_link(request, *args, **kwargs):
+    if request.method == 'POST':
+        error = None
+        obj = get_object_or_404(CrashDumpModel, id=kwargs['pk'])
+        if obj is not None:
+            if obj.productCodeName:
+                proj = CrashDumpProject.findByCodename(obj.productCodeName)
+                if proj is None:
+                    error = 'No project matching codename %s' % obj.productCodeName
+            else:
+                error = 'No codename available for crash %s' % obj.id
+        else:
+            proj = None
+            error = 'Unable to find crash %s' % obj.id
+        if proj:
+            issue = {
+                'title': 'Crash %s' % (obj.id),
+                'description': 'Crash on {obj.id}' % { 'obj': obj },
+                'labels': ['crash'],
+            }
+            if proj.issueTrackerType == CrashDumpProject.GITLAB:
+                new_issue, error = gitlab_create_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
+                if new_issue and not error:
+                    link_obj = CrashDumpLink.objects.create(crash=obj, name='Issue %s' % new_issue.get('id'), url=new_issue.get('url'))        
+                    if link_obj:
+                        link_obj.save()
+
+                    
+
+        redir_url = reverse('crash_details', args=[obj.id])
+        if error:
+            redir_url = patch_url(redir_url, {'error': error})
+
+        return HttpResponseRedirect(redir_url)
+    else:
+        body = "No crash dump data provided."
+        return HttpResponse(body, status=400, content_type="text/plain")
 
 
 class CrashDumpDetailsFromCrashId(RedirectView):

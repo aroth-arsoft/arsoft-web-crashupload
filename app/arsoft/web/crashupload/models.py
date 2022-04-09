@@ -7,21 +7,30 @@ class CrashDumpProject(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField('Name', max_length=32, help_text='Project name')
     description = models.CharField('Description', max_length=256, help_text='description of the project')
+    url = models.CharField('Url', max_length=256, null=True, default=None, help_text='URL for the Project page')
 
     GITLAB = 'GitLab'
     ISSUETRACKERTYPES = (
         (None, 'None'),
         (GITLAB, 'GitLab'),
     )
-    issueTrackerType = models.CharField('Issue Tracker', max_length=16, choices=ISSUETRACKERTYPES, default=None, help_text='Issue Tracker')
-    issueTrackerUrl = models.CharField('Issue Tracker Url', max_length=256, default=None, help_text='URL to the issue tracker') 
-    issueTrackerToken = models.CharField('Issue Tracker Token', max_length=256, default=None, help_text='Token to access the issue tracker') 
+    issueTrackerType = models.CharField('Issue Tracker', max_length=16, choices=ISSUETRACKERTYPES, null=True, default=None, help_text='Issue Tracker')
+    issueTrackerUrl = models.CharField('Issue Tracker Url', max_length=256, null=True, default=None, help_text='URL to the issue tracker') 
+    issueTrackerToken = models.CharField('Issue Tracker Token', max_length=256, null=True, default=None, help_text='Token to access the issue tracker') 
 
     codename = models.CharField('Code name', max_length=256, default=None, help_text='Code name of the project for crash matching')
 
     class Meta:
         verbose_name = "Project"
         verbose_name_plural = "Projects"
+
+    @staticmethod
+    def findByCodename(codename):
+        q = CrashDumpProject.objects.filter(codename=codename)
+        if q:
+            return q[0]
+        else:
+            return None
         
 
 class CrashDumpState(models.Model):
