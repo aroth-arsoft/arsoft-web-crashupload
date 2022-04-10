@@ -101,3 +101,18 @@ a.nav-link {
     font-size: 0.875rem;
     border-radius: 0.25rem;    
 }
+.btn-new-issue {
+    border-width: 0;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;    
+    line-height: 0.8rem;
+    color: #303030;
+    fill: currentColor;
+    box-shadow: inset 0 0 0 1px #bfbfbf;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.855rem;
+    border-radius: 0.25rem;    
+}

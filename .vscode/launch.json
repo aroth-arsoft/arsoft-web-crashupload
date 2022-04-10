@@ -13,6 +13,25 @@
             "justMyCode": true
         },
         {
+            "name": "import_crashes list",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/app/import_crashes",
+            "console": "integratedTerminal",
+            "args": ["--list"],
+            "justMyCode": false
+        },
+        {
+            "name": "import_crashes upload",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/app/import_crashes",
+            "console": "integratedTerminal",
+            "args": ["~/Downloads/7327811d-a682-49f5-bb00-008d7673ef44.dmp"],
+            "justMyCode": false
+        },
+       
+        {
             "name": "GUnicorn: Debug",
             "type": "python",
             "request": "launch",

@@ -8,12 +8,9 @@ import sys
 import argparse
 import json
 import uuid
-if sys.version_info.major == 3:
-    from urllib.request import Request, urlopen as urlopen
-    from urllib.error import HTTPError, URLError
-    import http.client
-else:
-    from urllib2 import Request, urlopen as urlopen, HTTPError, URLError
+from urllib.request import Request, urlopen as urlopen
+from urllib.error import HTTPError, URLError
+import http.client
 
 import io
 import codecs
@@ -234,12 +231,15 @@ class import_crashes_app(object):
         except URLError as e:
             print('Invalid URL: %s' % e.reason, file=sys.stderr)
 
-    def _get_crash_list(self, status):
+    def _get_crash_list(self, state):
         headers = {
             'User-Agent': self._user_agent,
         }
         body = None
-        url = self._crashlist_url + '?status=%s' % status
+        if state:
+            url = self._crashlist_url + '?state=%s' % state
+        else:
+            url = self._crashlist_url
         if self._verbose:
             print('url %s' % url)
         req = Request (url, data=body, headers=headers)
@@ -270,7 +270,7 @@ class import_crashes_app(object):
         parser.add_argument('-p', '--port', dest='port', default=8000, help='Specify upload server port')
         parser.add_argument('files', metavar='FILE', type=str, nargs='*', help='crash dump files or directories')
         parser.add_argument('--ticket', dest='create_ticket', nargs='?', default='auto', help='Specify if to create a new ticket for each crash')
-        parser.add_argument('--list', dest='list_tickets', nargs='?', default='active', help='list all crashes on the server')
+        parser.add_argument('--list', dest='list_tickets', metavar='STATE', nargs='*', choices=['open','closed'], help='list all crashes on the server')
         parser.add_argument('--prefix', dest='prefix', default='', help='perfix for trac instance (e.g. /myproject)')
 
         args = parser.parse_args()
@@ -319,7 +319,11 @@ class import_crashes_app(object):
 
             ret = 0
         elif args.list_tickets is not None:
-            self._get_crash_list(status=args.list_tickets)
+            if args.list_tickets:
+                for x in args.list_tickets:
+                    self._get_crash_list(state=x)
+            else:
+                self._get_crash_list(state=None)
             ret = 0
         else:
             print('No operation specified.')

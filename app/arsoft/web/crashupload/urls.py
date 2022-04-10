@@ -6,7 +6,7 @@ from arsoft.web.utils import django_debug_urls, django_debug_404
 from django.conf.urls import handler404, handler500, handler403, handler400
 
 from .views import CrashDumpListView, CrashDumpDetails, CrashDumpDetailsFromCrashId, \
-    CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, crashdump_new_link, submit
+    CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, crashdump_new_link, submit, submit_capabilities, submit_crashlist
 from .migrate import migrate
 
 # Uncomment the next two lines to enable the admin:
@@ -30,6 +30,8 @@ urlpatterns = [
     #re_path(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)(/(?P<flag>\w+)?)$', CrashDumpReport.as_view(), name='crash_report'),
     re_path(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)/(?P<flag>\w+)$', CrashDumpReport.as_view(), name='crash_report'),
     re_path(r'^submit$', submit, name='submit'),
+    re_path(r'^submit/crashlist$', submit_crashlist, name='submit_crashlist'),
+    re_path(r'^submit/capabilities$', submit_capabilities, name='submit_capabilities'),
     #re_path(r'^migrate$', migrate, name='migrate'),
 
     # Uncomment the admin/doc line below to enable admin documentation:

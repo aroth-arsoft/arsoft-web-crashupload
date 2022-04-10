@@ -1,7 +1,35 @@
 from pickle import NONE
 from crashdump.utils import format_os_version_short, get_os_version_number, get_os_build_number
 from django.db import models, migrations
+from django.urls import reverse
 
+class CrashDumpSetting(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    AVAILABLE_SETTINGS = (
+        ('issue_title', 'issue_title'),
+        ('issue_description', 'issue_description'),
+        ('issue_labels', 'issue_labels'),
+        ('max_upload_size', 'max_upload_size'),
+        ('upload_disabled', 'upload_disabled'),
+    )
+    name = models.CharField('Name', unique=True, choices=AVAILABLE_SETTINGS, max_length=64, help_text='Name')
+    value = models.CharField('Value', max_length=1024, help_text='Value') 
+
+    class Meta:
+        verbose_name = "Setting"
+        verbose_name_plural = "Settings"
+
+    @staticmethod
+    def get(key,default_value=None):
+        try:
+            s = CrashDumpSetting.objects.get(name=key)
+        except CrashDumpSetting.DoesNotExist:
+            s = None
+        if s:
+            return s.value
+        else:
+            return default_value
 
 class CrashDumpProject(models.Model):
     id = models.AutoField(primary_key=True)
@@ -221,6 +249,14 @@ class CrashDumpModel(models.Model):
             return True
         else:
             return False
+
+    @property
+    def url(self):
+        local_url = reverse('crash_details', args=[self.id])
+        return local_url
+
+    def to_json(self):
+        return {'id': self.id, 'uuid': self.uuid, 'state': self.state.name }
 
     class Meta:
         verbose_name = "Crash"

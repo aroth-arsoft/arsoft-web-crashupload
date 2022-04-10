@@ -35,7 +35,13 @@
 </tr>
 <tr>
     <th>Application&nbsp;name</th>
-    <td><a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a></td>
+    <td>
+      {% if object.get_applicationName %}
+        <a href="{% url "list_filter_app" object.get_applicationName %}">{{ object.get_applicationName }}</a>
+      {% else %}
+      N/A
+      {% endif %}
+    </td>
     <th>Application&nbsp;file</th><td>{{ object.applicationFile }}</td>
 </tr>
 
@@ -153,7 +159,7 @@ None
   {% csrf_token %} 
   <input type="hidden" name="id" value="{{ object.id }}"/>
   <input type="hidden" name="new-issue" value="1"/>
-  <button type="submit" class="button" title="Create New Issue">New Issue</button>
+  <button type="submit" class="btn-new-issue" title="Create New Issue">New Issue</button>
 </form>
 {% else %}
 None

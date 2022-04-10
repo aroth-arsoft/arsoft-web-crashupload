@@ -2,9 +2,10 @@ from random import choices
 from urllib import request
 from django.template import RequestContext, loader
 from django.urls import reverse
+from django.core import serializers
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404, JsonResponse, HttpResponseNotAllowed, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.list import ListView
@@ -21,7 +22,7 @@ import os.path
 from io import StringIO
 import logging
 import time
-from .models import CrashDumpProject, CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
+from .models import CrashDumpProject, CrashDumpSetting, CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
 from .tables import CrashDumpModelTable
 from .forms import UploadFileForm
 from uuid import UUID
@@ -33,6 +34,9 @@ from crashdump.xmlreport import XMLReport
 from crashdump.systeminforeport import SystemInfoReport
 
 logger = logging.getLogger('arsoft.web.crashupload')
+
+# 16 MB
+DEFAULT_MAX_UPLOAD_SIZE = 16 * 1024 * 1024
 
 def safe_get_as_int (l, default=None):
     try:
@@ -290,35 +294,59 @@ def patch_url(url, params=None):
     url_parts[4] = urlencode(query)
     return urlunparse(url_parts)
 
-
-def crashdump_new_link(request, *args, **kwargs):
-    if request.method == 'POST':
-        error = None
-        obj = get_object_or_404(CrashDumpModel, id=kwargs['pk'])
-        if obj is not None:
-            if obj.productCodeName:
-                proj = CrashDumpProject.findByCodename(obj.productCodeName)
-                if proj is None:
-                    error = 'No project matching codename %s' % obj.productCodeName
-            else:
-                error = 'No codename available for crash %s' % obj.id
+def crash_new_issue_link(request, obj):
+    link_obj = None
+    error = None
+    proj = None
+    if obj is not None:
+        if obj.productCodeName:
+            proj = CrashDumpProject.findByCodename(obj.productCodeName)
+            if proj is None:
+                error = 'No project matching codename %s' % obj.productCodeName
         else:
-            proj = None
-            error = 'Unable to find crash %s' % obj.id
-        if proj:
-            issue = {
-                'title': 'Crash %s' % (obj.id),
-                'description': 'Crash on {obj.id}' % { 'obj': obj },
-                'labels': ['crash'],
-            }
+            error = 'No codename available for crash %s' % obj.id
+    else:
+        error = 'Unable to find crash %s' % obj.id
+    if proj:
+        crash_url = request.build_absolute_uri(obj.url)
+
+        default_description = """The crash [{crash.uuid}]({crash_url}){{:target="_blank"}} has been uploaded by **{crash.reportUserName}**
+from **{crash.reportHostName}** and linked to this ticket.
+
+The crash occured at {crash.crashtimestamp} on **{crash.crashHostName}** with user **%{crash.crashUserName}** while running `{crash.applicationName}`. The
+application was running as part of {crash.productName} ({crash.productCodeName}) version {crash.productVersion} ({crash.productTargetVersion}, {crash.buildType}) on a
+{crash.systemName}/{crash.machineType} with {crash.osVersion} ({crash.osRelease}/{crash.osMachine}).
+"""
+
+        info = {'crash': obj, 'crash_url': crash_url, 'project': proj }
+        title = CrashDumpSetting.get('issue_title', 'Crash {crash.id}')
+        description = CrashDumpSetting.get('issue_description', default_description)
+        labels = []
+        for l in CrashDumpSetting.get('issue_labels', 'crash').split(','):
+            labels.append(l.format(**info))
+        
+        title = title.format(**info)
+        description = description.format(**info)
+        issue = {
+            'title': title,
+            'description': description,
+            'labels': labels,
+        }
+        if 1:
             if proj.issueTrackerType == CrashDumpProject.GITLAB:
                 new_issue, error = gitlab_create_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
                 if new_issue and not error:
                     link_obj = CrashDumpLink.objects.create(crash=obj, name='Issue %s' % new_issue.get('id'), url=new_issue.get('url'))        
                     if link_obj:
                         link_obj.save()
+    return link_obj, error
 
+def crashdump_new_link(request, *args, **kwargs):
+    if request.method == 'POST':
+        error = None
+        obj = get_object_or_404(CrashDumpModel, id=kwargs['pk'])
                     
+        link_obj, error = crash_new_issue_link(request, obj)
 
         redir_url = reverse('crash_details', args=[obj.id])
         if error:
@@ -569,6 +597,7 @@ def submit(request):
         else:
             is_terra3d_crashuploader = False
         remote_addr = _get_remote_addr(request)
+        links = None
 
         id_str = request.POST.get('id')
         if id_str and id_str != '00000000-0000-0000-0000-000000000000' and id_str != '{00000000-0000-0000-0000-000000000000}':
@@ -600,6 +629,8 @@ def submit(request):
             osrelease = request.POST.get('osrelease')
             osmachine = request.POST.get('osmachine')
             sysinfo = request.POST.get('sysinfo')
+
+            ticket_str = request.POST.get('ticket') or 'no'
 
             db_entry, created = CrashDumpModel.objects.get_or_create(crashid=crashid, 
                                         defaults={'state': CrashDumpState.objects.get(name='new') })
@@ -636,6 +667,11 @@ def submit(request):
                     result = True
 
         if result:
+            try:
+                links = CrashDumpLink.objects.filter(crash=db_entry.id)
+            except CrashDumpLink.DoesNotExist:
+                links = None
+
             db_entry.crashtimestamp = crashtimestamp
             db_entry.reporttimestamp = reporttimestamp
 
@@ -669,21 +705,109 @@ def submit(request):
             db_entry.systemInfoData = sysinfo
             db_entry.save()
 
+            if ticket_str == 'no':
+                pass
+            elif '#' in ticket_str:
+                if 1:
+                    # link to given issue/ticket
+                    # link_obj, error = crash_new_issue_link(request, db_entry)
+                    pass
+                else:
+                    ticket_ids = []
+                    for t in ticket_str.split(','):
+                        if t[0] == '#':
+                            ticket_ids.append(int(t[1:]))
+                    ticketobjs = []
+                    for tkt_id in ticket_ids:
+                        try:
+                            ticketobjs.append(Ticket(env=self.env, tkt_id=tkt_id))
+                        except ResourceNotFound:
+                            return self._error_response(req, status=HTTPNotFound.code, body='Ticket %i not found. Cannot link crash %s to the requested ticket.' % (tkt_id, str(uuid)))
+
+            elif ticket_str == 'auto':
+                if not links:
+                    link_obj, error = crash_new_issue_link(request, db_entry)
+            elif ticket_str == 'new':
+                link_obj, error = crash_new_issue_link(request, db_entry)
+
+
         if is_terra3d_crashuploader:
+            headers = {}
+
             if result:
+                crash_url = request.build_absolute_uri(db_entry.url)
+                headers['Crash-URL'] = crash_url
+                headers['CrashId'] = db_entry.uuid
+
+                linked_ticket_header = []
+                for lnk in links:
+                    linked_ticket_header.append('#%i:%s' % (lnk.name, lnk.url))
+                if linked_ticket_header:
+                    headers['Linked-Tickets'] = ';'.join(linked_ticket_header)
+
                 body = "Upload of crash %s (%s, %s) from %s successful" % (crashid, applicationfile, crashtimestamp, remote_addr)
                 status_code = 200
             else:
                 body = "Upload of crash %s (%s, %s) from %s failed" % (crashid, applicationfile, crashtimestamp, remote_addr)
                 status_code = 500
-            return HttpResponse(body, status=status_code, content_type="text/plain")
+            return HttpResponse(body, status=status_code, headers=headers, content_type="text/plain")
         else:
             # Always return an HttpResponseRedirect after successfully dealing
             # with POST data. This prevents data from being posted twice if a
             # user hits the Back button.
             request.session['error_message'] = error_message
-            request.session['result'] = result_code
+            request.session['result'] = result
             return HttpResponseRedirect(reverse('arsoft.web.crashupload.views.home'))
     else:
         body = "No crash dump data provided."
         return HttpResponse(body, status=400, content_type="text/plain")
+
+@csrf_exempt
+def submit_crashlist(request):
+    if request.method == 'GET':
+        data = []
+        args = {}
+        state = request.GET.get('state')
+        if state is not None:
+            try:
+                state_obj = CrashDumpState.objects.filter(name=state)
+                args = {'state': state_obj }
+            except CrashDumpState.DoesNotExist:
+                raise Http404("CrashDumpState %s does not exist" % state)
+        list = CrashDumpModel.objects.filter(**args)
+        for obj in list:
+            data.append(obj.to_json())
+        return JsonResponse({'list': data })
+    else:
+        return HttpResponseNotAllowed(permitted_methods=['GET'])
+
+def safe_int(s, default_value=None):
+    if s:
+        try:
+            n = int(s)
+            return n
+        except ValueError:
+            return default_value
+    else:
+        return default_value
+
+
+@csrf_exempt
+def submit_capabilities(request):
+    if request.method != "GET":
+        return HttpResponseNotAllowed(permitted_methods=['GET'])
+
+    user_agent = request.META.get('HTTP_USER_AGENT')
+    if user_agent is None:
+        return HttpResponseForbidden('No user-agent specified.')
+
+    max_upload_size = safe_int(CrashDumpSetting.get('max_upload_size', DEFAULT_MAX_UPLOAD_SIZE))
+    upload_disabled = safe_int(CrashDumpSetting.get('upload_disabled', False))
+
+    headers = {}
+    headers['Max-Upload-Size'] = max_upload_size
+    headers['Upload-Disabled'] = '1' if upload_disabled else '0'
+    headers['Version'] = '2'
+    headers['Crashdump-Plugin-Version'] = '2'
+
+    return JsonResponse(headers, headers=headers)
