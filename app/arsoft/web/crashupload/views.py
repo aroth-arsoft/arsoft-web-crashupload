@@ -313,7 +313,7 @@ def crash_new_issue_link(request, obj):
         default_description = """The crash [{crash.uuid}]({crash_url}){{:target="_blank"}} has been uploaded by **{crash.reportUserName}**
 from **{crash.reportHostName}** and linked to this ticket.
 
-The crash occured at {crash.crashtimestamp} on **{crash.crashHostName}** with user **%{crash.crashUserName}** while running `{crash.applicationName}`. The
+The crash occured at {crash.crashtimestamp} on **{crash.crashHostName}** with user **{crash.crashUserName}** while running `{crash.applicationName}`. The
 application was running as part of {crash.productName} ({crash.productCodeName}) version {crash.productVersion} ({crash.productTargetVersion}, {crash.buildType}) on a
 {crash.systemName}/{crash.machineType} with {crash.osVersion} ({crash.osRelease}/{crash.osMachine}).
 """

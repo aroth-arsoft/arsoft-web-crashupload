@@ -4,11 +4,12 @@ from django.http import HttpResponseServerError, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import MySQLdb
 import MySQLdb.cursors
+from arsoft.web.crashupload.views import crash_new_issue_link
 
 
 import logging
 
-from .models import CrashDumpModel, CrashDumpState
+from .models import CrashDumpLink, CrashDumpModel, CrashDumpState
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,7 @@ class MigrateDb:
             # self.cnxn.setencoding(encoding=encoding)
 
         self.cursor = self.cnxn.cursor()
+        self.cursor2 = self.cnxn.cursor()
 
         if not self.is_mysql:
             self.GET_LAST_INSERTED_ID = 'SELECT SCOPE_IDENTITY();' #MSSQL
@@ -60,6 +62,9 @@ class MigrateDb:
         if self.cursor:
             self.cursor.close()
             self.cursor = None
+        if self.cursor2:
+            self.cursor2.close()
+            self.cursor2 = None
         if self.cnxn:
             self.cnxn.close()
             self.cnxn = None
@@ -168,9 +173,14 @@ def migrate(request):
         'coredumpreportxmlfile':MigrateField('coredumpReportXMLFile'),  
         'coredumpreporthtmlfile':MigrateField('coredumpReportHTMLFile'),  
     }
+    crashdump_ticket_fields = {
+        'crash':MigrateField('crash'), 
+        'ticket':MigrateField('ticket'), 
+    }
 
     num_records = 0
     num_new_records = 0
+    num_new_tickets = 0
     try:
         new_state = CrashDumpState.objects.filter(name='new')
         if new_state:
@@ -188,13 +198,30 @@ def migrate(request):
                     newcrash.state = new_state
                 newcrash.save()
                 num_new_records += 1
+            else:
+                newcrash = existing[0]
+
+            existing_links = CrashDumpLink.objects.filter(crash=newcrash.id)
+
+            db.cursor2.execute(f"select " + _sql_query_fields(crashdump_ticket_fields) + " from crashdump_ticket where crash=%s", ( item['id'], ))
+            for link_item in db.cursor2.fetchall():
+                num_records += 1
+                issue_name = 'Crash %i' % link_item['ticket']
+                found = False
+                for e in existing_links:
+                    if e.name == issue_name:
+                        found = True
+                if not found:
+                    link_obj, error = crash_new_issue_link(request, newcrash)
+                    if link_obj:
+                        num_new_tickets += 1
 
     except MySQLdb.Error as e:
         return HttpResponseServerError('MySQL Error %s' % e)
 
     except TypeError as ex:
-        return HttpResponseServerError('Type Error %s' % e)
+        return HttpResponseServerError('Type Error %s' % ex)
   
 
-    body = "%i crashes found, %i new crashes imported" % (num_records, num_new_records)
+    body = "%i crashes found, %i new crashes, %i new tickets imported" % (num_records, num_new_records, num_new_tickets)
     return HttpResponse(body, status=200, content_type="text/plain")

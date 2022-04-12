@@ -31,7 +31,7 @@ class CrashDumpProjectForm(forms.ModelForm):
 @admin.action(description='Migrate old crashes')
 def migrate_project(modeladmin, request, queryset):
     from arsoft.web.crashupload.migrate import migrate
-    migrate(request)
+    return migrate(request)
 
 class CrashDumpProjectAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'issueTrackerType', 'codename')

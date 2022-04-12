@@ -32,7 +32,8 @@ urlpatterns = [
     re_path(r'^submit$', submit, name='submit'),
     re_path(r'^submit/crashlist$', submit_crashlist, name='submit_crashlist'),
     re_path(r'^submit/capabilities$', submit_capabilities, name='submit_capabilities'),
-    #re_path(r'^migrate$', migrate, name='migrate'),
+    # easy migrate access to testing
+    re_path(r'^migrate$', migrate, name='migrate'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # re_path(r'^admin/doc/', include('django.contrib.admindocs.urls')),
