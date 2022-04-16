@@ -397,6 +397,7 @@ class XMLReport(object):
         def __init__(self, report, message):
             super(XMLReport.XMLReportException, self).__init__(message)
             self.report = report
+            self.message = message
 
         def __str__(self):
             return '%s(%s): %s' % (type(self).__name__, self.report._filename, self.message)
