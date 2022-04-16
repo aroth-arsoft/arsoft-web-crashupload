@@ -48,6 +48,8 @@ def safe_get_as_int (l, default=None):
 
 def add_utils_to_context(context, crash=None):
 
+    if not 'error' in context:
+        context['error'] = None
     context['nav_items'] = django_settings.NAV_ITEMS
     context['hex_format'] = hex_format
     context['exception_code'] = exception_code
@@ -82,10 +84,12 @@ def add_utils_to_context(context, crash=None):
         xmlfile = None
         xmlfile_from_db = None
         minidumpfile = None
+        minidumpfile_from_db = None
         coredumpfile = None
         if crash.has_minidump:
             xmlfile_from_db = crash.minidumpReportXMLFile
             xmlfile = _get_dump_filename(crash, crash.minidumpReportXMLFile)
+            minidumpfile_from_db = crash.minidumpFile
             minidumpfile = _get_dump_filename(crash, crash.minidumpFile)
         elif crash.has_coredump:
             xmlfile_from_db = crash.coredumpReportXMLFile
@@ -109,22 +113,25 @@ def add_utils_to_context(context, crash=None):
         for f in XMLReport._main_fields:
             context[f] = None
 
-        if xmlfile:
-            start = time.time()
-            if minidumpfile:
-                try:
-                    context['minidumpfile_size'] = os.path.getsize(minidumpfile)
-                    context['minidumpfile'] = MiniDump(minidumpfile)
-                except (OSError, AssertionError) as e:
-                    context['minidumpfile_error'] = str(e)
-                    pass
+        start = time.time()
+        if minidumpfile:
+            try:
+                context['minidumpfile_size'] = os.path.getsize(minidumpfile)
+                context['minidumpfile'] = MiniDump(minidumpfile)
+            except (OSError, AssertionError) as e:
+                context['minidumpfile_error'] = str(e)
+                pass
+        else:
+            if minidumpfile_from_db:
+                context['minidumpfile_error'] = "Minidump file %s not accessible" % minidumpfile_from_db
             else:
                 context['minidumpfile_error'] = "No minidump file available"
-            if coredumpfile:
-                try:
-                    context['coredumpfile_size'] = os.path.getsize(coredumpfile)
-                except OSError:
-                    pass
+        if coredumpfile:
+            try:
+                context['coredumpfile_size'] = os.path.getsize(coredumpfile)
+            except OSError:
+                pass
+        if xmlfile:
             if os.path.isfile(xmlfile):
                 try:
                     xmlreport = XMLReport(xmlfile)
@@ -143,7 +150,10 @@ def add_utils_to_context(context, crash=None):
             end = time.time()
             context['parsetime'] = end - start
         else:
-            xmlfile_error = 'No XML file available'
+            if xmlfile_from_db:
+                context['xmlfile_error'] = 'XML file %s not accessible' % xmlfile_from_db
+            else:
+                context['xmlfile_error'] = 'No XML file available'
         context['bits'] = 64 if context['is_64_bit'] else 32
         context['addr_format'] = addr_format_64 if context['is_64_bit'] else addr_format_32    
 

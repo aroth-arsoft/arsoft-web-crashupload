@@ -6,20 +6,20 @@
 <h1 class="title">Crash {{ object.crashid }} of {{ object.get_applicationName }} at {{ object.crashtimestamp|date:"Y-m-d H:i:s" }}</h1>
 <div id="crashdump">
 <table class="report">
+{% if xmlfile_error %}
+<tr><th>XML Error:</th><td colspan="3" class="fullrow"><div class='crasherror'>{{ xmlfile_error }}</div></td></tr>
+{% endif %}
+{% if minidumpfile_error %}
+<tr><th>Minidump Error:</th><td colspan="3" class="fullrow"><div class='crasherror'>{{ minidumpfile_error }}</div></td></tr>
+{% endif %}
+{% if error %}
+<tr><th>Error:</th><td colspan="3" class="fullrow"><div class='crasherror'>{{ error }}</div></td></tr>
+{% endif %}
+{% if show_debug_info %}
 <tr>
   <th>Id</th><td><div class='crashid'>{{ object.crashid }}</div> (PK {{ object.id }})</td>
   <th>State</th><td>{{ object.state.description }}</td>
 </tr>
-{% if xmlfile_error %}
-<tr><th>XML Error:</th><td><div class='crasherror'>{{ xmlfile_error }}</div></td></tr>
-{% endif %}
-{% if minidumpfile_error %}
-<tr><th>Minidump Error:</th><td><div class='crasherror'>{{ minidumpfile_error }}</div></td></tr>
-{% endif %}
-{% if error %}
-<tr><th>Error:</th><td><div class='crasherror'>{{ error }}</div></td></tr>
-{% endif %}
-{% if show_debug_info %}
 <tr>
   <th>Parse time:</th><td>{% format_seconds parsetime %}</td>
   <th>Database time:</th><td>{% format_seconds dbtime %}</td>
