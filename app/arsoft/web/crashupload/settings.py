@@ -52,7 +52,10 @@ SECRET_KEY = '(l*vxapxd##_58l*-i@9g6%ao3xq53u6rs^sqf87*5q*9woswk'
 
 # Disable the host verification in the web application. This test must be
 # done in the web server itself.
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+
+# Application definition
 
 MEDIA_ROOT = APP_DATA_DIR
 
