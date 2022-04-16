@@ -33,6 +33,8 @@ from crashdump.minidump import MiniDump
 from crashdump.xmlreport import XMLReport
 from crashdump.systeminforeport import SystemInfoReport
 
+from arsoft.web.crashupload.gitlab import gitlab_create_issue, gitlab_get_issue
+
 logger = logging.getLogger('arsoft.web.crashupload')
 
 # 16 MB
@@ -244,47 +246,6 @@ class CrashDumpDetails(DetailView):
         return context
 
 
-def gitlab_create_issue(url, token, issue):
-    ret = None
-    error = None
-    # https://docs.gitlab.com/ee/api/issues.html#new-issue
-    import requests
-    requests.packages.urllib3.disable_warnings()
-    if not url.endswith('/issues'):
-        url += '/issues'
-    headers = {'PRIVATE-TOKEN': token}
-    params = {
-        'title': issue.get('title', None), 
-        'description': issue.get('description', ''), 
-        'labels': ','.join(issue.get('labels', [])), 
-        'issue_type': issue.get('issue_type', 'issue'), 
-        'confidential': '1' if issue.get('confidential', False) else '0'
-         }
-    try:
-        response = requests.post(url, headers=headers, params=params)
-        if (response.status_code >= 200) and (response.status_code < 300):
-            h = response.headers.get('content-type')
-            if h and ';' in h:
-                h, _ = h.split(';',1)
-            if h is not None and h == 'application/json':
-                response.encoding = 'utf-8-sig' #fix encoding BOM error
-                issue_result = response.json()
-
-                web_url = issue_result.get('web_url')
-                #project_id = issue_result.get('id')
-                issue_id = issue_result.get('iid')
-                #links = issue_result.get('_links', {})
-                #issue_link = links.get('self')
-                #project_link = links.get('project')
-
-                ret = {'id': issue_id, 'url': web_url}
-
-        else:
-            error = 'HTTP Error %s: %s' % (response.status_code, response.reason)
-    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
-        error = e
-    return ret, error
-
 def patch_url(url, params=None):
     from urllib.parse import urlencode, parse_qsl, urlparse, urlunparse
     url_parts = list(urlparse(url))
@@ -294,8 +255,7 @@ def patch_url(url, params=None):
     url_parts[4] = urlencode(query)
     return urlunparse(url_parts)
 
-def crash_new_issue_link(request, obj):
-    link_obj = None
+def crash_to_issue(request, obj, issue=None):
     error = None
     proj = None
     if obj is not None:
@@ -310,7 +270,7 @@ def crash_new_issue_link(request, obj):
     if proj:
         crash_url = request.build_absolute_uri(obj.url)
 
-        default_description = """The crash [{crash.uuid}]({crash_url}){{:target="_blank"}} has been uploaded by **{crash.reportUserName}**
+        default_description = """The crash [{crash.uuid}]({crash_url}) has been uploaded by **{crash.reportUserName}**
 from **{crash.reportHostName}** and linked to this ticket.
 
 The crash occured at {crash.crashtimestamp} on **{crash.crashHostName}** with user **{crash.crashUserName}** while running `{crash.applicationName}`. The
@@ -319,7 +279,7 @@ application was running as part of {crash.productName} ({crash.productCodeName})
 """
 
         info = {'crash': obj, 'crash_url': crash_url, 'project': proj }
-        title = CrashDumpSetting.get('issue_title', 'Crash {crash.id}')
+        title = CrashDumpSetting.get('issue_title', 'Crash {crash.uuid}')
         description = CrashDumpSetting.get('issue_description', default_description)
         labels = []
         for l in CrashDumpSetting.get('issue_labels', 'crash').split(','):
@@ -327,26 +287,43 @@ application was running as part of {crash.productName} ({crash.productCodeName})
         
         title = title.format(**info)
         description = description.format(**info)
-        issue = {
-            'title': title,
-            'description': description,
-            'labels': labels,
-        }
-        if 1:
-            if proj.issueTrackerType == CrashDumpProject.GITLAB:
-                new_issue, error = gitlab_create_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
-                if new_issue and not error:
-                    link_obj = CrashDumpLink.objects.create(crash=obj, name='Issue %s' % new_issue.get('id'), url=new_issue.get('url'))        
+        if issue is None:
+            issue = {}
+        issue['title'] = title
+        issue['description'] = description
+        issue['labels'] = labels
+    else:
+        issue = None
+    return issue, proj, error
+
+def crash_get_or_create_issue_link(request, obj, issue):
+    link_obj = None
+    error = None
+    proj = None
+    issue, proj, error = crash_to_issue(request, obj, issue)
+    if proj:
+        if proj.issueTrackerType == CrashDumpProject.GITLAB:
+            existing_issue, error = gitlab_get_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
+            if not existing_issue:
+                existing_issue, error = gitlab_create_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
+
+            if existing_issue and not error:
+                existing_links = CrashDumpLink.objects.filter(crash=obj, url=existing_issue.get('web_url'))
+                if not existing_links:
+                    link_obj = CrashDumpLink.objects.create(crash=obj, name='Issue %s' % existing_issue.get('iid'), url=existing_issue.get('web_url'))        
                     if link_obj:
                         link_obj.save()
+                else:
+                    link_obj = existing_links[0]
     return link_obj, error
+
 
 def crashdump_new_link(request, *args, **kwargs):
     if request.method == 'POST':
         error = None
         obj = get_object_or_404(CrashDumpModel, id=kwargs['pk'])
                     
-        link_obj, error = crash_new_issue_link(request, obj)
+        link_obj, error = crash_get_or_create_issue_link(request, obj)
 
         redir_url = reverse('crash_details', args=[obj.id])
         if error:
@@ -710,7 +687,7 @@ def submit(request):
             elif '#' in ticket_str:
                 if 1:
                     # link to given issue/ticket
-                    # link_obj, error = crash_new_issue_link(request, db_entry)
+                    # link_obj, error = crash_get_or_create_issue_link(request, db_entry)
                     pass
                 else:
                     ticket_ids = []
@@ -726,9 +703,9 @@ def submit(request):
 
             elif ticket_str == 'auto':
                 if not links:
-                    link_obj, error = crash_new_issue_link(request, db_entry)
+                    link_obj, error = crash_get_or_create_issue_link(request, db_entry)
             elif ticket_str == 'new':
-                link_obj, error = crash_new_issue_link(request, db_entry)
+                link_obj, error = crash_get_or_create_issue_link(request, db_entry)
 
 
         if is_terra3d_crashuploader:

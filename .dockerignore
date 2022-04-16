@@ -42,3 +42,5 @@ app/dumpdata
 venv
 *.tar.gz
 .env
+.vscode
+

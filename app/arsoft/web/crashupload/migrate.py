@@ -4,12 +4,13 @@ from django.http import HttpResponseServerError, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import MySQLdb
 import MySQLdb.cursors
-from arsoft.web.crashupload.views import crash_new_issue_link
+from arsoft.web.crashupload.gitlab import gitlab_delete_multiple_issues
+from arsoft.web.crashupload.views import crash_get_or_create_issue_link
 
 
 import logging
 
-from .models import CrashDumpLink, CrashDumpModel, CrashDumpState
+from .models import CrashDumpLink, CrashDumpModel, CrashDumpProject, CrashDumpState
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,13 @@ def _sql_to_model(fields, record):
 
 @csrf_exempt
 def migrate(request):
+
+    new_state = CrashDumpState.objects.filter(name='new')
+    if new_state:
+        new_state = new_state[0]
+    else:
+        return HttpResponseServerError('CrashDumpState new missing')
+
     from django.conf import settings
 
     try:
@@ -122,6 +130,7 @@ def migrate(request):
         body = "Failed to connect to database: " + str(e)
         return HttpResponse(body, status=500, content_type="text/plain")
 
+    remove_old_issues = request.GET.get('remove_old_issues', False)
     file = None
     error_message = None
 
@@ -178,17 +187,26 @@ def migrate(request):
         'ticket':MigrateField('ticket'), 
     }
 
+    # TODO: Remove next line
+    remove_old_issues = False
+
+    if remove_old_issues:
+        error_list = {}
+        for proj in CrashDumpProject.objects.all():
+            ret, error = gitlab_delete_multiple_issues(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, filter={'labels':['crash']})
+
+        body = ''
+        for k,v in error_list.items():
+            body += 'Project %s: %s\r\n' % (k, v)
+        
+        return HttpResponse(body, status=200, content_type="text/plain")
+
     num_records = 0
     num_new_records = 0
     num_new_tickets = 0
     try:
-        new_state = CrashDumpState.objects.filter(name='new')
-        if new_state:
-            new_state = new_state[0]
-        else:
-            return HttpResponseServerError('CrashDumpState new missing')
-            
-        db.cursor.execute(f"select " + _sql_query_fields(crashdump_fields) + " from crashdump")
+        #db.cursor.execute(f"select " + _sql_query_fields(crashdump_fields) + " from crashdump")
+        db.cursor.execute(f"select " + _sql_query_fields(crashdump_fields) + " from crashdump c, crashdump_ticket t where c.id=t.crash")
         for item in db.cursor.fetchall():
             num_records += 1
             existing = CrashDumpModel.objects.filter(crashid=item['uuid'])
@@ -201,20 +219,12 @@ def migrate(request):
             else:
                 newcrash = existing[0]
 
-            existing_links = CrashDumpLink.objects.filter(crash=newcrash.id)
-
             db.cursor2.execute(f"select " + _sql_query_fields(crashdump_ticket_fields) + " from crashdump_ticket where crash=%s", ( item['id'], ))
             for link_item in db.cursor2.fetchall():
                 num_records += 1
-                issue_name = 'Crash %i' % link_item['ticket']
-                found = False
-                for e in existing_links:
-                    if e.name == issue_name:
-                        found = True
-                if not found:
-                    link_obj, error = crash_new_issue_link(request, newcrash)
-                    if link_obj:
-                        num_new_tickets += 1
+                link_obj, error = crash_get_or_create_issue_link(request, newcrash, issue={'iid': link_item['ticket'], 'created_at': newcrash.reporttimestamp })
+                if link_obj:
+                    num_new_tickets += 1
 
     except MySQLdb.Error as e:
         return HttpResponseServerError('MySQL Error %s' % e)
@@ -223,5 +233,5 @@ def migrate(request):
         return HttpResponseServerError('Type Error %s' % ex)
   
 
-    body = "%i crashes found, %i new crashes, %i new tickets imported" % (num_records, num_new_records, num_new_tickets)
+    body = "%i records found, %i new crashes, %i new tickets imported" % (num_records, num_new_records, num_new_tickets)
     return HttpResponse(body, status=200, content_type="text/plain")
