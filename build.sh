@@ -5,6 +5,7 @@ script_docker_image_name=`basename "$script_dir"`
 tag='latest'
 docker_user='rothan'
 got_tag=0
+push_image=0
 
 function usage() {
     set +x
@@ -24,6 +25,7 @@ while [ $# -ne 0 ]; do
 	case "$1" in
 	'-?'|'-h'|'--help') usage;;
 	'-v'|'--verbose') verbose=1; ;;
+	'-p'|'--push') push_image=1; ;;
 	-*)
 		echo "Unrecognized option $1" >&2
 		exit 1
@@ -46,4 +48,7 @@ echo "Builds the docker image: $script_docker_image_name, tag $tag"
 full_image_name="${script_docker_image_name}:${tag}"
 docker build --tag "$full_image_name" "$script_dir"
 docker tag "$full_image_name" "$docker_user/$full_image_name"
-docker push "$docker_user/$full_image_name"
+
+if [ $push_image -ne 0 ]; then
+	docker push "$docker_user/$full_image_name"
+fi

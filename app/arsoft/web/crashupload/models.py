@@ -3,6 +3,8 @@ from crashdump.utils import format_os_version_short, get_os_version_number, get_
 from django.db import models, migrations
 from django.urls import reverse
 
+CRASHDUMP_VERSION = '0.9.1'
+
 class CrashDumpSetting(models.Model):
     id = models.AutoField(primary_key=True)
 

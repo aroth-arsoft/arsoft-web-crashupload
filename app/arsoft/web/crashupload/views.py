@@ -22,7 +22,7 @@ import os.path
 from io import StringIO
 import logging
 import time
-from .models import CrashDumpProject, CrashDumpSetting, CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
+from .models import CRASHDUMP_VERSION, CrashDumpProject, CrashDumpSetting, CrashDumpState, CrashDumpModel, CrashDumpLink, CrashDumpAttachment
 from .tables import CrashDumpModelTable
 from .forms import UploadFileForm
 from uuid import UUID
@@ -210,8 +210,12 @@ class CrashDumpListView(SingleTableMixin, FilterView):
         context = super(CrashDumpListView, self).get_context_data(**kwargs)
         if 'application' in self.kwargs:
             context['application'] = self.kwargs['application']
+        else:
+            context['application'] = None
         if 'state' in self.kwargs:
             context['state'] = self.kwargs['state']
+        else:
+            context['state'] = None
         add_utils_to_context(context)
         return context
 
@@ -571,6 +575,14 @@ def _get_remote_addr(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+@csrf_exempt
+def crashdump_version(request):
+    template = loader.get_template('version.html')
+    context = {
+        'version': CRASHDUMP_VERSION,
+    }
+    return HttpResponse(template.render(context, request))
 
 @csrf_exempt
 def submit(request):

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load crashupload_utils %}
+
+{% block content %}
+<h1 class="title">Crashupload Version</h1>
+<div id="crashdump">
+<table class="report">
+<tr><th>Version:</th><td>{{ version }}</td></tr>
+</table>
+</div>
+{% endblock %}

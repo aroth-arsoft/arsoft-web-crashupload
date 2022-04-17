@@ -6,7 +6,9 @@ from arsoft.web.utils import django_debug_urls, django_debug_404
 from django.conf.urls import handler404, handler500, handler403, handler400
 
 from .views import CrashDumpListView, CrashDumpDetails, CrashDumpDetailsFromCrashId, \
-    CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, crashdump_new_link, submit, submit_capabilities, submit_crashlist
+    CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, crashdump_new_link, \
+        submit, submit_capabilities, submit_crashlist, \
+            crashdump_version
 from .migrate import migrate
 
 # Uncomment the next two lines to enable the admin:
@@ -26,6 +28,7 @@ urlpatterns = [
     re_path(r'^view/(?P<crashid>\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b)$', CrashDumpDetailsFromCrashId.as_view(), name='crash_details_crashid'),
     
     re_path(r'^sysinfo/(?P<pk>\d+)/?(?P<page>\w+)?$', CrashDumpSysInfo.as_view(), name='sysinfo_report'),
+    re_path(r'^version$', crashdump_version, name='version'),
     
     #re_path(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)(/(?P<flag>\w+)?)$', CrashDumpReport.as_view(), name='crash_report'),
     re_path(r'^report/(?P<pk>\d+)/(?P<report_type>\w+)/(?P<flag>\w+)$', CrashDumpReport.as_view(), name='crash_report'),

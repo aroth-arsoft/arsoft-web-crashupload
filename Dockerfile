@@ -25,15 +25,12 @@ LABEL maintainer="docker@fastprotect.net"
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing mariadb-connector-odbc
 
 # odbc-mariadb
-ADD ./app/ /app/
 COPY --from=builder /wheels/*.whl /tmp
-# RUN pip install -r /app/requirements.txt && \
-#     adduser -S -s /bin/sh app
 RUN pip install /tmp/*.whl && rm -rf /tmp/*.whl && \
-    pip install -r /app/requirements.txt && \
     adduser -S -s /bin/sh app
 
-#VOLUME /app/static/
+ADD ./app/ /app/
+RUN pip install -r /app/requirements.txt
 
 EXPOSE 8000
 CMD ["/bin/sh", "/app/entrypoint.sh"]

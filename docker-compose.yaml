@@ -5,7 +5,7 @@ services:
         environment:
             - GUNICORN_DEBUG=1
             - BASE_PATH=/crashupload
-        image: rothan/arsoft-web-crashupload:latest
+        image: arsoft-web-crashupload:latest
         restart: "no"
         ports:
             - "8067:8000"
