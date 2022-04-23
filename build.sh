@@ -13,6 +13,7 @@ function usage() {
 	echo "OPTIONS:"
 	echo "    -h, --help            shows this help"
 	echo "    -v, --verbose         enable verbose output"
+	echo "    -p, --push            push image to docker hub"
 	echo ""
 	echo "  TAG        name of the docker image tag (default $tag)"
 	echo ""

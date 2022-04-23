@@ -1,0 +1,65 @@
+From 0a4a5e5bacc354df3132d0fcf706839c21afb89d Mon Sep 17 00:00:00 2001
+From: Mariusz Felisiak <felisiak.mariusz@gmail.com>
+Date: Thu, 13 Jan 2022 10:10:48 +0100
+Subject: [PATCH] Refs #32681 -- Fixed VariableDoesNotExist when rendering some
+ admin template.
+
+Regression in 84609b3205905097d7d3038d32e6101f012c0619.
+
+Follow up to 4e5bbb6ef2287126badd32842b239f4a8a7394ca.
+
+Thanks Sourav Kumar for the report.
+---
+ django/contrib/admin/actions.py |  1 +
+ django/contrib/admin/sites.py   |  1 +
+ django/contrib/auth/views.py    |  2 ++
+ tests/admin_views/tests.py      | 14 ++++++++++++++
+ 4 files changed, 18 insertions(+)
+
+diff --git a/django/contrib/admin/actions.py b/django/contrib/admin/actions.py
+index 665d83c7f71a..8eab4ae5f7ec 100644
+--- a/django/contrib/admin/actions.py
++++ b/django/contrib/admin/actions.py
+@@ -59,6 +59,7 @@ def delete_selected(modeladmin, request, queryset):
+     context = {
+         **modeladmin.admin_site.each_context(request),
+         "title": title,
++        "subtitle": None,
+         "objects_name": str(objects_name),
+         "deletable_objects": [deletable_objects],
+         "model_count": dict(model_count).items(),
+diff --git a/django/contrib/admin/sites.py b/django/contrib/admin/sites.py
+index a87bac02bd80..cff1dab8291a 100644
+--- a/django/contrib/admin/sites.py
++++ b/django/contrib/admin/sites.py
+@@ -400,6 +400,7 @@ def login(self, request, extra_context=None):
+         context = {
+             **self.each_context(request),
+             "title": _("Log in"),
++            "subtitle": None,
+             "app_path": request.get_full_path(),
+             "username": request.user.get_username(),
+         }
+diff --git a/django/contrib/auth/views.py b/django/contrib/auth/views.py
+index f1b326b29a16..8790076dc476 100644
+--- a/django/contrib/auth/views.py
++++ b/django/contrib/auth/views.py
+@@ -169,6 +169,7 @@
+                 "site": current_site,
+                 "site_name": current_site.name,
+                 "title": _("Logged out"),
++                "subtitle": None,
+                 **(self.extra_context or {}),
+             }
+         )
+@@ -211,7 +212,7 @@
+ 
+     def get_context_data(self, **kwargs):
+         context = super().get_context_data(**kwargs)
+-        context.update({"title": self.title, **(self.extra_context or {})})
++        context.update({"title": self.title, "subtitle": None, **(self.extra_context or {})})
+         return context
+ 
+ 
+
+

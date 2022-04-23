@@ -29,8 +29,20 @@ COPY --from=builder /wheels/*.whl /tmp
 RUN pip install /tmp/*.whl && rm -rf /tmp/*.whl && \
     adduser -S -s /bin/sh app
 
+ADD ./app/requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt
+
+# add slighly modified patch from
+# https://github.com/django/django/commit/0a4a5e5bacc354df3132d0fcf706839c21afb89d?diff=unified
+# to fix https://code.djangoproject.com/ticket/32681
+#   Exception while resolving variable 'subtitle' in template
+ADD ./0a4a5e5bacc354df3132d0fcf706839c21afb89d.patch /tmp/0a4a5e5bacc354df3132d0fcf706839c21afb89d.patch
+RUN apk add --no-cache patch && \
+    cd /usr/local/lib/python3.9/site-packages && \
+    patch -p1 -r /patch.rej -i /tmp/0a4a5e5bacc354df3132d0fcf706839c21afb89d.patch
+
 ADD ./app/ /app/
-RUN pip install -r /app/requirements.txt
 
 EXPOSE 8000
 CMD ["/bin/sh", "/app/entrypoint.sh"]
