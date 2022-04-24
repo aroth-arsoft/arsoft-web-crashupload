@@ -45,7 +45,7 @@ urlpatterns = [
     #re_path(r'^admin/', include('admin.site.urls')),
 
     # Uncomment the next line to enable the admin:
-    re_path(r'^debug/', include(django_debug_urls())),
+    re_path(r'^debug/', django_debug_urls()),
     re_path(r'^admin/', admin.site.urls),
 ]
 

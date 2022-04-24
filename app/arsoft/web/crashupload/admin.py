@@ -8,8 +8,8 @@ class CrashDumpSettingForm(forms.ModelForm):
         fields = '__all__'
 
 class CrashDumpSettingAdmin(admin.ModelAdmin):
-    #list_display = ('name', 'value')
-    #fields = ['name', 'value']
+    list_display = ('name', 'value')
+    fields = ['name', 'value']
     form = CrashDumpSettingForm
 
 class CrashDumpStateForm(forms.ModelForm):

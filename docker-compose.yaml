@@ -5,6 +5,7 @@ services:
         environment:
             - GUNICORN_DEBUG=1
             - BASE_PATH=/crashupload
+            #- CSRF_TRUSTED_ORIGINS=http://localhost:8067
         image: arsoft-web-crashupload:latest
         restart: "no"
         ports:

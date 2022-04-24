@@ -33,6 +33,9 @@ class CrashDumpSetting(models.Model):
         else:
             return default_value
 
+    def __str__(self):
+        return '%s=%s' % (self.name, self.value)
+
 class CrashDumpProject(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField('Name', max_length=32, help_text='Project name')
@@ -61,7 +64,10 @@ class CrashDumpProject(models.Model):
             return q[0]
         else:
             return None
-        
+
+    def __str__(self):
+        return 'Project %s' % (self.name)
+
 
 class CrashDumpState(models.Model):
     id = models.AutoField(primary_key=True)
@@ -71,6 +77,9 @@ class CrashDumpState(models.Model):
     class Meta:
         verbose_name = "Crash state"
         verbose_name_plural = "Crash states"
+
+    def __str__(self):
+        return '%s, %s' % (self.name, self.description)
 
 class CrashDumpModel(models.Model):
 
@@ -291,6 +300,9 @@ class CrashDumpAttachment(models.Model):
         verbose_name = "Crash attachment"
         verbose_name_plural = "Crash attachments"
 
+    def __str__(self):
+        return '%s, %s' % (self.crash, self.name)
+
 class CrashDumpLink(models.Model):
     id = models.AutoField(primary_key=True)
     crash = models.ForeignKey(CrashDumpModel, on_delete=models.CASCADE)
@@ -300,6 +312,9 @@ class CrashDumpLink(models.Model):
     class Meta:
         verbose_name = "Crash link"
         verbose_name_plural = "Crash links"
+
+    def __str__(self):
+        return '%s, %s' % (self.crash, self.name)
 
 
 def add_crashdump_states(apps, schema_editor):

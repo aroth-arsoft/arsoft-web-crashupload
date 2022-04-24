@@ -206,7 +206,10 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     # Python dotted path to the WSGI application used by Django's runserver.
     settings_obj.WSGI_APPLICATION = appname + '.wsgi.application'
 
-    settings_obj.SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    # Django default: 'django.contrib.sessions.backends.db'
+    # Use 'django.contrib.sessions.backends.cache' for app which do not use
+    # authentication and/or sessions
+    settings_obj.SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
     settings_obj.MIDDLEWARE = [
             'django.middleware.common.CommonMiddleware',
@@ -288,6 +291,7 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
             'arsoft.web',
             appname
             ]
+
     settings_obj.LOG_DIR = os.path.join(appdir, 'data')
     if not os.path.isdir(settings_obj.LOG_DIR):
         # create LOG_DIR if it does not exists
@@ -339,6 +343,16 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
                 },
                 # Might as well log any errors anywhere else in Django
                 'django': {
+                    'handlers': ['console'] if in_docker else ['logfile'],
+                    'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
+                    'propagate': True,
+                },
+                'django.server': {
+                    'handlers': ['console'] if in_docker else ['logfile'],
+                    'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
+                    'propagate': True,
+                },
+                'django.security.csrf': {
                     'handlers': ['console'] if in_docker else ['logfile'],
                     'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
                     'propagate': True,
@@ -696,6 +710,8 @@ def django_debug_404(request, *args, **kwargs):
 def django_debug_urls(options={}):
     from django.urls import re_path
 
+    name = options.get('name', 'debug')
+
     # add debug handler here
     urlpatterns = [
         re_path(r'^$', django_debug_info, name='debug_django_info'),
@@ -704,7 +720,7 @@ def django_debug_urls(options={}):
         re_path(r'^settings$', django_settings_view, name='debug_django_settings'),
         re_path(r'^urls$', django_urls_view, name='debug_django_urls'),
         ]
-    return urlpatterns
+    return urlpatterns, 'debug', name
 
 DEBUG_INFO_VIEW_TEMPLATE = """
 {% load base_url %}

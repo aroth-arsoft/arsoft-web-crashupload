@@ -19,7 +19,9 @@ INSTALLED_APPS.extend(
      'django_filters',
      'bootstrap4',
      ])
+
 MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
+MIDDLEWARE.append('django.contrib.messages.middleware.MessageMiddleware')
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -53,7 +55,11 @@ SECRET_KEY = '(l*vxapxd##_58l*-i@9g6%ao3xq53u6rs^sqf87*5q*9woswk'
 # Disable the host verification in the web application. This test must be
 # done in the web server itself.
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = []
+else:
+    CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS.split(',')
 
 # Application definition
 
