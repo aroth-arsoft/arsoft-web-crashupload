@@ -3,6 +3,7 @@
 # kate: space-indent on; indent-width 4; mixedindent off; indent-mode python;
 
 from __future__ import print_function
+from os import stat
 
 import sys
 import argparse
@@ -16,6 +17,8 @@ import io
 import codecs
 import os.path
 from datetime import datetime
+from pytz import UTC
+from crashdump.minidump import MiniDumpWrapper
 
 from crashdump.xmlreport import XMLReport
 
@@ -99,11 +102,22 @@ class import_crashes_app(object):
 
     def _process_file(self, f, force=False):
 
-        f_xml = f + '.xml'
+        if f.endswith('.dmp'):
+            f_minidump = f
+            f_xml = f[:-4] + '.xml'
+        elif f.endswith('.xml'):
+            f_minidump = f[:-4] + '.dmp'
+            f_xml = f
+
+        crashtimestamp = datetime.fromtimestamp(0)
+        try:
+            s = os.stat(f)
+            crashtimestamp = datetime.fromtimestamp(s.st_mtime, tz=UTC)
+        except Exception:
+            pass
 
         crash_id = None
-        crashtimestamp = datetime.fromtimestamp(0)
-        reporttimestamp = datetime.fromtimestamp(0)
+        reporttimestamp = crashtimestamp 
         productname = ''
         productcodename = ''
         productversion = ''
@@ -123,7 +137,10 @@ class import_crashes_app(object):
         applicationfile = ''
         applicationname = ''
 
-        files = [ ('minidump', os.path.basename(f), f) ]
+        xmlreport = None
+        minidump = None
+
+        files = [ ('minidump', os.path.basename(f_minidump), f_minidump) ]
         if os.path.isfile(f_xml):
             files += [ ('minidumpreportxml', os.path.basename(f_xml), f_xml) ]
 
@@ -155,8 +172,36 @@ class import_crashes_app(object):
                 systemname = xmlreport.system_info.platform_type
                 osversion = xmlreport.system_info.os_version
                 osrelease = xmlreport.system_info.os_version
-        else:
+        elif os.path.isfile(f_minidump):
             xmlreport = None
+            minidump = MiniDumpWrapper(f_minidump)
+            if minidump.crash_info is not None:
+                crash_id = minidump.crash_info.uuid
+                applicationfile = minidump.crash_info.application
+                applicationname = os.path.basename(applicationfile)
+                crashtimestamp = minidump.crash_info.crash_timestamp
+                reporttimestamp = minidump.crash_info.report_time
+                uploadhostname = minidump.crash_info.report_fqdn
+                uploadusername = minidump.crash_info.report_username
+            if minidump.fast_protect_version_info is not None:
+                productname = minidump.fast_protect_version_info.product_name
+                productcodename = minidump.fast_protect_version_info.product_code_name
+                productversion = minidump.fast_protect_version_info.product_version
+                producttargetversion = minidump.fast_protect_version_info.product_target_version
+                buildtype = minidump.fast_protect_version_info.product_build_type
+                buildpostfix = minidump.fast_protect_version_info.product_build_postfix
+            if minidump.system_info is not None:
+                cputype = minidump.system_info.cpu_type_id
+            if minidump.fast_protect_system_info is not None:
+                machinetype = minidump.fast_protect_system_info.machine_type
+                crashfqdn = minidump.fast_protect_system_info.fqdn
+                if not crashfqdn:
+                    crashfqdn = minidump.fast_protect_system_info.hostname
+                crashusername = minidump.fast_protect_system_info.username
+            if minidump.system_info is not None:
+                systemname = minidump.system_info.platform_type
+                osversion = minidump.system_info.os_version
+                osrelease = minidump.system_info.os_version
 
         if crash_id is None:
             path, name = os.path.split(f)
@@ -217,7 +262,17 @@ class import_crashes_app(object):
             if linked_tickets:
                 for elem in linked_tickets.split(';'):
                     (tkt_id, tkt_url) = elem.split(':', 1)
-                    tickets[int(tkt_id[1:])] = tkt_url
+                    if tkt_id.startswith('Issue'):
+                        tkt_id = tkt_id[5:].trim()
+                    if tkt_id[0] == '#':
+                        tkt_id = tkt_id[1:]
+                    try:
+                        tkt_id = int(tkt_id)
+                        tickets[tkt_id] = tkt_url
+                    except ValueError:
+                        pass
+
+                    
             print('Crash URL: %s' % (crash_url if crash_url else 'N/A'))
             print('Crash Id: %s' % (crash_id if crash_id else 'N/A'))
             if tickets:
@@ -226,8 +281,21 @@ class import_crashes_app(object):
                     print('  #%i: %s' % (k,v))
 
         except HTTPError as e:
+            got_html_error = False
+            h = e.headers.get('content-type')
+            if h and ';' in h:
+                h, _ = h.split(';',1)
+            if h is not None and h == 'text/html':
+                got_html_error = True
             ResponseData = e.read().decode("utf8", 'ignore')
-            print('HTTP error %i: %s: %s' % (e.code, e.reason, ResponseData), file=sys.stderr)
+            if got_html_error:
+                f_error = f + '_error.html'
+                err = open(f_error, 'w')
+                err.write(ResponseData)
+                err.close()
+                print('HTTP error %i: %s: Error report %s' % (e.code, e.reason, f_error), file=sys.stderr)
+            else:
+                print('HTTP error %i: %s: %s' % (e.code, e.reason, ResponseData), file=sys.stderr)
         except URLError as e:
             print('Invalid URL: %s' % e.reason, file=sys.stderr)
 
@@ -277,21 +345,28 @@ class import_crashes_app(object):
         self._verbose = args.verbose
         self._force = args.force
         self._create_ticket = args.create_ticket
-        if self._create_ticket == 'auto' or self._create_ticket == 'no' or self._create_ticket == 'new':
+        print(args)
+
+        if self._create_ticket is None or self._create_ticket == 'auto' or self._create_ticket == 'no' or self._create_ticket == 'new':
             pass
-        elif '#' in self._create_ticket:
+        elif self._create_ticket:
             ticket_ids = []
             for t in self._create_ticket.split(','):
                 if t[0] == '#':
-                    ticket_ids.append(int(t[1:]))
+                    t = t[1:]
+                n = None
+                try:
+                    n = int(t)
+                except ValueError:
+                    print('Invalid ticket option %s.' % t, file=sys.stderr)
+                if n:
+                    ticket_ids.append(n)
+
             self._create_ticket = ''
             for tkt_id in ticket_ids:
                 if self._create_ticket:
                     self._create_ticket += ','
                 self._create_ticket += '#%i' % tkt_id
-        else:
-            print('Invalid ticket option %s.' % self._create_ticket, file=sys.stderr)
-            return 1
 
         if args.upload_url:
             self._upload_url = args.upload_url

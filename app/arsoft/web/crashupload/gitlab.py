@@ -173,13 +173,136 @@ def gitlab_delete_multiple_issues(url, token, filter=None):
             break
     return ret, error
 
+def gitlab_get_issue_notes(url, token, issue, filter=None):
+    ret = False
+    error = None
+    # https://docs.gitlab.com/ee/api/issues.html#new-issue
+    requests.packages.urllib3.disable_warnings()
+    if not url.endswith('/issues'):
+        url += '/issues'
+    if isinstance(issue, dict):
+        url += '/%s/notes' % issue.get('iid')
+    else:
+        url += '/%s/notes' % issue
+
+    page = 0
+    params = {}
+    if filter:
+        if filter.get('labels'):
+            params['labels'] =  ','.join(filter.get('labels', []))
+        if filter.get('state'):
+            params['state'] =  filter.get('state')
+    ret = []
+    headers = {'PRIVATE-TOKEN': token}
+    missing_pages = True
+    while missing_pages:
+        page += 1
+        params['page'] = str(page)
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            if (response.status_code >= 200) and (response.status_code < 300):
+                h = response.headers.get('content-type')
+                if h and ';' in h:
+                    h, _ = h.split(';',1)
+                if h is not None and h == 'application/json':
+                    response.encoding = 'utf-8-sig' #fix encoding BOM error
+                    issue_result = response.json()
+                    if not issue_result:
+                        missing_pages = False
+                    ret.extend(issue_result)
+            else:
+                error = 'HTTP Error %s: %s' % (response.status_code, response.reason)
+                missing_pages = False
+        except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+            error = e
+            missing_pages = False
+    return ret, error
+
+def gitlab_get_issue_note(url, token, issue, note):
+    ret = None
+    error = None
+    # https://docs.gitlab.com/ee/api/notes.html#get-single-issue-note
+    requests.packages.urllib3.disable_warnings()
+    if not url.endswith('/issues'):
+        url += '/issues'
+    if isinstance(issue, dict):
+        url += '/%s/notes' % issue.get('iid')
+    else:
+        url += '/%s/notes' % issue
+    if isinstance(note, dict):
+        url += '/%s' % note.get('note_id')
+    else:
+        url += '/%s' % note
+
+    headers = {'PRIVATE-TOKEN': token}
+    params = {}
+
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if (response.status_code >= 200) and (response.status_code < 300):
+            h = response.headers.get('content-type')
+            if h and ';' in h:
+                h, _ = h.split(';',1)
+            if h is not None and h == 'application/json':
+                response.encoding = 'utf-8-sig' #fix encoding BOM error
+                ret = response.json()
+            ret = True
+        else:
+            error = 'HTTP Error %s: %s' % (response.status_code, response.reason)
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+        error = e
+    return ret, error
+    
+
+def gitlab_create_issue_note(url, token, issue, note):
+    ret = None
+    error = None
+    # https://docs.gitlab.com/ee/api/notes.html#create-new-issue-note
+    requests.packages.urllib3.disable_warnings()
+    if not url.endswith('/issues'):
+        url += '/issues'
+    if isinstance(issue, dict):
+        issue_iid = issue.get('iid')
+    else:
+        issue_iid = issue
+    url += '/%s/notes' % issue_iid
+
+    headers = {'PRIVATE-TOKEN': token}
+    params = {
+        'issue_iid': issue_iid,
+        'body': note.get('body', ''), 
+         }
+    if 'created_at' in note:
+        t = note.get('created_at')
+        if isinstance(t, datetime):
+            params['created_at'] = t.isoformat()
+        else:
+            params['created_at'] = t
+    print(params)
+    try:
+        response = requests.post(url, headers=headers, params=params)
+        if (response.status_code >= 200) and (response.status_code < 300):
+            h = response.headers.get('content-type')
+            if h and ';' in h:
+                h, _ = h.split(';',1)
+            if h is not None and h == 'application/json':
+                response.encoding = 'utf-8-sig' #fix encoding BOM error
+                issue_result = response.json()
+                ret = issue_result
+        else:
+            error = 'HTTP Error %s: %s' % (response.status_code, response.reason)
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+        error = e
+    return ret, error    
+    
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='GitLab direct access')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='enable verbose output of this script.')
     parser.add_argument('url')
     parser.add_argument('token')
-    parser.add_argument('action', choices=['list', 'delete-all'])
+    parser.add_argument('action', choices=['list', 'delete-all', 'issue-notes', 'create-issue-note'])
     parser.add_argument('args', nargs='*')
 
     args = parser.parse_args()
@@ -200,6 +323,30 @@ def main():
             print('Error %s' % error)
         else:
             print('Result: %s' % ret)
+    elif args.action == 'issue-notes':
+        issue_id = args.args.pop() if args.args else None
+
+        list, error = gitlab_get_issue_notes(args.url, args.token, issue=issue_id)
+        if not list and error:
+            print('Error %s' % error)
+        else:
+            if not list:
+                print('No Notes')
+            else:
+                for issue in list:
+                    print('[%i]: %s' % (issue.get('iid'), issue))
+    elif args.action == 'create-issue-note':
+        print('args=%s' % args)
+        issue_id = args.args.pop(0) if args.args else None
+        body = args.args.pop(0) if args.args else None
+
+        print('issue=id=%s' % issue_id)
+        print('body=id=%s' % body)
+
+        print('args=%s' % args)
+        note, error = gitlab_create_issue_note(args.url, args.token, issue=issue_id, note={'body': body})
+        print(note, error)
+    
     else:
         print('Unknown action %s' % args.action)
 

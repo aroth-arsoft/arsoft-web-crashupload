@@ -1,3 +1,4 @@
+from datetime import datetime
 from random import choices
 from urllib import request
 from django.template import RequestContext, loader
@@ -27,6 +28,7 @@ from .tables import CrashDumpModelTable
 from .forms import UploadFileForm
 from uuid import UUID
 from django.conf import settings as django_settings
+from pytz import UTC
 
 from crashdump.utils import *
 from crashdump.minidump import MiniDump
@@ -303,9 +305,15 @@ application was running as part of {crash.productName} ({crash.productCodeName})
         description = description.format(**info)
         if issue is None:
             issue = {}
-        issue['title'] = title
-        issue['description'] = description
-        issue['labels'] = labels
+        if isinstance(issue, list):
+            for item in issue:
+                item['title'] = title
+                item['description'] = description
+                item['labels'] = labels
+        else:
+            issue['title'] = title
+            issue['description'] = description
+            issue['labels'] = labels
     else:
         issue = None
     return issue, proj, error
@@ -317,9 +325,20 @@ def crash_get_or_create_issue_link(request, obj, issue):
     issue, proj, error = crash_to_issue(request, obj, issue)
     if proj:
         if proj.issueTrackerType == CrashDumpProject.GITLAB:
-            existing_issue, error = gitlab_get_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
+            existing_issue = None
+            error = None
+            if isinstance(issue, list):
+                for item in issue:
+                    existing_issue, error = gitlab_get_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=item)
+                    if existing_issue is not None:
+                        break
+            else:
+                existing_issue, error = gitlab_get_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
             if not existing_issue:
-                existing_issue, error = gitlab_create_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
+                if isinstance(issue, list):
+                    existing_issue, error = gitlab_create_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue[0])
+                else:
+                    existing_issue, error = gitlab_create_issue(url=proj.issueTrackerUrl, token=proj.issueTrackerToken, issue=issue)
 
             if existing_issue and not error:
                 existing_links = CrashDumpLink.objects.filter(crash=obj, url=existing_issue.get('web_url'))
@@ -606,7 +625,7 @@ def submit(request):
             result = False
         if result:
             applicationfile = request.POST.get('applicationfile')
-            applicationname = request.POST.get('applicationname')
+            #applicationname = request.POST.get('applicationname')
             force = request.POST.get('force')
             crashtimestamp = request.POST.get('crashtimestamp')
             reporttimestamp = request.POST.get('reporttimestamp')
@@ -671,63 +690,93 @@ def submit(request):
             except CrashDumpLink.DoesNotExist:
                 links = None
 
+            if crashtimestamp:
+                crashtimestamp = datetime.fromisoformat(crashtimestamp)
+                crashtimestamp = crashtimestamp.replace(tzinfo=UTC)
+            if reporttimestamp:
+                reporttimestamp = datetime.fromisoformat(reporttimestamp)
+                reporttimestamp = reporttimestamp.replace(tzinfo=UTC)
+
             db_entry.crashtimestamp = crashtimestamp
             db_entry.reporttimestamp = reporttimestamp
 
-            db_entry.applicationFile = applicationfile
+            if applicationfile:
+                db_entry.applicationFile = applicationfile
 
             # don't trust the applicationname provided by the client
-            appbase = os.path.basename(applicationfile)
-            (appbase, ext) = os.path.splitext(appbase)
-            if buildpostfix and appbase.endswith(buildpostfix):
-                appbase = appbase[:-len(buildpostfix)]
-            db_entry.applicationName = appbase
+            if db_entry.applicationFile:
+                appbase = os.path.basename(db_entry.applicationFile)
+                (appbase, ext) = os.path.splitext(appbase)
+                if buildpostfix and appbase.endswith(buildpostfix):
+                    appbase = appbase[:-len(buildpostfix)]
+                db_entry.applicationName = appbase
 
-            db_entry.productName = productname
-            db_entry.productCodeName = productcodename
-            db_entry.productVersion = productversion
-            db_entry.productTargetVersion = producttargetversion
-            db_entry.clientHostName = fqdn
-            db_entry.clientUserName = username
-            db_entry.crashHostName = crashfqdn
-            db_entry.crashUserName = crashusername
+            if productname:
+                db_entry.productName = productname
+            if productcodename:
+                db_entry.productCodeName = productcodename
+            if productversion:
+                db_entry.productVersion = productversion
+            if producttargetversion:
+                db_entry.productTargetVersion = producttargetversion
+            if fqdn:
+                db_entry.clientHostName = fqdn
+            if username:
+                db_entry.clientUserName = username
+            if crashfqdn:
+                db_entry.crashHostName = crashfqdn
+            if crashusername:
+                db_entry.crashUserName = crashusername
 
-            db_entry.buildType = buildtype
-            db_entry.buildPostfix = buildpostfix
+            if buildtype:
+                db_entry.buildType = buildtype
+            if buildpostfix:
+                db_entry.buildPostfix = buildpostfix
 
-            db_entry.machineType = machinetype
-            db_entry.cpuType = cputype
-            db_entry.systemName = systemname
-            db_entry.osVersion = osversion
-            db_entry.osRelease = osrelease
-            db_entry.osMachine = osmachine
-            db_entry.systemInfoData = sysinfo
-            db_entry.save()
+            if machinetype:
+                db_entry.machineType = machinetype
+            if cputype:
+                db_entry.cpuType = cputype
+            if systemname:
+                db_entry.systemName = systemname
+            if osversion:
+                db_entry.osVersion = osversion
+            if osrelease:
+                db_entry.osRelease = osrelease
+            if osmachine:
+                db_entry.osMachine = osmachine
+            if sysinfo:
+                db_entry.systemInfoData = sysinfo
+            try:
+                db_entry.save()
+            except Exception as ex:
+                return HttpResponse(str(ex), status=500, content_type="text/plain")
 
+
+            issue = None
             if ticket_str == 'no':
                 pass
             elif '#' in ticket_str:
-                if 1:
-                    # link to given issue/ticket
-                    # link_obj, error = crash_get_or_create_issue_link(request, db_entry)
-                    pass
-                else:
-                    ticket_ids = []
-                    for t in ticket_str.split(','):
-                        if t[0] == '#':
-                            ticket_ids.append(int(t[1:]))
-                    ticketobjs = []
-                    for tkt_id in ticket_ids:
-                        try:
-                            ticketobjs.append(Ticket(env=self.env, tkt_id=tkt_id))
-                        except ResourceNotFound:
-                            return self._error_response(req, status=HTTPNotFound.code, body='Ticket %i not found. Cannot link crash %s to the requested ticket.' % (tkt_id, str(uuid)))
-
+                ticket_ids = []
+                for t in ticket_str.split(','):
+                    if t[0] == '#':
+                        t = t[1:]
+                    n = None
+                    try:
+                        n = int(t)
+                    except ValueError:
+                        pass
+                    if n:
+                        ticket_ids.append(n)
+                issue = []
+                for tkt_id in ticket_ids:
+                    issue.append( {'iid': tkt_id} )
+                link_obj, error = crash_get_or_create_issue_link(request, db_entry, issue=issue)
             elif ticket_str == 'auto':
                 if not links:
-                    link_obj, error = crash_get_or_create_issue_link(request, db_entry)
+                    link_obj, error = crash_get_or_create_issue_link(request, db_entry, issue=issue)
             elif ticket_str == 'new':
-                link_obj, error = crash_get_or_create_issue_link(request, db_entry)
+                link_obj, error = crash_get_or_create_issue_link(request, db_entry, issue=issue)
 
 
         if is_terra3d_crashuploader:
@@ -740,7 +789,12 @@ def submit(request):
 
                 linked_ticket_header = []
                 for lnk in links:
-                    linked_ticket_header.append('#%i:%s' % (lnk.name, lnk.url))
+                    
+                    if lnk.name.startswith('Issue'):
+                        lnk_name = lnk.name[5:]
+                    else:
+                        lnk_name = lnk.name
+                    linked_ticket_header.append('%s:%s' % (lnk_name, lnk.url))
                 if linked_ticket_header:
                     headers['Linked-Tickets'] = ';'.join(linked_ticket_header)
 

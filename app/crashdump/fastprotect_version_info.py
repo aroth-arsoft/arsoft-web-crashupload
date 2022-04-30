@@ -1,15 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # kate: space-indent on; indent-width 4; mixedindent off; indent-mode python;
-from io import StringIO
+from curses import raw
+from io import BytesIO, TextIOWrapper
 from arsoft.inifile import IniFile
 import datetime
 
 class FastprotectVersionInfo(object):
     def __init__(self, rawdata):
 
-        import StringIO
-        stream = StringIO.StringIO(rawdata)
+        stream = TextIOWrapper(BytesIO(rawdata), encoding='utf8')
         ini = IniFile(filename=None, commentPrefix=';', keyValueSeperator='=', qt=True)
         ini.open(stream)
 
@@ -36,8 +36,8 @@ class FastprotectVersionInfo(object):
         self.jenkins_master = ini.get(None, 'jenkinsMaster')
         self.jenkins_nodename = ini.get(None, 'jenkinsNodename')
         self.threadname_tlsslot = ini.getAsInteger(None, 'threadNameTLSSlot')
-
-        self.jenkins_build_date = datetime.utcfromtimestamp(ts)
+        ts = ini.getAsInteger(None, 'jenkinsJobBuildDateUnix')
+        self.jenkins_build_date = datetime.datetime.utcfromtimestamp(ts) if ts else None
 
     def __str__(self):
         return '%s %s (%s)' % (self.product_name, self.product_target_version, self.product_version)

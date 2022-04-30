@@ -767,7 +767,8 @@ class MiniDump(object):
 
     def __parse_fast_protect_system_info__(self, dirent):
         self.fd.seek(dirent.Location.Rva)
-        self.fast_protect_system_info = self.fd.read(dirent.Location.DataSize)
+        rawdata = self.fd.read(dirent.Location.DataSize)
+        self.fast_protect_system_info = None
 
     def _read_string(self, rva):
 
@@ -787,7 +788,9 @@ class MiniDump(object):
             hdr = MINIDUMP_HEADER()
             hdr.parse(self.fd)
             
-            assert hdr.Signature == "MDMP"
+            if hdr.Signature != b"MDMP":
+                raise Exception("MINIDUMP_HEADER signature does not match %s" % hdr.Signature)
+
             self.fd.seek(hdr.StreamDirectoryRva)
             
             # Check MINIDUMP_STREAM_TYPE for full list
@@ -845,7 +848,7 @@ class MiniDump(object):
             if not 7 in streams: raise Exception("No SYSTEM_INFO stream found...context will not work correctly!")
             
             # it is important we parse SYSTEM_INFO first
-            parse_order = streams.keys()
+            parse_order = list(streams.keys())
             parse_order.remove(7)
             parse_order = [7] + parse_order
             
@@ -948,7 +951,11 @@ class MiniDumpWrapper(object):
     };
 
     def __init__(self, minidump):
-        self._md = minidump
+        if isinstance(minidump, str):
+            self._md = MiniDump(minidump)
+        else:
+            self._md = minidump
+        self._crash_info = None
         self._system_info = None
         self._exception = None
         self._assertion = None
@@ -1259,6 +1266,11 @@ class MiniDumpWrapper(object):
                 return len(self._real_object)
             else:
                 return 0
+    @property
+    def crash_info(self):
+        #if self._crash_info is None:
+        #    self._crash_info = MiniDumpWrapper.CrashInfo(self)
+        return self._crash_info
 
     @property
     def system_info(self):
