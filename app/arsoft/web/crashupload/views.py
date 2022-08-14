@@ -15,6 +15,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.base import RedirectView
 from django import forms
 from django_tables2.views import SingleTableView, SingleTableMixin
+from django_tables2.export.views import ExportMixin
 from django_filters.views import FilterView
 import django_filters
 from django.conf import settings
@@ -168,22 +169,40 @@ class CrashDumpModelViewForm(forms.ModelForm):
 class CrashDumpFilter(django_filters.FilterSet):
     #state = django_filters.ModelChoiceFilter(queryset=CrashDumpState.objects.all())
     #state = django_filters.ModelChoiceFilter(queryset=CrashDumpState.objects.values_list('id', 'name'))
-    applicationName = django_filters.CharFilter(lookup_expr='iexact')
-    reportHostName = django_filters.CharFilter(lookup_expr='iexact')
-    reportUserName = django_filters.CharFilter(lookup_expr='iexact')
-    crashHostName = django_filters.CharFilter(lookup_expr='iexact')
-    crashUserName = django_filters.CharFilter(lookup_expr='iexact')
-    buildType = django_filters.ChoiceFilter(choices=CrashDumpModel.BUILDTYPES)
+    applicationName = django_filters.CharFilter(lookup_expr='icontains', label='Application')
+    reportHostName = django_filters.CharFilter(lookup_expr='icontains', label='Report Host')
+    reportUserName = django_filters.CharFilter(lookup_expr='icontains', label='Report User')
+    crashHostName = django_filters.CharFilter(lookup_expr='icontains', label='Crash Host')
+    crashUserName = django_filters.CharFilter(lookup_expr='icontains', label='Crash User')
+    buildType = django_filters.ChoiceFilter(choices=CrashDumpModel.BUILDTYPES, label='Build type')
+
+    productTargetVersion = django_filters.ModelChoiceFilter(to_field_name='productTargetVersion',
+        queryset=CrashDumpModel.objects.values_list('productTargetVersion', flat=True).distinct(), label='Version')    
 
     class Meta:
         model = CrashDumpModel
+        exclude = []
         fields = [
             'state',
             'applicationName', 
-            'reportHostName', 'reportUserName',
-            'crashHostName', 'crashUserName',
-            'buildType','productTargetVersion'
-            ]
+            'reportHostName',
+            'reportUserName',
+            'crashHostName', 
+            'crashUserName',
+            'buildType',
+            'productTargetVersion'
+            ]        
+        # fields = {
+        #     'state': {},
+        #     'state':['exact'],
+        #     'applicationName':['icontains'], 
+        #     'reportHostName':['iexact'], 
+        #     'reportUserName':['iexact'], 
+        #     'crashHostName':['iexact'], 
+        #     'crashUserName':['iexact'], 
+        #     'buildType':{},
+        #     'productTargetVersion':['exact', 'lt', 'gt'],
+        # }
 
     def __init__(self, *args, **kwargs):
         super(CrashDumpFilter, self).__init__(*args, **kwargs)
@@ -191,7 +210,7 @@ class CrashDumpFilter(django_filters.FilterSet):
         self.filters['state'].field.label_from_instance = lambda obj: obj.name
 
 
-class CrashDumpListView(SingleTableMixin, FilterView):
+class CrashDumpListView(ExportMixin, SingleTableMixin, FilterView):
     model = CrashDumpModel
     table_class = CrashDumpModelTable
     template_name = 'list.html'

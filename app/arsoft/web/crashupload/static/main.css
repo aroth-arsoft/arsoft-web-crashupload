@@ -2,6 +2,64 @@ body {
     background-color:#FEFEF2;
     font-family:helvetica, arial, verdana, sans-serif;
 }
+table.crashlist {
+    width:100%;
+}
+table.crashlist {
+    clear: both;
+    background: #ffd;
+    border: none;
+    border-top: 1px solid #dd9;
+    border-collapse: collapse;
+}
+table.crashlist tr {
+    font-size: 100%;
+    font-weight: normal;
+    border: 1px dotted #ddd;
+}
+table.crashlist tr.odd {
+    background: #ffb;
+    border-color: #eea;
+    color: #880;    
+}
+table.crashlist tr.even {
+    background: #ffd;
+    border-color: #dd8;
+    color: #880;
+}
+table.crashlist th {
+    background: #f7f7f0;
+}
+table.crashlist th a {
+    border-bottom: 1px;
+    color: #b00;    
+    font-size: 100%;
+    font-weight: bold;
+    text-decoration: none;
+}
+table.crashlist td a {
+    border-bottom: 1px;
+    color: #b00;    
+    font-size: 100%;
+    font-weight: normal;
+    text-decoration: none;
+    padding-left: 2px;
+}
+   
+table.crashlist td, table.report td {
+color: black;
+font-size: 80%;
+padding: .5em 1em 0 0;
+vertical-align: top;
+text-align: left;
+white-space: nowrap;
+}
+table.crashlist th {
+color: #663;
+font-weight: normal;
+white-space: nowrap;
+}
+
 /*
 th,td {
     padding-left: 3pt;
@@ -86,6 +144,29 @@ a.navbar-brand {
 a.nav-link {
     color: #d1d1f0;
 }
+.form-filter {
+    display: table;
+}
+.form-filter > div.col-12 {
+    background-color: #292961;
+    margin-bottom: 0px;
+    margin-top: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    display: table-cell;
+    width: auto;
+}
+.form-filter div .form-select.is-valid {
+    background-image: none;
+}
+.label-filter {
+    display: none;
+}
+.field-filter {
+    border-width: 0px;
+    padding: 0px;
+    display: inline-block;
+}
 .btn-filter {
     border-width: 0;
     padding-top: 0.5rem;
@@ -93,7 +174,7 @@ a.nav-link {
     padding-left: 0.75rem;
     padding-right: 0.75rem;    
     line-height: 1rem;
-    color: #303030;
+    color: green;
     fill: currentColor;
     box-shadow: inset 0 0 0 1px #bfbfbf;
     justify-content: center;
@@ -115,4 +196,7 @@ a.nav-link {
     align-items: center;
     font-size: 0.855rem;
     border-radius: 0.25rem;    
+}
+ul.pagination {
+    margin-top: 12px;
 }

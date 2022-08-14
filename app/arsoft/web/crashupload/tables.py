@@ -1,13 +1,21 @@
 import django_tables2 as tables
 
-from django_tables2_column_shifter.tables import ColumnShiftTableBootstrap4 as ColumnShiftTable
+#from django_tables2_column_shifter.tables import ColumnShiftTableBootstrap4 as ColumnShiftTable
+from django_tables2_column_shifter.tables import ColumnShiftTableBootstrap5 as ColumnShiftTable
+
 from .models import CrashDumpModel, CrashDumpState
 from django.conf import settings
+from packaging import version
+
+class VersionNumberColumn(tables.Column):
+    def render(self, record):
+        return str(record)
 
 class CrashDumpModelTable(ColumnShiftTable):
     class Meta:
         model = CrashDumpModel
-        template_name = "django_tables2/bootstrap.html"
+        template_name = "django_tables2/bootstrap4.html"
+        export_formats = ['csv', 'xlsx']
         fields = ('id', 
                     "state", "crashtimestamp", 'reporttimestamp',
                      "applicationName", 'applicationFile', 
@@ -15,7 +23,7 @@ class CrashDumpModelTable(ColumnShiftTable):
                      'reportHostName', 'reportUserName',
                      'productTargetVersion', 'productVersion', 
                      'machine_os', 'buildType')
-        attrs = {"class": "properties table-sortable"}        
+        attrs = {"class": "crashlist table-sortable"}        
         hide_fields_by_default = [
             'reporttimestamp',
             'reportHostName', 'reportUserName',
@@ -24,9 +32,15 @@ class CrashDumpModelTable(ColumnShiftTable):
         ]
 
     id = tables.LinkColumn("crash_details", kwargs={"pk": tables.A("id")})
-    machine_os = tables.Column(accessor='machineType')   
+    machine_os = tables.Column(accessor='machineType', verbose_name='Machine')   
     crashtimestamp = tables.DateTimeColumn(format = settings.SHORT_DATETIME_FORMAT)
     reporttimestamp = tables.DateTimeColumn(format = settings.SHORT_DATETIME_FORMAT)
+
+    productTargetVersion = tables.Column(accessor='productTargetVersion', verbose_name='Version')   
+
+    #productVersionNum = VersionNumberColumn(accessor='productVersion')   
+    #productTargetVersionNum = VersionNumberColumn(accessor='productTargetVersion')   
+
 
     def get_column_default_show(self):
         self.column_default_show = []
@@ -49,3 +63,10 @@ class CrashDumpModelTable(ColumnShiftTable):
 
     def render_buildType(self, value, record):
         return record.buildType
+
+    def render_productVersion(self, value, record):
+        return version.Version(record.productVersion)
+
+    def render_productTargetVersion(self, value, record):
+        return version.Version(record.productTargetVersion)
+

@@ -1479,10 +1479,10 @@ if __name__ == '__main__':
         #print(m)
     #for m in xmlreport.memory_regions:
         #print(m)
-    for m in xmlreport.stackdumps:
-        print('thread %u %s exception (simple %s)' % (m.threadid, 'with' if m.exception else 'without', 'yes' if m.simplified else 'no'))
-        for f in m.callstack:
-            print(f)
+    #for m in xmlreport.stackdumps:
+        #print('thread %u %s exception (simple %s)' % (m.threadid, 'with' if m.exception else 'without', 'yes' if m.simplified else 'no'))
+        #for f in m.callstack:
+            #print(f)
 
     #dump = xmlreport.stackdumps['exception']
     #for f in dump.callstack:
@@ -1527,7 +1527,7 @@ if __name__ == '__main__':
     #dump_report(xmlreport, 'crash_info')
     #dump_report(xmlreport, 'system_info')
     #dump_report(xmlreport, 'file_info')
-    #dump_report(xmlreport, 'fast_protect_version_info')
+    dump_report(xmlreport, 'fast_protect_version_info')
     #dump_report(xmlreport, 'fast_protect_system_info')
     #print('machine_type=%s' % xmlreport.fast_protect_system_info.machine_type)
     #dump_report(xmlreport, 'simplified_info')
