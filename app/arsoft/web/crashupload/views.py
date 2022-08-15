@@ -13,6 +13,7 @@ from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.views.generic.detail import DetailView
 from django.views.generic.base import RedirectView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
 from django_tables2.views import SingleTableView, SingleTableMixin
 from django_tables2.export.views import ExportMixin
@@ -210,7 +211,7 @@ class CrashDumpFilter(django_filters.FilterSet):
         self.filters['state'].field.label_from_instance = lambda obj: obj.name
 
 
-class CrashDumpListView(ExportMixin, SingleTableMixin, FilterView):
+class CrashDumpListView(LoginRequiredMixin, ExportMixin, SingleTableMixin, FilterView):
     model = CrashDumpModel
     table_class = CrashDumpModelTable
     template_name = 'list.html'

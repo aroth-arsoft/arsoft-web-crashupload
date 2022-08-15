@@ -11,3 +11,4 @@ requests==2.27.1
 packaging==21.3
 tablib==3.2.1
 pytz==2022.2.1
+mozilla-django-oidc==2.0.0

@@ -1,9 +1,11 @@
 from django.conf.urls import include
-from django.urls import re_path
+from django.urls import re_path, path
 from django.conf import settings
 from django.contrib import admin
 from arsoft.web.utils import django_debug_urls, django_debug_404
 from django.conf.urls import handler404, handler500, handler403, handler400
+from django.contrib.auth import views as auth_views
+
 
 from .views import CrashDumpListView, CrashDumpDetails, CrashDumpDetailsFromCrashId, \
     CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, crashdump_new_link, \
@@ -47,6 +49,8 @@ urlpatterns = [
     # Uncomment the next line to enable the admin:
     re_path(r'^debug/', django_debug_urls()),
     re_path(r'^admin/', admin.site.urls),
+    path('accounts/login/', auth_views.LoginView.as_view(template_name='login.html')),
+    path('oidc/', include('mozilla_django_oidc.urls')),
 ]
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns

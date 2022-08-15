@@ -12,6 +12,8 @@ initialize_settings(__name__, __file__)
 
 SITE_ID = 1
 
+INSTALLED_APPS.insert(1, 'mozilla_django_oidc')  # Load after auth     
+
 INSTALLED_APPS.extend(
     ['django.contrib.admin',
      'django_tables2',
@@ -20,8 +22,19 @@ INSTALLED_APPS.extend(
      "django_bootstrap5",
      ])
 
+AUTHENTICATION_BACKENDS.append('mozilla_django_oidc.auth.OIDCAuthenticationBackend')
+
 MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 MIDDLEWARE.append('django.contrib.messages.middleware.MessageMiddleware')
+MIDDLEWARE.append('mozilla_django_oidc.middleware.SessionRefresh')
+
+in_docker = os.path.isfile('/.dockerenv')
+
+LOGGING['loggers']['mozilla_django_oidc'] = {
+    'handlers': ['console'] if in_docker else ['logfile'],
+    #'level': 'ERROR' if not DEBUG else 'DEBUG',
+    'level': 'DEBUG',
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -78,3 +91,16 @@ MIGRATE_DB_PORT = int(os.getenv('MIGRATE_DB_PORT', 3306))
 MIGRATE_DB_DATABASE = os.getenv('MIGRATE_DB_DATABASE', 'trac')
 MIGRATE_DB_USER = os.getenv('MIGRATE_DB_USER', 'root')
 MIGRATE_DB_PASSWORD = os.getenv('MIGRATE_DB_PASSWORD', 'pass')
+
+OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
+OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
+
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', '')
+OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', '')
+OIDC_OP_USER_ENDPOINT = os.getenv('OIDC_OP_USER_ENDPOINT', '')
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/denied'
+
+print(INSTALLED_APPS)
+print(MIDDLEWARE)
