@@ -5,7 +5,8 @@ ARG RELEASE=3-alpine
 #
 # RUN pip wheel lxml --wheel-dir /src
 #FROM python:$RELEASE
-FROM logiqx/python-lxml:3.9-alpine3.13 AS builder
+#FROM logiqx/python-lxml:3.9-alpine3.13 AS builder
+FROM logiqx/python-lxml:3.10-alpine3.15 AS builder
 
 ENV container=docker LANG=C.UTF-8
 
@@ -14,7 +15,8 @@ RUN apk add --no-cache mariadb-dev build-base
 RUN pip wheel -w /wheels 'mysqlclient>=2.1.0'
 
 
-FROM logiqx/python-lxml:3.9-alpine3.13
+#FROM logiqx/python-lxml:3.9-alpine3.13
+FROM logiqx/python-lxml:3.10-alpine3.15
 
 ENV container=docker LANG=C.UTF-8
 
