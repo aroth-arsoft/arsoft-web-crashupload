@@ -11,7 +11,7 @@
     <input type="submit" value="logout">
   </form>
 {% else %}
-  <a href="{% url 'oidc_authentication_init' %}">Login</a>
+  <a href="{% url 'oidc_authentication_init' %}">Login with OAuth</a>
 {% endif %}
 
 {% endblock %}

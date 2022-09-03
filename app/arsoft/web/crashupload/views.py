@@ -251,7 +251,7 @@ class CrashDumpListView(LoginRequiredMixin, ExportMixin, SingleTableMixin, Filte
     #     else:
     #         return super(CrashDumpListView, self).get_queryset()
 
-class CrashDumpDetails(DetailView):
+class CrashDumpDetails(LoginRequiredMixin, DetailView):
     model = CrashDumpModel
     template_name = 'report.html'
 
@@ -393,7 +393,7 @@ class CrashDumpDetailsFromCrashId(RedirectView):
         obj = get_object_or_404(CrashDumpModel, crashid=kwargs['crashid'])
         return reverse('crash_details', args=[obj.id] )
 
-class CrashDumpDetailsSub(DetailView):
+class CrashDumpDetailsSub(LoginRequiredMixin, DetailView):
     model = CrashDumpModel
     template_name = None
 
@@ -432,7 +432,7 @@ class CrashDumpDetailsSub(DetailView):
 
         return context
 
-class CrashDumpSysInfo(DetailView):
+class CrashDumpSysInfo(LoginRequiredMixin, DetailView):
     model = CrashDumpModel
     template_name = 'sysinfo_report.html'
 
@@ -463,7 +463,7 @@ class CrashDumpSysInfo(DetailView):
         context['dbtime'] = end - start
         return context
 
-class CrashDumpReport(DetailView):
+class CrashDumpReport(LoginRequiredMixin, DetailView):
     model = CrashDumpModel
     template_name = 'crashdumpmodel_report.html'
 

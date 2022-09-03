@@ -95,12 +95,22 @@ MIGRATE_DB_PASSWORD = os.getenv('MIGRATE_DB_PASSWORD', 'pass')
 OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
 
-OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', '')
-OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', '')
-OIDC_OP_USER_ENDPOINT = os.getenv('OIDC_OP_USER_ENDPOINT', '')
+
+OIDC_BASE_URL = os.getenv('OIDC_BASE_URL', '')
+
+# Check https://myurl/gitlab/.well-known/openid-configuration for endpoint URLs
+
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', OIDC_BASE_URL + '/oauth/authorize')
+OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', OIDC_BASE_URL + '/oauth/token')
+OIDC_OP_USER_ENDPOINT = os.getenv('OIDC_OP_USER_ENDPOINT', OIDC_BASE_URL + '/oauth/userinfo')
+OIDC_OP_JWKS_ENDPOINT = os.getenv('OIDC_OP_JWKS_ENDPOINT', OIDC_BASE_URL + '/oauth/discovery/keys')
+
+# GitLab uses RS256, default is HS256
+OIDC_RP_SIGN_ALGO = os.getenv('OIDC_RP_SIGN_ALGO', 'RS256')
+OIDC_RP_SCOPES = os.getenv('OIDC_RP_SCOPES', 'openid email')
+
+OIDC_CREATE_USER = bool(os.getenv('OIDC_CREATE_USER', 'True'))
+OIDC_USERNAME_ALGO = 'arsoft.web.crashupload.oidc_generate_username'
 
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/denied'
-
-print(INSTALLED_APPS)
-print(MIDDLEWARE)
+LOGOUT_REDIRECT_URL = '/'
