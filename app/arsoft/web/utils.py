@@ -358,6 +358,11 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
                     'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
                     'propagate': True,
                 },
+                'mozilla_django_oidc': {
+                    'handlers': ['console'] if in_docker else ['logfile'],
+                    'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
+                    'propagate': True,
+                },
                 appname: {
                     'handlers': ['console'] if in_docker else ['console', 'logfile'],
                     'level': 'ERROR' if not settings_obj.DEBUG else 'DEBUG',
