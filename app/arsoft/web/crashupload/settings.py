@@ -112,5 +112,7 @@ OIDC_RP_SCOPES = os.getenv('OIDC_RP_SCOPES', 'openid email')
 OIDC_CREATE_USER = bool(os.getenv('OIDC_CREATE_USER', 'True'))
 OIDC_USERNAME_ALGO = 'arsoft.web.crashupload.oidc_generate_username'
 
+OIDC_AUTHENTICATION_CALLBACK_URL = os.getenv('OIDC_AUTHENTICATION_CALLBACK_URL', 'oidc_authentication_callback')
+
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'

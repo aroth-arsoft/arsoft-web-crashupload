@@ -6,6 +6,7 @@ import types
 import re
 import os.path
 import collections
+from django import template
 
 def _get_system_language_code():
     # Language code for this installation. All choices can be found here:
@@ -68,7 +69,7 @@ def cleanse_setting(key, value):
         # If the key isn't regex-able, just return as-is.
         cleansed = value
 
-    if isinstance(cleansed, collections.Callable):
+    if callable(cleansed):
         # For fixing #21345 and #23070
         cleansed = CallableSettingWrapper(cleansed)
     return cleansed
@@ -621,7 +622,7 @@ def django_urls_view(request):
         'urlconf': urlconf,
         'root_urlconf': settings.ROOT_URLCONF,
         'request_path': request.path_info,
-        'urlpatterns': _flatten_url_list(resolver),
+        'urlpatterns': resolver,
         'urlnames': _sort_dict_by_key(_flatten_url_dict(resolver)),
         'reason': 'N/A',
         'request': request,
@@ -722,20 +723,7 @@ def django_debug_urls(options={}):
         ]
     return urlpatterns, 'debug', name
 
-DEBUG_INFO_VIEW_TEMPLATE = """
-{% load base_url %}
-{% load static_url %}
-{% load media_url %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <title>Request information</title>
-  <meta name="robots" content="NONE,NOARCHIVE">
-  <style type="text/css">
-    html * { padding:0; margin:0; }
-    body * { padding:10px 20px; }
-    body * * { padding:0; }
+DEBUG_CSS = """
     body { font:small sans-serif; background:#eee; }
     body>div { border-bottom:1px solid #ddd; }
     h1 { font-weight:normal; margin-bottom:.4em; }
@@ -751,12 +739,27 @@ DEBUG_INFO_VIEW_TEMPLATE = """
     th { width:12em; text-align:right; color:#666; padding-right:.5em; }
     th.settings { text-align:left; }
     th.req { text-align:left; }
+    td pre { margin:0; }
     div { padding-bottom: 10px; }
     #info { background:#f6f6f6; }
     #info ol { margin: 0.5em 4em; }
     #info ol li { font-family: monospace; }
     #summary { background: #ffc; }
     #explanation { background:#eee; border-bottom: 0px none; }
+"""
+
+DEBUG_INFO_VIEW_TEMPLATE = """
+{% load base_url %}
+{% load static_url %}
+{% load media_url %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Request information</title>
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <style type="text/css">
+  """ + DEBUG_CSS + """
   </style>
 </head>
 <body>
@@ -805,7 +808,11 @@ DEBUG_INFO_VIEW_TEMPLATE = """
     </tr>
     <tr>
       <th>Python Path:</th>
-      <td><pre>{{ sys_path|pprint }}</pre></td>
+      <td><ul>
+          {% for item in sys_path %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+      </ul></td>
     </tr>
     <tr>
       <th>Server time:</th>
@@ -842,16 +849,6 @@ DEBUG_INFO_VIEW_TEMPLATE = """
     </table>
   </div>
 
-  <div id="info">
-      <ol>
-        {% for pattern in urlpatterns %}
-          <li>
-            <a href="{% url pattern.name %}">{{ pattern.name }}</a> ({{ pattern.regex.pattern }})
-          </li>
-        {% endfor %}
-      </ol>
-  </div>
-
   <div id="explanation">
     <p>
       This page contains information to investigate issues with this web application.
@@ -872,30 +869,7 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
   <title>Request information</title>
   <meta name="robots" content="NONE,NOARCHIVE">
   <style type="text/css">
-    html * { padding:0; margin:0; }
-    body * { padding:10px 20px; }
-    body * * { padding:0; }
-    body { font:small sans-serif; background:#eee; }
-    body>div { border-bottom:1px solid #ddd; }
-    h1 { font-weight:normal; margin-bottom:.4em; }
-    h1 span { font-size:60%; color:#666; font-weight:normal; }
-    h2 { margin-bottom:.8em; }
-    h2 span { font-size:80%; color:#666; font-weight:normal; }
-    h3 { margin:1em 0 .5em 0; }
-    h4 { margin:0 0 .5em 0; font-weight: normal; }
-    table { border:none; border-collapse: collapse; width:100%; }
-    tr.settings { border-bottom: 1px solid #ccc; }
-    tr.req { border-bottom: 1px solid #ccc; }
-    td, th { vertical-align:top; padding:2px 3px; }
-    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
-    th.settings { text-align:left; }
-    th.req { text-align:left; }
-    div { padding-bottom: 10px; }
-    #info { background:#f6f6f6; }
-    #info ol { margin: 0.5em 4em; }
-    #info ol li { font-family: monospace; }
-    #summary { background: #ffc; }
-    #explanation { background:#eee; border-bottom: 0px none; }
+  """ + DEBUG_CSS + """
   </style>
 </head>
 <body>
@@ -944,7 +918,11 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
     </tr>
     <tr>
       <th>Python Path:</th>
-      <td><pre>{{ sys_path|pprint }}</pre></td>
+      <td><ul>
+          {% for item in sys_path %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+      </ul></td>
     </tr>
     <tr>
       <th>Server time:</th>
@@ -1146,30 +1124,7 @@ DEBUG_REQUEST_404_TEMPLATE = """
   <title>Not Found - 404</title>
   <meta name="robots" content="NONE,NOARCHIVE">
   <style type="text/css">
-    html * { padding:0; margin:0; }
-    body * { padding:10px 20px; }
-    body * * { padding:0; }
-    body { font:small sans-serif; background:#eee; }
-    body>div { border-bottom:1px solid #ddd; }
-    h1 { font-weight:normal; margin-bottom:.4em; }
-    h1 span { font-size:60%; color:#666; font-weight:normal; }
-    h2 { margin-bottom:.8em; }
-    h2 span { font-size:80%; color:#666; font-weight:normal; }
-    h3 { margin:1em 0 .5em 0; }
-    h4 { margin:0 0 .5em 0; font-weight: normal; }
-    table { border:none; border-collapse: collapse; width:100%; }
-    tr.settings { border-bottom: 1px solid #ccc; }
-    tr.req { border-bottom: 1px solid #ccc; }
-    td, th { vertical-align:top; padding:2px 3px; }
-    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
-    th.settings { text-align:left; }
-    th.req { text-align:left; }
-    div { padding-bottom: 10px; }
-    #info { background:#f6f6f6; }
-    #info ol { margin: 0.5em 4em; }
-    #info ol li { font-family: monospace; }
-    #summary { background: #ffc; }
-    #explanation { background:#eee; border-bottom: 0px none; }
+  """ + DEBUG_CSS + """
   </style>
 </head>
 <body>
@@ -1218,7 +1173,11 @@ DEBUG_REQUEST_404_TEMPLATE = """
     </tr>
     <tr>
       <th>Python Path:</th>
-      <td><pre>{{ sys_path|pprint }}</pre></td>
+      <td><ul>
+          {% for item in sys_path %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+      </ul></td>
     </tr>
     <tr>
       <th>Server time:</th>
@@ -1420,22 +1379,7 @@ DEBUG_ENV_VIEW_TEMPLATE = """
   <title>Environment info</title>
   <meta name="robots" content="NONE,NOARCHIVE">
   <style type="text/css">
-    html * { padding:0; margin:0; }
-    body * { padding:10px 20px; }
-    body * * { padding:0; }
-    body { font:small sans-serif; background:#eee; }
-    body>div { border-bottom:1px solid #ddd; }
-    h1 { font-weight:normal; margin-bottom:.4em; }
-    h1 span { font-size:60%; color:#666; font-weight:normal; }
-    table { border:none; border-collapse: collapse; width:100%; }
-    td, th { vertical-align:top; padding:2px 3px; }
-    tr.env { border-bottom: 1px solid #ccc; }
-    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
-    #info { background:#f6f6f6; }
-    #info ol { margin: 0.5em 4em; }
-    #info ol li { font-family: monospace; }
-    #summary { background: #ffc; }
-    #explanation { background:#eee; border-bottom: 0px none; }
+  """ + DEBUG_CSS + """
   </style>
 </head>
 <body>
@@ -1484,7 +1428,11 @@ DEBUG_ENV_VIEW_TEMPLATE = """
     </tr>
     <tr>
       <th>Python Path:</th>
-      <td><pre>{{ sys_path|pprint }}</pre></td>
+      <td><ul>
+          {% for item in sys_path %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+      </ul></td>
     </tr>
     <tr>
       <th>Server time:</th>
@@ -1546,23 +1494,7 @@ DEBUG_SETTINGS_VIEW_TEMPLATE = """
   <title>Settings</title>
   <meta name="robots" content="NONE,NOARCHIVE">
   <style type="text/css">
-    html * { padding:0; margin:0; }
-    body * { padding:10px 20px; }
-    body * * { padding:0; }
-    body { font:small sans-serif; background:#eee; }
-    body>div { border-bottom:1px solid #ddd; }
-    h1 { font-weight:normal; margin-bottom:.4em; }
-    h1 span { font-size:60%; color:#666; font-weight:normal; }
-    table { border:none; border-collapse: collapse; width:100%; }
-    tr.settings { border-bottom: 1px solid #ccc; }
-    td, th { vertical-align:top; padding:2px 3px; }
-    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
-    th.settings { text-align:left; }
-    #info { background:#f6f6f6; }
-    #info ol { margin: 0.5em 4em; }
-    #info ol li { font-family: monospace; }
-    #summary { background: #ffc; }
-    #explanation { background:#eee; border-bottom: 0px none; }
+  """ + DEBUG_CSS + """
   </style>
 </head>
 <body>
@@ -1611,7 +1543,11 @@ DEBUG_SETTINGS_VIEW_TEMPLATE = """
     </tr>
     <tr>
       <th>Python Path:</th>
-      <td><pre>{{ sys_path|pprint }}</pre></td>
+      <td><ul>
+          {% for item in sys_path %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+      </ul></td>
     </tr>
     <tr>
       <th>Server time:</th>
@@ -1721,6 +1657,7 @@ DEBUG_URLS_VIEW_TEMPLATE = """
 {% load base_url %}
 {% load static_url %}
 {% load media_url %}
+{% load show_url_list %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1728,21 +1665,7 @@ DEBUG_URLS_VIEW_TEMPLATE = """
   <title>URL handler info</title>
   <meta name="robots" content="NONE,NOARCHIVE">
   <style type="text/css">
-    html * { padding:0; margin:0; }
-    body * { padding:10px 20px; }
-    body * * { padding:0; }
-    body { font:small sans-serif; background:#eee; }
-    body>div { border-bottom:1px solid #ddd; }
-    h1 { font-weight:normal; margin-bottom:.4em; }
-    h1 span { font-size:60%; color:#666; font-weight:normal; }
-    table { border:none; border-collapse: collapse; width:100%; }
-    td, th { vertical-align:top; padding:2px 3px; }
-    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
-    #info { background:#f6f6f6; }
-    #info ol { margin: 0.5em 4em; }
-    #info ol li { font-family: monospace; }
-    #summary { background: #ffc; }
-    #explanation { background:#eee; border-bottom: 0px none; }
+  """ + DEBUG_CSS + """
   </style>
 </head>
 <body>
@@ -1795,7 +1718,11 @@ DEBUG_URLS_VIEW_TEMPLATE = """
     </tr>
     <tr>
       <th>Python Path:</th>
-      <td><pre>{{ sys_path|pprint }}</pre></td>
+      <td><ul>
+          {% for item in sys_path %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+      </ul></td>
     </tr>
     <tr>
       <th>Server time:</th>
@@ -1827,18 +1754,7 @@ DEBUG_URLS_VIEW_TEMPLATE = """
     <p>
     Available URL patterns:
     </p>
-    <ul>
-    {% for pattern in urlpatterns %}
-        <li style="margin-left:{% widthratio pattern.level 1 16 %}px;">
-        {{ pattern.full_url}}
-        {% if pattern.full_name.strip %}&nbsp;[{% url pattern.name as the_url %}{% if the_url %}<a href="{{the_url}}">{% endif %}name='{{pattern.name}}'{% if the_url %}</a>{% endif %}]
-        {% endif %}
-        {% if pattern.namespace %}&nbsp;[namespace='{{pattern.namespace}}']{% endif %}
-        {% if pattern.name.default_args %}&nbsp;[args='{{pattern.default_args|join:", "}}']{% endif %}
-        &nbsp;({{pattern.url|type}})
-        </li>
-    {% endfor %}
-    </ul>
+    {% show_url_list urlpatterns %}
     <p>
     Available URL names:
     </p>
@@ -1846,9 +1762,7 @@ DEBUG_URLS_VIEW_TEMPLATE = """
     {% for full_qualified_name, pattern in urlnames %}
         <li>
         {{full_qualified_name}}
-        {% if pattern.reverse_url %}&nbsp;<a href="{{ pattern.reverse_url }}">{{ pattern.reverse_url }}</a>{% endif %}
-        {% if pattern.name.default_args %}&nbsp;[args='{{pattern.default_args|join:", "}}']{% endif %}
-        &nbsp;({{pattern.url|type}})
+        {% show_url_list pattern %}
         </li>
     {% endfor %}
     </ul>
