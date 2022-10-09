@@ -599,6 +599,10 @@ def os_version_info(platform_type, os_version_number, os_build_number):
                 ret['short'] = 'Win10/21H2'
                 productName = "Windows 10 Version 21H2"
                 marketingName = '21H2'
+            elif (build <= 19045):
+                ret['short'] = 'Win10/22H2'
+                productName = "Windows 10 Version 22H2"
+                marketingName = '22H2'
             else:
                 ret['short'] = 'Win10/TBA'
                 productName = 'Windows 10 Build %i' % build
@@ -606,9 +610,13 @@ def os_version_info(platform_type, os_version_number, os_build_number):
             ret['href'] = 'https://en.wikipedia.org/wiki/Windows_11'
             # See https://en.wikipedia.org/wiki/Windows_11_version_history
             if (build <= 22000):
-                ret['short'] = 'Win11/21H1'
-                productName = "Windows 11 Version 21H1"
-                marketingName = '21H1'
+                ret['short'] = 'Win11/21H2'
+                productName = "Windows 11 Version 21H2"
+                marketingName = '21H2'
+            elif (build <= 22621):
+                ret['short'] = 'Win11/22H2'
+                productName = "Windows 11 Version 22H2"
+                marketingName = '21H2'
             else:
                 ret['short'] = 'Win11/TBA'
                 productName = 'Windows 11 Build %i' % build

@@ -75,6 +75,9 @@
                 "runserver"
             ],
             "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "BASE_PATH": "/crashupload"
+            },
             "justMyCode": false,
             "django": true
         }

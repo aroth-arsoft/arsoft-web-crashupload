@@ -50,6 +50,7 @@ urlpatterns = [
     re_path(r'^debug/', django_debug_urls()),
     re_path(r'^admin/', admin.site.urls),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='login.html')),
+    path('accounts/logout/', auth_views.LogoutView.as_view()),
     path('oidc/', include('mozilla_django_oidc.urls')),
 ]
 
