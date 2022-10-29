@@ -10,7 +10,7 @@ from django.contrib.auth import views as auth_views
 from .views import CrashDumpListView, CrashDumpDetails, CrashDumpDetailsFromCrashId, \
     CrashDumpDetailsSub, CrashDumpSysInfo, CrashDumpReport, crashdump_new_link, \
         submit, submit_capabilities, submit_crashlist, \
-            crashdump_version
+            crashdump_version, nav_items_context
 from .migrate import migrate
 
 # Uncomment the next two lines to enable the admin:
@@ -49,8 +49,8 @@ urlpatterns = [
     # Uncomment the next line to enable the admin:
     re_path(r'^debug/', django_debug_urls()),
     re_path(r'^admin/', admin.site.urls),
-    path('accounts/login/', auth_views.LoginView.as_view(template_name='login.html')),
-    path('accounts/logout/', auth_views.LogoutView.as_view()),
+    path('accounts/login/', auth_views.LoginView.as_view(template_name='login.html', extra_context=nav_items_context()) ),
+    path('accounts/logout/', auth_views.LogoutView.as_view(extra_context=nav_items_context()) ),
     path('oidc/', include('mozilla_django_oidc.urls')),
 ]
 

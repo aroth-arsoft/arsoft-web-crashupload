@@ -50,6 +50,18 @@ def safe_get_as_int (l, default=None):
     except ValueError:
         return default
 
+def nav_items_context():
+    context = {}
+    nav_items = []
+    try:
+        nav_items = django_settings.NAV_ITEMS
+        if not isinstance(nav_items, list):
+            nav_items = []
+    except KeyError:
+        pass
+    context['nav_items'] = nav_items
+    return context
+
 def add_utils_to_context(context, crash=None):
 
     if not 'error' in context:
