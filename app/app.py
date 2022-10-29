@@ -48,7 +48,11 @@ def gunicorn_dispatch_request(environ, start_response):
     #   proxy_set_header BASE_PATH "<%= @uri %>";
     #   proxy_set_header FORCE_SCRIPT_NAME "<%= @uri %>";
     #   proxy_set_header SCRIPT_URL $request_uri;
-    from arsoft.web.crashupload.wsgi import application as wsgi_application
+    from arsoft.web.crashupload.wsgi import application as wsgi_application, django_settings
+    from whitenoise import WhiteNoise
+    wsgi_application = WhiteNoise(wsgi_application, root=django_settings.STATIC_ROOT, prefix='static')
+    for d in django_settings.STATICFILES_DIRS:
+        wsgi_application.add_files(d, prefix='static')    
     return wsgi_application(environ, start_response)
 
 application = gunicorn_dispatch_request

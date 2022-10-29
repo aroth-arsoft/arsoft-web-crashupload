@@ -12,7 +12,10 @@ initialize_settings(__name__, __file__)
 
 SITE_ID = 1
 
-INSTALLED_APPS.insert(1, 'mozilla_django_oidc')  # Load after auth     
+OIDC_BASE_URL = os.getenv('OIDC_BASE_URL', '')
+
+if OIDC_BASE_URL:
+    INSTALLED_APPS.insert(1, 'mozilla_django_oidc')  # Load after auth     
 
 INSTALLED_APPS.extend(
     ['django.contrib.admin',
@@ -22,11 +25,15 @@ INSTALLED_APPS.extend(
      "django_bootstrap5",
      ])
 
-AUTHENTICATION_BACKENDS.append('mozilla_django_oidc.auth.OIDCAuthenticationBackend')
-
 MIDDLEWARE.append('django.contrib.auth.middleware.AuthenticationMiddleware')
 MIDDLEWARE.append('django.contrib.messages.middleware.MessageMiddleware')
-MIDDLEWARE.append('mozilla_django_oidc.middleware.SessionRefresh')
+if OIDC_BASE_URL:
+    MIDDLEWARE.append('mozilla_django_oidc.middleware.SessionRefresh')
+    AUTHENTICATION_BACKENDS.append('mozilla_django_oidc.auth.OIDCAuthenticationBackend')
+
+# setup whitenoise
+MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
+#STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 in_docker = os.path.isfile('/.dockerenv')
 
@@ -85,9 +92,17 @@ NAV_ITEMS_JSON = os.getenv('NAV_ITEMS', '')
 SHORT_DATETIME_FORMAT = 'Y-m-d H:i'
 DATETIME_FORMAT = 'Y-m-d H:i'
 
+def safe_int(v, default_value=None):
+    if not v:
+        return default_value
+    try:
+        return int(v)
+    except ValueError:
+        return default_value
+
 MIGRATE_DB_DRIVER = os.getenv('MIGRATE_DB_DRIVER', 'MariaDB')
 MIGRATE_DB_HOST = os.getenv('MIGRATE_DB_HOST', '127.0.0.1')
-MIGRATE_DB_PORT = int(os.getenv('MIGRATE_DB_PORT', 3306))
+MIGRATE_DB_PORT = safe_int(os.getenv('MIGRATE_DB_PORT'), 3306)
 MIGRATE_DB_DATABASE = os.getenv('MIGRATE_DB_DATABASE', 'trac')
 MIGRATE_DB_USER = os.getenv('MIGRATE_DB_USER', 'root')
 MIGRATE_DB_PASSWORD = os.getenv('MIGRATE_DB_PASSWORD', 'pass')
@@ -95,24 +110,21 @@ MIGRATE_DB_PASSWORD = os.getenv('MIGRATE_DB_PASSWORD', 'pass')
 OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
 
-
-OIDC_BASE_URL = os.getenv('OIDC_BASE_URL', '')
-
 # Check https://myurl/gitlab/.well-known/openid-configuration for endpoint URLs
 
-OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', OIDC_BASE_URL + '/oauth/authorize')
-OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', OIDC_BASE_URL + '/oauth/token')
-OIDC_OP_USER_ENDPOINT = os.getenv('OIDC_OP_USER_ENDPOINT', OIDC_BASE_URL + '/oauth/userinfo')
-OIDC_OP_JWKS_ENDPOINT = os.getenv('OIDC_OP_JWKS_ENDPOINT', OIDC_BASE_URL + '/oauth/discovery/keys')
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', OIDC_BASE_URL + '/oauth/authorize').replace('//', '/')
+OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', OIDC_BASE_URL + '/oauth/token').replace('//', '/')
+OIDC_OP_USER_ENDPOINT = os.getenv('OIDC_OP_USER_ENDPOINT', OIDC_BASE_URL + '/oauth/userinfo').replace('//', '/')
+OIDC_OP_JWKS_ENDPOINT = os.getenv('OIDC_OP_JWKS_ENDPOINT', OIDC_BASE_URL + '/oauth/discovery/keys').replace('//', '/')
 
 # GitLab uses RS256, default is HS256
 OIDC_RP_SIGN_ALGO = os.getenv('OIDC_RP_SIGN_ALGO', 'RS256')
 OIDC_RP_SCOPES = os.getenv('OIDC_RP_SCOPES', 'openid email')
 
-OIDC_CREATE_USER = bool(os.getenv('OIDC_CREATE_USER', 'True'))
+OIDC_CREATE_USER = bool(os.getenv('OIDC_CREATE_USER', 'True') == 'True')
 OIDC_USERNAME_ALGO = 'arsoft.web.crashupload.oidc_generate_username'
 
 OIDC_AUTHENTICATION_CALLBACK_URL = os.getenv('OIDC_AUTHENTICATION_CALLBACK_URL', 'oidc_authentication_callback')
 
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = (BASE_PATH + '/').replace('//', '/')
+LOGOUT_REDIRECT_URL = LOGIN_REDIRECT_URL

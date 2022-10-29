@@ -90,6 +90,12 @@ def is_debug_info_disabled():
     else:
         return False
 
+class InvalidString(str):
+    def __mod__(self, other):
+        from django.template.base import TemplateSyntaxError
+        raise TemplateSyntaxError(
+            "Undefined variable or unknown value for: \"%s\"" % other)
+
 def initialize_settings(settings_module, setttings_file, options={}, use_local_tz=False):
     settings_obj = sys.modules[settings_module]
     settings_obj_type = type(settings_obj)
@@ -146,6 +152,8 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
 
     # If DISABLE_DEBUG_INFO_PAGE is set the 
     settings_obj.DISABLE_DEBUG_INFO_PAGE = False
+    settings_obj.TEMPLATE_STRING_IF_INVALID = InvalidString("%s")        
+
 
     settings_obj.ADMINS = _get_default_admin() 
     settings_obj.MANAGERS = settings_obj.ADMINS
@@ -182,12 +190,12 @@ def initialize_settings(settings_module, setttings_file, options={}, use_local_t
     if in_docker:
         settings_obj.STATIC_ROOT = '/app/static'
         settings_obj.STATICFILES_DIRS = []
-    elif in_devserver or in_gunicorn_debug:
+    elif in_devserver:
         settings_obj.STATIC_ROOT = os.path.join(appdir, 'static')
         settings_obj.STATICFILES_DIRS = []
     else:
-        settings_obj.STATIC_ROOT = ''
-        settings_obj.STATICFILES_DIRS = [ os.path.join(app_etc_dir, 'static') ]
+        settings_obj.STATIC_ROOT = os.path.join(appdir, 'static')
+        settings_obj.STATICFILES_DIRS = []
 
     # URL prefix for static files.
     # Example: "http://media.lawrence.com/static/"
@@ -703,6 +711,50 @@ def django_debug_404(request, *args, **kwargs):
         'environment': env,
         'request': request,
         'request_base_fields': request_base_fields,
+        'settings': get_safe_settings(),
+        'script_prefix': script_prefix,
+        'sys_executable': sys.executable,
+        'sys_version_info': '%d.%d.%d' % sys.version_info[0:3],
+        'server_time': datetime.datetime.now(),
+        'django_version_info': get_version(),
+        'sys_path': sys.path,
+    })
+    return HttpResponse(t.render(c), content_type='text/html')
+
+def django_debug_500(request, *args, **kwargs):
+    import datetime
+    from django.http import HttpResponse
+    from django.template import Template, Context
+    from django.urls import get_script_prefix
+    from django import get_version
+
+    disable = is_debug_info_disabled()
+    if disable:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden('Debug info pages disabled.', content_type='text/plain')
+
+    script_prefix = get_script_prefix()
+    (exc_type, exc_info, exc_traceback) = sys.exc_info()
+
+    import traceback
+    exc_info = traceback.format_exception(exc_info)
+
+    exc_info = ''.join(exc_info)
+
+    env = []
+    for key in sorted(os.environ.keys()):
+        env.append( (key, os.environ[key]) )
+    request_base_fields = []
+    for attr in ['scheme', 'method', 'path', 'path_info', 'user', 'session', 'urlconf', 'resolver_match', 'content_type', 'content_params']:
+        request_base_fields.append( (attr, getattr(request, attr) if hasattr(request, attr) else None) )
+    t = Template(DEBUG_REQUEST_500_TEMPLATE, name='Server Error template')
+    c = Context({
+        'request_path': request.path_info,
+        'environment': env,
+        'request': request,
+        'request_base_fields': request_base_fields,
+        'exc_info': exc_info,
+        'exc_traceback': exc_traceback,
         'settings': get_safe_settings(),
         'script_prefix': script_prefix,
         'sys_executable': sys.executable,
@@ -1343,6 +1395,281 @@ DEBUG_REQUEST_404_TEMPLATE = """
 {% else %}
   <p>Request data not supplied</p>
 {% endif %}
+
+  <div id="settings">
+  <h3 id="settings">Settings</h3>
+  <table class="settings">
+    <thead>
+      <tr>
+        <th class="settings">Setting</th>
+        <th class="settings">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for var in settings.items %}
+        <tr class="settings">
+          <td>{{ var.0 }}</td>
+          <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <div id="explanation">
+    <p>
+      This page contains information to investigate issues with this web application.
+    </p>
+  </div>
+</body>
+</html>
+"""
+
+DEBUG_REQUEST_500_TEMPLATE = """
+{% load base_url %}
+{% load static_url %}
+{% load media_url %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Server Error - 500</title>
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <style type="text/css">
+  """ + DEBUG_CSS + """
+  </style>
+</head>
+<body>
+  <div id="summary">
+    <h1>Server Error - 500</h1>
+    <table class="meta">
+      <tr>
+        <th>Request Method:</th>
+        <td>{{ request.META.REQUEST_METHOD }}</td>
+      </tr>
+      <tr>
+        <th>Request URL:</th>
+        <td>{{ request.build_absolute_uri|escape }}</td>
+      </tr>
+    <tr>
+      <th>Script prefix:</th>
+      <td><pre>{{ script_prefix|escape }}</pre></td>
+    </tr>
+    <tr>
+      <th>Base URL:</th>
+      <td><pre>{% base_url %}</pre></td>
+    </tr>
+    <tr>
+      <th>Static URL:</th>
+      <td><pre>{% static_url %}</pre></td>
+    </tr>
+    <tr>
+      <th>Media URL:</th>
+      <td><pre>{% media_url %}</pre></td>
+    </tr>
+      <tr>
+        <th>Django Version:</th>
+        <td>{{ django_version_info }}</td>
+      </tr>
+      <tr>
+        <th>Python Version:</th>
+        <td>{{ sys_version_info }}</td>
+      </tr>
+    <tr>
+      <th>Python Executable:</th>
+      <td>{{ sys_executable|escape }}</td>
+    </tr>
+    <tr>
+      <th>Python Version:</th>
+      <td>{{ sys_version_info }}</td>
+    </tr>
+    <tr>
+      <th>Python Path:</th>
+      <td><ul>
+          {% for item in sys_path %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+      </ul></td>
+    </tr>
+    <tr>
+      <th>Server time:</th>
+      <td>{{server_time|date:"r"}}</td>
+    </tr>
+      <tr>
+        <th>Installed Applications:</th>
+        <td><ul>
+          {% for item in settings.INSTALLED_APPS %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+        </ul></td>
+      </tr>
+      <tr>
+        <th>Installed Middleware:</th>
+        <td><ul>
+          {% for item in settings.MIDDLEWARE %}
+            <li><code>{{ item }}</code></li>
+          {% endfor %}
+        </ul></td>
+      </tr>
+      <tr>
+        <th>settings module:</th>
+        <td><code>{{ settings.SETTINGS_MODULE }}</code></td>
+      </tr>
+    </table>
+  </div>
+
+<div id="requestinfo">
+  <h2>Request information</h2>
+
+{% if request %}
+  <h3 id="basic-info">base</h3>
+    <table class="req">
+      <thead>
+        <tr class="req">
+          <th class="req">Variable</th>
+          <th class="req">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for var in request_base_fields %}
+          <tr class="req">
+            <td>{{ var.0 }}</td>
+            <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  
+
+
+  <h3 id="get-info">GET</h3>
+  {% if request.GET %}
+    <table class="req">
+      <thead>
+        <tr class="req">
+          <th class="req">Variable</th>
+          <th class="req">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for var in request.GET.items %}
+          <tr class="req">
+            <td>{{ var.0 }}</td>
+            <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No GET data</p>
+  {% endif %}
+
+  <h3 id="post-info">POST</h3>
+  {% if filtered_POST %}
+    <table class="req">
+      <thead>
+        <tr class="req">
+          <th class="req">Variable</th>
+          <th class="req">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for var in filtered_POST.items %}
+          <tr class="req">
+            <td>{{ var.0 }}</td>
+            <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No POST data</p>
+  {% endif %}
+  <h3 id="files-info">FILES</h3>
+  {% if request.FILES %}
+    <table class="req">
+        <thead>
+            <tr class="req">
+                <th class="req">Variable</th>
+                <th class="req">Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for var in request.FILES.items %}
+                <tr class="req">
+                    <td>{{ var.0 }}</td>
+                    <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+  {% else %}
+    <p>No FILES data</p>
+  {% endif %}
+
+
+  <h3 id="cookie-info">COOKIES</h3>
+  {% if request.COOKIES %}
+    <table class="req">
+      <thead>
+        <tr class="req">
+          <th class="req">Variable</th>
+          <th class="req">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for var in request.COOKIES.items %}
+          <tr class="req">
+            <td>{{ var.0 }}</td>
+            <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No cookie data</p>
+  {% endif %}
+
+  <h3 id="meta-info">META</h3>
+  <table class="req">
+    <thead>
+      <tr class="req">
+        <th class="req">Variable</th>
+        <th class="req">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for var in request.META.items|dictsort:"0" %}
+        <tr class="req">
+          <td>{{ var.0 }}</td>
+          <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>Request data not supplied</p>
+{% endif %}
+
+  <h3 id="exc-info">Exception</h3>
+  <pre>{{ exc_info }}</pre>
+  <pre>{{ exc_traceback.format }}</pre>
+  <table class="req">
+    <thead>
+      <tr class="req">
+        <th class="req">Variable</th>
+        <th class="req">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for var in exc_info.0.items|dictsort:"0" %}
+        <tr class="req">
+          <td>{{ var.0 }}</td>
+          <td class="code"><pre>{{ var.1|pprint }}</pre></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
   <div id="settings">
   <h3 id="settings">Settings</h3>

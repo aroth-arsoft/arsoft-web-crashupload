@@ -2,7 +2,7 @@ from django.conf.urls import include
 from django.urls import re_path, path
 from django.conf import settings
 from django.contrib import admin
-from arsoft.web.utils import django_debug_urls, django_debug_404
+from arsoft.web.utils import django_debug_urls, django_debug_404, django_debug_500
 from django.conf.urls import handler404, handler500, handler403, handler400
 from django.contrib.auth import views as auth_views
 
@@ -61,3 +61,4 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns += staticfiles_urlpatterns("/static")
 
 handler404 = django_debug_404
+handler500 = django_debug_500

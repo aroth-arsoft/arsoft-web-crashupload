@@ -67,6 +67,7 @@ $(document).ready(function() {
                 <li class="nav-item active">
                     <a class="nav-link" href="{% url "home" %}">Home</a>
                 </li>
+                {% if nav_items|length %}
                 {% for nav_item in nav_items %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ nav_item.url }}">
@@ -77,6 +78,7 @@ $(document).ready(function() {
                     </a>
                 </li>
                 {% endfor %}
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url "admin:index" %}">Admin</a>
                 </li>

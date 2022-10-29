@@ -54,7 +54,14 @@ def add_utils_to_context(context, crash=None):
 
     if not 'error' in context:
         context['error'] = None
-    context['nav_items'] = django_settings.NAV_ITEMS
+    nav_items = []
+    try:
+        nav_items = django_settings.NAV_ITEMS
+        if not isinstance(nav_items, list):
+            nav_items = []
+    except KeyError:
+        pass
+    context['nav_items'] = nav_items
     context['hex_format'] = hex_format
     context['exception_code'] = exception_code
     context['format_bool_yesno'] = format_bool_yesno
