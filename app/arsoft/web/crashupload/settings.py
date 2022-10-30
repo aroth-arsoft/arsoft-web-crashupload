@@ -112,10 +112,10 @@ OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
 
 # Check https://myurl/gitlab/.well-known/openid-configuration for endpoint URLs
 
-OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', OIDC_BASE_URL + '/oauth/authorize').replace('//', '/')
-OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', OIDC_BASE_URL + '/oauth/token').replace('//', '/')
-OIDC_OP_USER_ENDPOINT = os.getenv('OIDC_OP_USER_ENDPOINT', OIDC_BASE_URL + '/oauth/userinfo').replace('//', '/')
-OIDC_OP_JWKS_ENDPOINT = os.getenv('OIDC_OP_JWKS_ENDPOINT', OIDC_BASE_URL + '/oauth/discovery/keys').replace('//', '/')
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', OIDC_BASE_URL + '/oauth/authorize')
+OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', OIDC_BASE_URL + '/oauth/token')
+OIDC_OP_USER_ENDPOINT = os.getenv('OIDC_OP_USER_ENDPOINT', OIDC_BASE_URL + '/oauth/userinfo')
+OIDC_OP_JWKS_ENDPOINT = os.getenv('OIDC_OP_JWKS_ENDPOINT', OIDC_BASE_URL + '/oauth/discovery/keys')
 
 # GitLab uses RS256, default is HS256
 OIDC_RP_SIGN_ALGO = os.getenv('OIDC_RP_SIGN_ALGO', 'RS256')
@@ -127,4 +127,5 @@ OIDC_USERNAME_ALGO = 'arsoft.web.crashupload.oidc_generate_username'
 OIDC_AUTHENTICATION_CALLBACK_URL = os.getenv('OIDC_AUTHENTICATION_CALLBACK_URL', 'oidc_authentication_callback')
 
 LOGIN_REDIRECT_URL = (BASE_PATH + '/').replace('//', '/')
+LOGIN_REDIRECT_URL_FAILURE = LOGIN_REDIRECT_URL
 LOGOUT_REDIRECT_URL = LOGIN_REDIRECT_URL
