@@ -81,6 +81,8 @@ if not CSRF_TRUSTED_ORIGINS:
 else:
     CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS.split(',')
 
+SECURE_SSL_REDIRECT = bool(os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True')
+
 # Application definition
 
 MEDIA_ROOT = APP_DATA_DIR

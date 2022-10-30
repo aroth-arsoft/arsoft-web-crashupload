@@ -7,6 +7,7 @@ import re
 import os.path
 import collections
 from django import template
+from django.urls.base import reverse
 
 def _get_system_language_code():
     # Language code for this installation. All choices can be found here:
@@ -424,6 +425,7 @@ def django_request_info_view(request):
     request_base_fields = []
     for attr in ['scheme', 'method', 'path', 'path_info', 'user', 'session', 'urlconf', 'resolver_match', 'content_type', 'content_params']:
         request_base_fields.append( (attr, getattr(request, attr) if hasattr(request, attr) else None) )
+    #request_base_fields.append( ('reverse_url', reverse('debug_django_request', urlconf=request.urlconf) ) )
     t = Template(DEBUG_REQUEST_VIEW_TEMPLATE, name='Debug request template')
     c = Context({
         'request_path': request.path_info,
@@ -1042,7 +1044,7 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
         </tr>
       </thead>
       <tbody>
-        {% for var in request.GET.items %}
+        {% for var in request.GET.items|dictsort:0 %}
           <tr class="req">
             <td>{{ var.0 }}</td>
             <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1064,7 +1066,7 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
         </tr>
       </thead>
       <tbody>
-        {% for var in filtered_POST.items %}
+        {% for var in filtered_POST.items|dictsort:0 %}
           <tr class="req">
             <td>{{ var.0 }}</td>
             <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1108,7 +1110,7 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
         </tr>
       </thead>
       <tbody>
-        {% for var in request.COOKIES.items %}
+        {% for var in request.COOKIES.items|dictsort:0 %}
           <tr class="req">
             <td>{{ var.0 }}</td>
             <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1121,6 +1123,7 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
   {% endif %}
 
   <h3 id="meta-info">META</h3>
+  {% if request.META %}
   <table class="req">
     <thead>
       <tr class="req">
@@ -1129,7 +1132,7 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
       </tr>
     </thead>
     <tbody>
-      {% for var in request.META.items|dictsort:"0" %}
+      {% for var in request.META.items|dictsort:0 %}
         <tr class="req">
           <td>{{ var.0 }}</td>
           <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1137,6 +1140,10 @@ DEBUG_REQUEST_VIEW_TEMPLATE = """
       {% endfor %}
     </tbody>
   </table>
+  {% else %}
+    <p>No META data</p>
+  {% endif %}
+
 {% else %}
   <p>Request data not supplied</p>
 {% endif %}
@@ -1297,7 +1304,7 @@ DEBUG_REQUEST_404_TEMPLATE = """
         </tr>
       </thead>
       <tbody>
-        {% for var in request.GET.items %}
+        {% for var in request.GET.items|dictsort:0 %}
           <tr class="req">
             <td>{{ var.0 }}</td>
             <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1319,7 +1326,7 @@ DEBUG_REQUEST_404_TEMPLATE = """
         </tr>
       </thead>
       <tbody>
-        {% for var in filtered_POST.items %}
+        {% for var in filtered_POST.items|dictsort:0 %}
           <tr class="req">
             <td>{{ var.0 }}</td>
             <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1363,7 +1370,7 @@ DEBUG_REQUEST_404_TEMPLATE = """
         </tr>
       </thead>
       <tbody>
-        {% for var in request.COOKIES.items %}
+        {% for var in request.COOKIES.items|dictsort:0 %}
           <tr class="req">
             <td>{{ var.0 }}</td>
             <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1384,7 +1391,7 @@ DEBUG_REQUEST_404_TEMPLATE = """
       </tr>
     </thead>
     <tbody>
-      {% for var in request.META.items|dictsort:"0" %}
+      {% for var in request.META.items|dictsort:0 %}
         <tr class="req">
           <td>{{ var.0 }}</td>
           <td class="code"><pre>{{ var.1|pprint }}</pre></td>
@@ -1639,7 +1646,7 @@ DEBUG_REQUEST_500_TEMPLATE = """
       </tr>
     </thead>
     <tbody>
-      {% for var in request.META.items|dictsort:"0" %}
+      {% for var in request.META.items|dictsort:0 %}
         <tr class="req">
           <td>{{ var.0 }}</td>
           <td class="code"><pre>{{ var.1|pprint }}</pre></td>

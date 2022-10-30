@@ -56,6 +56,10 @@ chown "$gunicorn_user" "$script_dir/data/dumpdata"
 
 export PYTHONPATH='/app'
 
-exec gunicorn --workers=${gunicorn_num_workers} --threads=${gunicorn_num_threads} $gunicorn_opts -b 0.0.0.0:8000 --user "$gunicorn_user" --group "nogroup" --chdir "$script_dir" app:application
+cat << EOF > /tmp/gunicorn.conf.py
+secure_scheme_headers = {'X-FORWARDED-PROTOCOL': 'https', 'X-FORWARDED-PROTO': 'https', 'X-FORWARDED-SSL': 'on'}
+EOF
+
+exec gunicorn -c /tmp/gunicorn.conf.py --workers=${gunicorn_num_workers} --threads=${gunicorn_num_threads} $gunicorn_opts -b 0.0.0.0:8000 --user "$gunicorn_user" --group "nogroup" --chdir "$script_dir" app:application
 exit $?
 
