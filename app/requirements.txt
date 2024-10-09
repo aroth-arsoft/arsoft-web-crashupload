@@ -1,5 +1,5 @@
 gunicorn>=19.0
-Django==4.1.13
+Django==4.2.16
 beautifulsoup4==4.11.1
 django-tables2==2.4.1
 django-tables2-column-shifter==2.0.3
